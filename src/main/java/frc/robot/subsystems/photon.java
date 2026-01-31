@@ -18,40 +18,40 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Robot;
-import swervelib.SwerveDrive;
 
 public class photon extends SubsystemBase{
-    SwerveSubsystem swerveDriveBase;
-    SwerveDrive swerveDrive; 
         
     PhotonCamera camera;
     PhotonPoseEstimator photonEstimator;
     private Matrix<N3,N1> curStdevs;
-    EstimateConsumer estConsumer;
+    CommandSwerveDrivetrain swerveDriveBase;
 
 
-    public photon(SwerveSubsystem swerveDriveBase, EstimateConsumer estConsumer ){
+    public photon(CommandSwerveDrivetrain swerveDriveBase ){
         this.swerveDriveBase = swerveDriveBase;
         this.camera = new PhotonCamera("photonvision");
-        this.estConsumer = estConsumer;
         photonEstimator =
                 new PhotonPoseEstimator(Constants.kTagLayout, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, Constants.kRobotToCam);
         photonEstimator.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
     }
     public void getResults(){
         var visionEstimates = camera.getAllUnreadResults();
-        for (var visionEstimate: visionEstimates){
-            var multiTagVision = visionEstimate.multitagResult.get();
-            var transform3dPos = multiTagVision.estimatedPose.best;
-            Pose2d pose2dPos = transform3dToPose2d(transform3dPos);
-            System.out.println("Estimated x: " +pose2dPos.getX() + "\nEstimated y: "+pose2dPos.getY() + "\nEstimated yaw: "+ pose2dPos.getRotation());
-            // swerveDrive.addVisionMeasurement(pose2dPos, 0);
-        }
+        for (var visionEstimate: visionEstimates){    
+                var multiTagVision = visionEstimate.multitagResult;
+                if(multiTagVision.isPresent()){
+                    var transform3dPos = multiTagVision.get().estimatedPose.best;    
+                    Pose2d pose2dPos = transform3dToPose2d(transform3dPos);
+                    System.out.println("Estimated x: " +pose2dPos.getX() + "\nEstimated y: "+pose2dPos.getY() + "\nEstimated yaw: "+ pose2dPos.getRotation());
+                // swerveDrive.addVisionMeasurement(pose2dPos, 0);
+                }
+    }
 
     }
+
     public Pose2d transform3dToPose2d(Transform3d transforming){
         return new Pose2d(transforming.getMeasureX(),transforming.getMeasureY(),transforming.getRotation().toRotation2d());
     }
