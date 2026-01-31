@@ -1,0 +1,112 @@
+package frc.robot.subsystems;
+
+import java.lang.reflect.Array;
+
+import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.hardware.TalonFX;
+
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
+import frc.robot.subsystems.CommandSwerveDrivetrain;
+
+public class Shooter extends SubsystemBase{
+    TalonFX frontShooter1 = new TalonFX(Constants.frontShooter1Id);
+    TalonFX frontShooter2 = new TalonFX(Constants.frontShooter2Id);
+    TalonFX backShooter = new TalonFX(Constants.backShooterId);
+    TalonFX hoodMotor = new TalonFX(Constants.hoodMotorId);
+    PositionVoltage pivotAngleRequest = new PositionVoltage(0).withSlot(0);
+    boolean isBlue;
+
+    CommandSwerveDrivetrain drivebase;
+
+    
+    Pose2d hubPose;
+
+    // private static final InterpolatingTreeMap LOOKUP_TABLE = new InterpolatingTreeMap(null, null);
+
+    public Shooter(CommandSwerveDrivetrain drivetrain, boolean isBlue) {
+        Slot0Configs pivotConfig = new Slot0Configs();
+        pivotConfig.kP = Constants.pivotKP;
+        pivotConfig.kI = 0;
+        pivotConfig.kD = Constants.pivotKD;
+
+        this.drivebase = drivetrain;
+        this.isBlue = isBlue;
+        if (isBlue) {
+            hubPose = new Pose2d(182.11*0.0254, 158.84*0.0254, new Rotation2d(0));
+        }
+        else {
+            hubPose = new Pose2d(469.11*0.0254, 158.84*0.0254, new Rotation2d(0));
+        }
+    }
+
+    public Command shooterOn() {
+        return startEnd(() -> {
+            frontShooter1.set(1);
+            frontShooter2.set(1);
+            backShooter.set(1);
+        }, () -> {
+            frontShooter1.set(0);
+            frontShooter2.set(0);
+            backShooter.set(0);
+        });
+    }
+
+    public Command setPivotAngle(double angle) {
+        return startEnd(() -> {
+            hoodMotor.setControl(pivotAngleRequest.withPosition(angle));
+        }, () -> {
+            hoodMotor.set(0);
+        });
+    }
+
+    private double getTimeFromDist(double dist) {
+        
+    }
+
+    private double getAngleFromDist(double dist) {
+        
+    }
+
+    private double getDistFromHub(Pose2d pose) {
+        Transform2d transform = pose.minus(hubPose);
+        return Math.sqrt(Math.pow(transform.getX(), 2) + Math.pow(transform.getY(), 2));
+    }
+
+    private Pose2d getFuturePose(Pose2d pose, ChassisSpeeds velocity, double airtime) {
+        double futureX = pose.getX() + velocity.vxMetersPerSecond * airtime;
+        double futureY = pose.getY() + velocity.vyMetersPerSecond * airtime;
+        return new Pose2d(futureX, futureY, new Rotation2d(0));
+    }
+    
+    private int iterationCount = 6;
+
+    public Command droneStrike() {
+        return run(() -> {
+            Pose2d currentPose = drivebase.getState().Pose;
+            double hubDist = getDistFromHub(currentPose);
+            Pose2d futurePose;
+            double airTime;
+            double shootAngle;
+
+            
+            ChassisSpeeds velocity = ChassisSpeeds.fromRobotRelativeSpeeds(drivebase.getState().Speeds, currentPose.getRotation());
+
+            for (int i = 0; i <= iterationCount; i++) {
+               airTime = getTimeFromDist(hubDist);
+               futurePose = getFuturePose(currentPose, velocity, airTime);
+               hubDist = getDistFromHub(futurePose);
+            }
+
+            shootAngle = getAngleFromDist(hubDist);
+            hoodMotor.setControl(pivotAngleRequest.withPosition(shootAngle));
+        });
+    }
+}

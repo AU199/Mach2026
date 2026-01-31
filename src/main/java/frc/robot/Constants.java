@@ -29,6 +29,10 @@ public final class Constants {
   public static final int pivotMotorId = 0;
   public static final int rollerMotorId = 0;
   public static final int feederMotorId = 0;
+  public static final int frontShooter1Id = 0;
+  public static final int frontShooter2Id = 0;
+  public static final int backShooterId = 0;
+  public static final int hoodMotorId = 0;
 
   public static final double pivotKP = 0;
   public static final double pivotKI = 0;

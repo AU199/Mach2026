@@ -4,7 +4,6 @@ import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 
-import edu.wpi.first.networktables.RawTopic;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -28,9 +27,7 @@ public class Intake extends SubsystemBase {
             pivotMotor.setControl(deployRequest);
         }, () -> {
             pivotMotor.set(0);
-
-            rollerMotor.set(0.7);
-        }).until(() -> Math.abs(pivotMotor.getPosition().getValueAsDouble() - Constants.IntakeDeployPos) > 0.01);
+        }).until(() -> Math.abs(pivotMotor.getPosition().getValueAsDouble() - Constants.IntakeDeployPos) > 0.08);
 
     //     return start(() -> {
     //         pivotMotor.setControl(request);
@@ -39,11 +36,17 @@ public class Intake extends SubsystemBase {
 
     public Command retractIntake() {
         return startEnd(() -> {
-            rollerMotor.set(0);
-
             pivotMotor.setControl(retractRequest);
         }, () -> {
             pivotMotor.set(0);
-        }).until(() -> Math.abs(pivotMotor.getPosition().getValueAsDouble() - Constants.IntakeRetractPos) > 0.01);
+        }).until(() -> Math.abs(pivotMotor.getPosition().getValueAsDouble() - Constants.IntakeRetractPos) > 0.08);
+    }
+
+    public Command runRoller() {
+        return startEnd(() -> {
+            rollerMotor.set(0.7);
+        }, () -> {
+            rollerMotor.set(0);
+        });
     }
 }
