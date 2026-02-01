@@ -43,6 +43,8 @@ public class RobotContainer {
     public final Shooter shooter = new Shooter(drivetrain,true,m_field);    
     
     public RobotContainer() {
+        FuelSim.getInstance();
+        FuelSim.getInstance().start();
         configureBindings();
     }
 

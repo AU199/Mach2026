@@ -7,10 +7,14 @@ import java.util.concurrent.Flow.Publisher;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.google.flatbuffers.FlatBufferBuilder;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -21,6 +25,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.FuelSim;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 
 public class Shooter extends SubsystemBase{
@@ -32,10 +37,12 @@ public class Shooter extends SubsystemBase{
     boolean isBlue;
     Field2d field;
     CommandSwerveDrivetrain drivebase;
-    StructPublisher<Pose2d> publisher = NetworkTableInstance.getDefault()
-            .getStructTopic("FuturePose", Pose2d.struct).publish();
+    StructPublisher<Pose3d> publisher = NetworkTableInstance.getDefault()
+            .getStructTopic("FuturePose", Pose3d.struct).publish();
     
     Pose2d hubPose;
+    double currentYaw = 0;
+
 
     // private static final InterpolatingTreeMap LOOKUP_TABLE = new InterpolatingTreeMap(null, null);
 
@@ -118,15 +125,18 @@ public class Shooter extends SubsystemBase{
                futurePose = getFuturePose(currentPose, velocity, airTime);
                hubDist = getDistFromHub(futurePose);
             }
-
-            publisher.set(new Pose2d(futurePose.getX(), futurePose.getY(), new Rotation2d(getYaw(futurePose))));
+            currentYaw = getYaw(futurePose);
+            publisher.set(new Pose3d(futurePose.getX(), futurePose.getY(), 0,new Rotation3d(0,0,currentYaw)));
             shootAngle = getAngleFromDist(hubDist);
             hoodMotor.setControl(pivotAngleRequest.withPosition(shootAngle));
             SmartDashboard.putNumber("shooterangle", shootAngle);
+            FuelSim.getInstance().spawnFuel(new Translation3d(currentPose.getX(),currentPose.getY(),0), new Translation3d(4*Math.cos(currentYaw),4*Math.sin(currentYaw),Math.sin(shootAngle)*10));
+
         });
     }
     @Override
     public void periodic(){
         
+        FuelSim.getInstance().stepSim();
     }
 }
