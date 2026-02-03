@@ -84,11 +84,11 @@ public class Shooter extends SubsystemBase{
     }
 
     private double getTimeFromDist(double dist) {
-        return 2/dist;   
+        return ;   
     }
 
-    private double getAngleFromDist(double dist) {
-        return 200/(dist);
+    private double getAngleFromDist(double dist,double velocity) {
+        return 
     }
 
     private double getDistFromHub(Pose2d pose) {

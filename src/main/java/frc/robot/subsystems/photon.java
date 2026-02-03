@@ -33,7 +33,7 @@ public class photon extends SubsystemBase{
 
     public photon(CommandSwerveDrivetrain swerveDriveBase ){
         this.swerveDriveBase = swerveDriveBase;
-        this.camera = new PhotonCamera("photonvision");
+        this.camera = new PhotonCamera("AprilTagDetection");
         photonEstimator =
                 new PhotonPoseEstimator(Constants.kTagLayout, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, Constants.kRobotToCam);
         photonEstimator.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
