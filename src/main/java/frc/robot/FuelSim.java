@@ -1,13 +1,14 @@
 package frc.robot;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
-
+import frc.robot.subsystems.Simulation;
 import java.util.ArrayList;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -30,7 +31,7 @@ public class FuelSim {
     private static final double TRENCH_BAR_HEIGHT = 0.102;
     private static final double TRENCH_BAR_WIDTH = 0.152;
     private static final double FRICTION = 0.1; // proportion of horizontal velocity to lose per second while on ground
-
+    
     private static FuelSim instance = null;
 
     private static final Translation3d[] FIELD_XZ_LINE_STARTS = {
@@ -81,20 +82,22 @@ public class FuelSim {
     private class Fuel {
         private Translation3d pos;
         private Translation3d vel;
-
-        private Fuel(Translation3d pos, Translation3d vel) {
+        Simulation simulation;
+        private Fuel(Translation3d pos, Translation3d vel, Translation3d omega) {
             this.pos = pos;
             this.vel = vel;
+            simulation = new Simulation(0.46, 0.2, omega, new Pose3d());
         }
 
         private Fuel(Translation3d pos) {
-            this(pos, new Translation3d());
+            this(pos, new Translation3d(),new Translation3d());
         }
 
         private void update() {
             pos = pos.plus(vel.times(PERIOD / subticks));
             if (pos.getZ() > FUEL_RADIUS) {
-                vel = vel.plus(GRAVITY.times(PERIOD / subticks));
+                Translation3d acceleration = simulation.acceleration(vel).times(PERIOD / subticks);
+                vel = vel.plus(acceleration);
             }
             if (Math.abs(vel.getZ()) < 0.05 && pos.getZ() <= FUEL_RADIUS + 0.03) {
                 vel = new Translation3d(vel.getX(), vel.getY(), 0);
@@ -434,8 +437,8 @@ public class FuelSim {
      * @param pos Position to spawn at
      * @param vel Initial velocity vector
      */
-    public void spawnFuel(Translation3d pos, Translation3d vel) {
-        fuels.add(new Fuel(pos, vel));
+    public void spawnFuel(Translation3d pos, Translation3d vel, Translation3d omega) {
+        fuels.add(new Fuel(pos, vel,omega));
     }
 
     private void handleRobotCollision(Fuel fuel, Pose2d robot, Translation2d robotVel) {
@@ -599,10 +602,10 @@ public class FuelSim {
                 new Translation3d(FIELD_LENGTH - 5.3, FIELD_WIDTH / 2, 0.89),
                 -1);
 
-        private static final double ENTRY_HEIGHT = 1.83;
+        private static final double ENTRY_HEIGHT = 72/39.37;
         private static final double ENTRY_RADIUS = 0.56;
 
-        private static final double SIDE = 1.2;
+        private static final double SIDE = 1.05;
 
         private static final double NET_HEIGHT_MAX = 3.057;
         private static final double NET_HEIGHT_MIN = 1.5;

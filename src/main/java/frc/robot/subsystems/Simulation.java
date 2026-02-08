@@ -1,6 +1,9 @@
 package frc.robot.subsystems;
 
+import java.time.Year;
 import java.util.Optional;
+
+import javax.imageio.stream.IIOByteBuffer;
 
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.Nat;
@@ -11,10 +14,16 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.numbers.N2;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.FuelSim.Hub;
+import org.littletonrobotics.junction.Logger;
 
-public class Simulation {
+public class Simulation extends SubsystemBase {
     // Mass of the ball
     private double mass = 0.203;
     private Translation3d gravity = new Translation3d(0, 0, -9.81);
@@ -24,23 +33,26 @@ public class Simulation {
     private double rho = 1.2;
     // radius of the ball
     private double radius = 0.075;
+    private double hubRadius = InchtoMeter(41.73);
     private Translation3d omega;
-    private Translation3d velocity;
-    private Optional<Alliance> currentAlliance = DriverStation.getAlliance();
-    private Pose3d hubPosition = (currentAlliance.get() == Alliance.Blue)
-            ? new Pose3d(InchtoMeter(182.11), InchtoMeter(158.84), InchtoMeter(72.0), new Rotation3d(0, 0, 0))
-            : new Pose3d(InchtoMeter(651.22 - 182.11), InchtoMeter(158.84), InchtoMeter(72.0), new Rotation3d(0, 0, 0));
+    private Pose3d hubPosition;
+    private int iterations = 0;
+    StructPublisher<Pose3d> hubPositionPublisherSIMULATION = NetworkTableInstance.getDefault()
+            .getStructTopic("Hub PositionSIMULATION", Pose3d.struct).publish();
 
     double A = Math.PI * Math.pow(radius, 2);
 
-    public Simulation(double CD, double CL, Translation3d Omega, Translation3d velocity) {
+    public Simulation(double CD, double CL, Translation3d Omega, Pose3d hubPosition) {
         this.CD = CD;
         this.CL = CL;
         this.omega = Omega;
-        this.velocity = velocity;
+        this.hubPosition = hubPosition;
     }
 
-    private Translation3d acceleration(Translation3d currVelocity) {
+    public Translation3d acceleration(Translation3d currVelocity) {
+        // if (currVelocity.getNorm() < 1e-5) {
+        // return gravity;
+        // }
         double DragMag = (0.5 * rho * CD * A * Math.pow(currVelocity.getNorm(), 2)) / mass;
         Translation3d DragAccel = currVelocity.times(-DragMag / currVelocity.getNorm());
         double magnusCoeff = (0.5 * rho * CL * A * radius) / mass;
@@ -49,87 +61,141 @@ public class Simulation {
     }
 
     private state rk4Step(Translation3d velocity, Translation3d position, double dt) {
-        Translation3d k1_v = acceleration(velocity);
-        Translation3d k1_x = velocity;
-
-        Translation3d v2 = velocity.plus(k1_v.times(dt / 2));
-        Translation3d x2 = position.plus(k1_x.times(dt / 2));
+        Translation3d tempVel = velocity;
+        Translation3d tempPos = position; 
+        
+        Translation3d k1_v = acceleration(tempVel);
+        Translation3d k1_x = tempVel;
+        
+        Translation3d v2 = tempVel.plus(k1_v.times(dt / 2));
+        Translation3d x2 = tempPos.plus(k1_x.times(dt / 2));
         Translation3d k2_v = acceleration(v2);
         Translation3d k2_x = v2;
 
-        Translation3d v3 = v2.plus(k2_v.times(dt / 2));
-        Translation3d x3 = x2.plus(k2_x.times(dt / 2));
+        Translation3d v3 = tempVel.plus(k2_v.times(dt / 2));
+        Translation3d x3 = tempPos.plus(k2_x.times(dt / 2));
         Translation3d k3_v = acceleration(v3);
         Translation3d k3_x = v3;
 
-        Translation3d v4 = v3.plus(k3_v.times(dt / 2));
-        Translation3d x4 = x3.plus(k3_x.times(dt / 2));
+        Translation3d v4 = tempVel.plus(k3_v.times(dt));
+        Translation3d x4 = tempPos.plus(k3_x.times(dt));
         Translation3d k4_v = acceleration(v4);
         Translation3d k4_x = v4;
 
-        Translation3d newPosition = position.plus(k1_x.plus(k2_x.times(2)).plus(k3_x.times(2)).plus(k4_x));
-        Translation3d newVelocity = velocity.plus(k1_v.plus(k2_v.times(2)).plus(k3_v.times(2)).plus(k4_v));
+        Translation3d newPosition = position
+                .plus((k1_x.plus(k2_x.times(2)).plus(k3_x.times(2)).plus(k4_x)).times(dt / 6));
+        Translation3d newVelocity = velocity
+                .plus((k1_v.plus(k2_v.times(2)).plus(k3_v.times(2)).plus(k4_v)).times(dt / 6));
 
         return new state(newVelocity, newPosition);
     }
 
-    public double[] Simulate(velocity initalVelocity, Pose3d initalPosition, double dt, double maxTime, double theta) {
+    public double[] Simulate(velocity initalVelocity, Pose3d initalPosition, double dt, double maxTime,Pose3d hubPosition) {
         Translation3d pos = new Translation3d(initalPosition.getX(), initalPosition.getY(), initalPosition.getZ());
         Translation3d vel = new Translation3d(initalVelocity.getX(), initalVelocity.getY(), initalVelocity.getZ());
+        // System.out.println(vel.getZ());
         double time = 0;
-        int Tick = 0;
-        while ((Tick > 0 && pos.getZ() <= hubPosition.getZ()) && time < maxTime) {
+        while (true) {
+            double horizontalDistance = pos.toTranslation2d().getDistance(hubPosition.toPose2d().getTranslation());
+            // System.out.println("Horizontal distance "+ horizontalDistance);
+            if (horizontalDistance < hubRadius && pos.getZ() <= hubPosition.getZ()) {
+                double zError = hubPosition.getZ()-pos.getZ();
+                // System.out.println("Z error" + hubPosition.getZ()+ " "+ pos.getZ());
+                // System.out.println("X pos" + pos.getX());
+                // System.out.println("Y pos" + pos.getY());
+
+                break;
+            }
+
+            if (time > maxTime) {
+                break;
+            }
+
             state rk4State = rk4Step(vel, pos, dt);
             vel = rk4State.velocity;
             pos = rk4State.position;
-            if (pos.getZ() >= hubPosition.getZ() && Tick == 0) {
-                Tick = 1;
+            if (Double.isNaN(pos.getZ())) {
+                System.exit(0);
             }
             time += dt;
         }
-
+        // System.out.println(hubPosition);
         double xError = pos.getX() - hubPosition.getX();
         double yError = pos.getY() - hubPosition.getY();
+        // System.out.println("X" + this.hubPosition.getX() + " " + pos.getX());
+        // System.out.println("Y" + this.hubPosition.getY() + " " + pos.getY());
+
         double[] errors = { xError, yError };
+        // System.out.println("X ERROR" + errors[0]);
+        // System.out.println("Y ERROR" + errors[1]);
+
+        SmartDashboard.putNumberArray("XYError", errors);
 
         return errors;
 
     }
 
-    public double[] NewtonRappingSon(velocity velocity, double theta, double phi, float epsilon, double dt,
-            double maxTime) {
-        // General Error Format [0] = XERROR [1] = YERROR                
-        double[] generalError = Simulate(velocity, hubPosition, 0.1, maxTime, theta);
-        double[] EpsilonErrorTheta = Simulate(velocity.changeTheta(epsilon), hubPosition, dt, maxTime, theta);
-        double[] EpsilonErrorPhi = Simulate(velocity.changePhi(epsilon), hubPosition, dt, maxTime, theta);
-        // DxDy (this is a paratial derivitive)  Format [0] = dx/d("whatever") [1] = dy/d("whatever")
+    public double[] NewtonRappingSon(velocity velocity, Pose3d initalPosition ,Float epsilon, double dt,
+            double maxTime, Pose3d hubPosition) {
+        // General Error Format [0] = XERROR [1] = YERROR
+        double[] generalError = Simulate(velocity, initalPosition, dt, maxTime, hubPosition);
+        // System.out.println(generalError[0] + " " + generalError[1]);
+        double[] EpsilonErrorTheta = Simulate(velocity.changeTheta(epsilon), initalPosition, dt, maxTime, hubPosition);
+        // System.out.println("EX" + EpsilonErrorTheta[0] + " " + generalError[0]);
+        double[] EpsilonErrorPhi = Simulate(velocity.changePhi(epsilon), initalPosition, dt, maxTime, hubPosition);
+        // System.out.println("E" + EpsilonErrorPhi[0] + " " + EpsilonErrorPhi[1]);
+
+        // DxDy (this is a paratial derivitive) Format [0] = dx/d("whatever") [1] =
+        // dy/d("whatever")
         double[] DxDyTheta = slopeFinder(EpsilonErrorTheta, generalError, epsilon);
+        // SmartDashboard.putNumberArray("paritial derivitve theta ", DxDyTheta);
+        // System.out.println(DxDyTheta[0]+" "+DxDyTheta[1]);
         double[] DxDyPhi = slopeFinder(EpsilonErrorPhi, generalError, epsilon);
-        double deltaPhi= (DxDyTheta[1]*generalError[0] - DxDyTheta[0]*generalError[1])/(DxDyPhi[1]*DxDyTheta[0]-DxDyPhi[0]*DxDyTheta[1]);
-        double deltaTheta = (-generalError[0]-deltaPhi*DxDyPhi[0])/DxDyTheta[0];
-        double[] deltaThetaDeltaPhi = {deltaTheta,deltaPhi};
-        return deltaThetaDeltaPhi;
+        // System.out.println(DxDyPhi[0] +' '+DxDyPhi[1]);
+        // DeltaPhi = c*xerror - a*yerror/(ad-bc)
+        double det = DxDyPhi[1]*DxDyTheta[0]-DxDyPhi[0]*DxDyTheta[1];
+        if(Math.abs(det) < 1e-10){
+            System.out.println(det);
+            return new double[]{0,0,generalError[0],generalError[1]};
+        }
+        double deltaPhi = (DxDyTheta[1] * generalError[0] - DxDyTheta[0] * generalError[1])/det;
+        // DeltaTheta = (-xerror - deltaPhi*b)/a
+        double deltaTheta = (-generalError[0] - deltaPhi*DxDyPhi[0])/DxDyTheta[0];
+
+        return new double[] { deltaTheta, deltaPhi, generalError[0], generalError[1] };
     }
 
-    public double[] findThetaPhi(double initalVelocity, Pose3d initalPosition, double initalTheta, float epsilon, int iterationCount,double dt) {
-        double initialPhi = initalPosition.getRotation().getZ();
-        velocity velocity = new velocity(initalVelocity, initalTheta,initialPhi);
+    public double[] findThetaPhi(double initalVelocity, Pose3d initalPosition, double yaw,double hubHeightChanger,
+            double initalTheta, Float epsilon,
+            int iterationCount, double dt, double tolarence) {
+        // System.out.println(hubPosition);
+        double initialPhi = yaw;
+        velocity velocity = new velocity(initalVelocity, initalTheta, initialPhi);
+        System.out.println(velocity);
+        hubPosition = new Pose3d(hubPosition.getX(),
+                hubPosition.getY(), hubPosition.getZ() + hubHeightChanger,
+                hubPosition.getRotation());
         Transform3d positionDifference = initalPosition.minus(hubPosition);
+        System.out.println(hubPosition);
         double theta = initalTheta;
-        double phi  = initialPhi;
+        double phi = initialPhi;
         double Diff = Math.sqrt(Math.pow(positionDifference.getX(), 2) + Math.pow(positionDifference.getY(), 2));
-        double maxTime = 1 + (Diff / Math.sqrt(Math.pow(velocity.getX(), 2) + Math.pow(velocity.getY(), 2)));
-        int iterations = 0;
-        while (iterations <= iterationCount){
-            double[] deltas = NewtonRappingSon(velocity, theta, phi, epsilon,dt, maxTime);
-            velocity = velocity.changePhi(deltas[1]).changeTheta(deltas[0]);
-            if (Math.abs((theta + deltas[0])-theta) <= 0.1){
+        this.iterations = 0;
+        while (iterations <= iterationCount) {
+            double horizontalSpeed = Math.sqrt(Math.pow(velocity.getX(), 2) + Math.pow(velocity.getY(), 2));
+            double maxTime = (Diff / Math.min(horizontalSpeed,0.1));
+
+            double[] deltas = NewtonRappingSon(velocity, initalPosition,epsilon, dt, maxTime,hubPosition);
+            if (Math.hypot(deltas[2], deltas[3]) < tolarence) {
                 break;
             }
-            theta += deltas[0];
-            phi += deltas[1];
-        }   
-        double[] thetaPhi = {theta,phi};
+            velocity = velocity.changePhi(deltas[1]).changeTheta(deltas[0]);
+            System.out.println(iterations +" "+ velocity);
+            this.iterations++;
+
+        }
+        SmartDashboard.putNumber("ShooterThetaSIMULATION", theta);
+        double[] thetaPhi = { velocity.theta, velocity.phi };
         return thetaPhi;
     }
 
@@ -145,10 +211,10 @@ public class Simulation {
         return inch / 39.37;
     }
 
-    private double[] slopeFinder(double[]EpsilonErrors,double[]Original,float epsilon){
-        double dx = (EpsilonErrors[0]-Original[0])/epsilon;
-        double dy = (EpsilonErrors[1]-Original[1])/epsilon;
-        double[] dxAndDy = {dx,dy};
+    private double[] slopeFinder(double[] EpsilonErrors, double[] Original, float epsilon) {
+        double dx = (EpsilonErrors[0] - Original[0]) / epsilon;
+        double dy = (EpsilonErrors[1] - Original[1]) / epsilon;
+        double[] dxAndDy = { dx, dy };
         return dxAndDy;
     }
 
@@ -203,6 +269,7 @@ public class Simulation {
         public velocity changePhi(float epsilon) {
             return new velocity(this.velocity, this.theta, this.phi + epsilon);
         }
+
         public velocity changeTheta(double epsilon) {
             return new velocity(this.velocity, this.theta + epsilon, this.phi);
         }
@@ -210,5 +277,18 @@ public class Simulation {
         public velocity changePhi(double epsilon) {
             return new velocity(this.velocity, this.theta, this.phi + epsilon);
         }
+
+        @Override
+        public String toString() {
+            return String.format(
+                    "Velocity[vel = %.3f, ,theta = %.3f, phi = %.3f,x component = %.3f, y component = %.3f, z component = %.3f]",
+                    this.velocity, Math.toDegrees(this.theta), Math.toDegrees(this.phi), this.getX(), this.getY(), this.getZ());
+        }
+    }
+
+    @Override
+    public void periodic() {
+        hubPositionPublisherSIMULATION
+                .accept(new Pose3d(hubPosition.getX(), hubPosition.getY(), 72 / 39.37, new Rotation3d(0, 0, 0)));
     }
 }

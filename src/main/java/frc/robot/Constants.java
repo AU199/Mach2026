@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Inches;
+
 import java.io.IOException;
 import java.nio.file.Paths;
 
@@ -40,6 +42,8 @@ public final class Constants {
 
   public static final double IntakeDeployPos = 0;
   public static final double IntakeRetractPos = 0;
+  public static final double G = 9.81;
+  public static final double HeightFromShooterToHubINCHES = 72;
   public static final String Path = Paths.get("").toAbsolutePath().toString()+"src\\\\main\\\\java\\\\frc\\\\robot\\\\AprilTags\\\\2026-rebuilt-welded.json";
   public static AprilTagFieldLayout kTagLayout;
   static{ 
@@ -51,4 +55,6 @@ public final class Constants {
     }
   }
   public static final Transform3d kRobotToCam = new Transform3d(20, 0,20 ,new Rotation3d(0,0,0));
+  public static final int LEDLENGHT = 60;
+  public static final int LEDPORT = 8; 
 }

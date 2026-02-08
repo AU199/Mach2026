@@ -10,6 +10,7 @@ import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -23,15 +24,16 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Shooter;
+import frc.robot.subsystems.Simulation;
 import frc.robot.subsystems.photon;
 
 public class RobotContainer {
-    private double MaxSpeed = 0.2 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
+    private double MaxSpeed = 1 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
     private double MaxAngularRate = 0.4 * RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
 
     /* Setting up bindings for necessary control of the swerve drive platform */
     private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
-            .withDeadband(MaxSpeed * 0.04).withRotationalDeadband(MaxAngularRate * 0.04) // Add a 10% deadband
+            .withDeadband(MaxSpeed * 0.1).withRotationalDeadband(MaxAngularRate * 0.04) // Add a 10% deadband
             .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
     private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
     private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
@@ -39,10 +41,10 @@ public class RobotContainer {
     private final Telemetry logger = new Telemetry(MaxSpeed);
     private final Field2d m_field = new Field2d();
     private final CommandXboxController joystick = new CommandXboxController(0);
-
+    
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
-    public final photon camera = new photon(drivetrain);
-    // public final Shooter shooter = new Shooter(drivetrain,true,m_field);    
+    // public final photon camera = new photon(drivetrain);
+    public final Shooter shooter = new Shooter(drivetrain,true,m_field);    
     
     public RobotContainer() {
         FuelSim.getInstance();
@@ -64,8 +66,10 @@ public class RobotContainer {
 
         joystick.y().onTrue(new InstantCommand(() -> drivetrain.seedFieldCentric()));
 
-        // joystick.a().whileTrue(shooter.droneStrike());
-
+        joystick.a().whileTrue(shooter.droneStrike());
+        joystick.x().whileTrue(new InstantCommand(() -> FuelSim.getInstance().clearFuel()));
+        joystick.rightBumper().whileTrue(new InstantCommand(() -> shooter.IncreaseSpeed()));
+        joystick.leftBumper().whileTrue(new InstantCommand(() -> shooter.DecreaseSpeed()));
         // Idle while the robot is disabled. This ensures the configured
         // neutral mode is applied to the drive motors while disabled.
         // final var idle = new SwerveRequest.Idle();
