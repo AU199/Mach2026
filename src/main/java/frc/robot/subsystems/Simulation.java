@@ -49,6 +49,10 @@ public class Simulation extends SubsystemBase {
         this.hubPosition = hubPosition;
     }
 
+    /**
+     * @param currVelocity the current velocity of the ball
+     * @return The acceleration vector
+     */
     public Translation3d acceleration(Translation3d currVelocity) {
         // if (currVelocity.getNorm() < 1e-5) {
         // return gravity;
@@ -60,13 +64,22 @@ public class Simulation extends SubsystemBase {
         return gravity.plus(DragAccel).plus(MagnusAccel);
     }
 
+    /**
+     * This method RK4 in order to calculate the next step in the trajectory of the
+     * ball.
+     * 
+     * @param velocity the inital velocity before the state update
+     * @param position the inital position before the state update
+     * @param dt       the time step the rk4 shouldl take
+     * @return returns the new position and velocity in a state
+     */
     private state rk4Step(Translation3d velocity, Translation3d position, double dt) {
         Translation3d tempVel = velocity;
-        Translation3d tempPos = position; 
-        
+        Translation3d tempPos = position;
+
         Translation3d k1_v = acceleration(tempVel);
         Translation3d k1_x = tempVel;
-        
+
         Translation3d v2 = tempVel.plus(k1_v.times(dt / 2));
         Translation3d x2 = tempPos.plus(k1_x.times(dt / 2));
         Translation3d k2_v = acceleration(v2);
@@ -90,7 +103,25 @@ public class Simulation extends SubsystemBase {
         return new state(newVelocity, newPosition);
     }
 
-    public double[] Simulate(velocity initalVelocity, Pose3d initalPosition, double dt, double maxTime,Pose3d hubPosition) {
+    /**
+     * Runs RK4 states in order calculate the x error and y error of the current
+     * shot and phi angle.
+     * 
+     * @param initalVelocity The initial velocity of the fuel
+     * @param initalPosition The initial postion of the fuel in respect of the
+     *                       origin (located at the bottom left of the field aka.
+     *                       the left corner of th
+     *                       blue alliance)
+     * @param dt             The tiny step in time that the simulation should take
+     * @param maxTime        The maximum time that the simulation can last
+     * @param hubPosition    The position of the hub in respect of the origin
+     *                       (located at the bottom left of the field aka. the left
+     *                       corner of th
+     *                       blue alliance)
+     * @return the x error and y error FORMAT [xError, yError]
+     */
+    public double[] Simulate(velocity initalVelocity, Pose3d initalPosition, double dt, double maxTime,
+            Pose3d hubPosition) {
         Translation3d pos = new Translation3d(initalPosition.getX(), initalPosition.getY(), initalPosition.getZ());
         Translation3d vel = new Translation3d(initalVelocity.getX(), initalVelocity.getY(), initalVelocity.getZ());
         // System.out.println(vel.getZ());
@@ -99,7 +130,7 @@ public class Simulation extends SubsystemBase {
             double horizontalDistance = pos.toTranslation2d().getDistance(hubPosition.toPose2d().getTranslation());
             // System.out.println("Horizontal distance "+ horizontalDistance);
             if (horizontalDistance < hubRadius && pos.getZ() <= hubPosition.getZ()) {
-                double zError = hubPosition.getZ()-pos.getZ();
+                double zError = hubPosition.getZ() - pos.getZ();
                 // System.out.println("Z error" + hubPosition.getZ()+ " "+ pos.getZ());
                 // System.out.println("X pos" + pos.getX());
                 // System.out.println("Y pos" + pos.getY());
@@ -135,14 +166,28 @@ public class Simulation extends SubsystemBase {
 
     }
 
-    public double[] NewtonRappingSon(velocity velocity, Pose3d initalPosition ,Float epsilon, double dt,
+    /**
+     * Uses the Newton-Rapson method in order to calculate the changes in theta and
+     * phi in order to improve shot accuracy.
+     * 
+     * @param velocity    The velocity of the fuel
+     * @param Position    the position of the fuel with respect to the field origin
+     * @param epsilon     the epsilon used to calculate the derivitive of the theta
+     *                    and phi function
+     * @param dt          the small step in time for the simulation
+     * @param maxTime     the maximum simulation time (NOT THE CPU TIME)
+     * @param hubPosition the position of the hub with respect to the field origin
+     * @return the change of theta and phi
+     */
+    public double[] NewtonRappingSon(velocity velocity, Pose3d Position, Float epsilon, double dt,
             double maxTime, Pose3d hubPosition) {
+
         // General Error Format [0] = XERROR [1] = YERROR
-        double[] generalError = Simulate(velocity, initalPosition, dt, maxTime, hubPosition);
+        double[] generalError = Simulate(velocity, Position, dt, maxTime, hubPosition);
         // System.out.println(generalError[0] + " " + generalError[1]);
-        double[] EpsilonErrorTheta = Simulate(velocity.changeTheta(epsilon), initalPosition, dt, maxTime, hubPosition);
+        double[] EpsilonErrorTheta = Simulate(velocity.changeTheta(epsilon), Position, dt, maxTime, hubPosition);
         // System.out.println("EX" + EpsilonErrorTheta[0] + " " + generalError[0]);
-        double[] EpsilonErrorPhi = Simulate(velocity.changePhi(epsilon), initalPosition, dt, maxTime, hubPosition);
+        double[] EpsilonErrorPhi = Simulate(velocity.changePhi(epsilon), Position, dt, maxTime, hubPosition);
         // System.out.println("E" + EpsilonErrorPhi[0] + " " + EpsilonErrorPhi[1]);
 
         // DxDy (this is a paratial derivitive) Format [0] = dx/d("whatever") [1] =
@@ -153,28 +198,38 @@ public class Simulation extends SubsystemBase {
         double[] DxDyPhi = slopeFinder(EpsilonErrorPhi, generalError, epsilon);
         // System.out.println(DxDyPhi[0] +' '+DxDyPhi[1]);
         // DeltaPhi = c*xerror - a*yerror/(ad-bc)
-        double det = DxDyPhi[1]*DxDyTheta[0]-DxDyPhi[0]*DxDyTheta[1];
-        if(Math.abs(det) < 1e-10){
+        double det = DxDyPhi[1] * DxDyTheta[0] - DxDyPhi[0] * DxDyTheta[1];
+        if (Math.abs(det) < 1e-10) {
             System.out.println(det);
-            return new double[]{0,0,generalError[0],generalError[1]};
+            return new double[] { 0, 0, generalError[0], generalError[1] };
         }
-        double deltaPhi = (DxDyTheta[1] * generalError[0] - DxDyTheta[0] * generalError[1])/det;
+        double deltaPhi = (DxDyTheta[1] * generalError[0] - DxDyTheta[0] * generalError[1]) / det;
         // DeltaTheta = (-xerror - deltaPhi*b)/a
-        double deltaTheta = (-generalError[0] - deltaPhi*DxDyPhi[0])/DxDyTheta[0];
+        double deltaTheta = (-generalError[0] - deltaPhi * DxDyPhi[0]) / DxDyTheta[0];
 
         return new double[] { deltaTheta, deltaPhi, generalError[0], generalError[1] };
     }
 
-    public double[] findThetaPhi(double initalVelocity, Pose3d initalPosition, double yaw,double hubHeightChanger,
+    /**
+     * @param initalVelocity The inital velocity of the fuel
+     * @param initalPosition The inital position of the fuel with respect to the
+     *                       field origin
+     * @param initalTheta    the initial launch angle of the shooter
+     * @param epsilon        the tiny change in theta and phi when calculating the
+     *                       derivitive
+     * @param iterationCount the maximum amount of times that this function can run
+     * @param dt             the time step of the simulation
+     * @param tolerance      the tolerance allowed for the simulation
+     * @return the new theta and phi for a better shot
+     */
+    public double[] findThetaPhi(double initalVelocity, Pose3d initalPosition,
             double initalTheta, Float epsilon,
-            int iterationCount, double dt, double tolarence) {
+            int iterationCount, double dt, double tolerance) {
         // System.out.println(hubPosition);
-        double initialPhi = yaw;
+        double initialPhi = initalPosition.getRotation().getZ();
         velocity velocity = new velocity(initalVelocity, initalTheta, initialPhi);
         System.out.println(velocity);
-        hubPosition = new Pose3d(hubPosition.getX(),
-                hubPosition.getY(), hubPosition.getZ() + hubHeightChanger,
-                hubPosition.getRotation());
+        hubPosition = this.hubPosition;
         Transform3d positionDifference = initalPosition.minus(hubPosition);
         System.out.println(hubPosition);
         double theta = initalTheta;
@@ -183,14 +238,14 @@ public class Simulation extends SubsystemBase {
         this.iterations = 0;
         while (iterations <= iterationCount) {
             double horizontalSpeed = Math.sqrt(Math.pow(velocity.getX(), 2) + Math.pow(velocity.getY(), 2));
-            double maxTime = (Diff / Math.min(horizontalSpeed,0.1));
+            double maxTime = (Diff / Math.min(horizontalSpeed, 0.1));
 
-            double[] deltas = NewtonRappingSon(velocity, initalPosition,epsilon, dt, maxTime,hubPosition);
-            if (Math.hypot(deltas[2], deltas[3]) < tolarence) {
+            double[] deltas = NewtonRappingSon(velocity, initalPosition, epsilon, dt, maxTime, hubPosition);
+            if (Math.hypot(deltas[2], deltas[3]) < tolerance) {
                 break;
             }
             velocity = velocity.changePhi(deltas[1]).changeTheta(deltas[0]);
-            System.out.println(iterations +" "+ velocity);
+            System.out.println(iterations + " " + velocity);
             this.iterations++;
 
         }
@@ -199,6 +254,11 @@ public class Simulation extends SubsystemBase {
         return thetaPhi;
     }
 
+    /**
+     * @param a The first Translation3d object
+     * @param b The second Translation3d object
+     * @return The cross product of the two Translation3d objects
+     */
     Translation3d crossProduct(Translation3d a, Translation3d b) {
         return new Translation3d(
                 a.getY() * b.getZ() - a.getZ() * b.getY(), // x component
@@ -211,6 +271,12 @@ public class Simulation extends SubsystemBase {
         return inch / 39.37;
     }
 
+    /**
+     * @param EpsilonErrors The x and y errors of the added epsilon
+     * @param Original The x any y errors of the original shot
+     * @param epsilon the epsilon (a tiny step)
+     * @return double[]
+     */
     private double[] slopeFinder(double[] EpsilonErrors, double[] Original, float epsilon) {
         double dx = (EpsilonErrors[0] - Original[0]) / epsilon;
         double dy = (EpsilonErrors[1] - Original[1]) / epsilon;
@@ -218,7 +284,7 @@ public class Simulation extends SubsystemBase {
         return dxAndDy;
     }
 
-    private static class state {
+    private class state {
         public Translation3d velocity;
         public Translation3d position;
 
@@ -233,7 +299,7 @@ public class Simulation extends SubsystemBase {
         }
     }
 
-    private static class velocity {
+    private class velocity {
         public double velocity;
         public double theta;
         public double phi;
@@ -277,12 +343,12 @@ public class Simulation extends SubsystemBase {
         public velocity changePhi(double epsilon) {
             return new velocity(this.velocity, this.theta, this.phi + epsilon);
         }
-
         @Override
         public String toString() {
             return String.format(
                     "Velocity[vel = %.3f, ,theta = %.3f, phi = %.3f,x component = %.3f, y component = %.3f, z component = %.3f]",
-                    this.velocity, Math.toDegrees(this.theta), Math.toDegrees(this.phi), this.getX(), this.getY(), this.getZ());
+                    this.velocity, Math.toDegrees(this.theta), Math.toDegrees(this.phi), this.getX(), this.getY(),
+                    this.getZ());
         }
     }
 

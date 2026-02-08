@@ -146,11 +146,11 @@ public class Shooter extends SubsystemBase {
             shootAngle = getAngleFromDist(hubDist, shooterVelocity);
             SmartDashboard.putNumber("shooterangleBefore", Math.toDegrees(shootAngle));
             SmartDashboard.putNumber("hub height changer", hubDist/10);
-            publisher.set(new Pose3d(futurePose.getX(), futurePose.getY(), 0, new Rotation3d(0, 0, currentYaw)));
+            Pose3d futurePosition = new Pose3d(futurePose.getX(), futurePose.getY(), 0, new Rotation3d(0, 0, currentYaw));
+            publisher.set(futurePosition);
 
             if (!Double.isNaN(shootAngle)){
-                double[] shooterAnglePhi = simulation.findThetaPhi(shooterVelocity,
-                    new Pose3d(futurePose.getX(), futurePose.getY(), 0, new Rotation3d(0, 0, currentYaw)), currentYaw,0,shootAngle,
+                double[] shooterAnglePhi = simulation.findThetaPhi(shooterVelocity, futurePosition,shootAngle,
                     epsilon, 10, 0.01,0.5);
                     
                 shootAngle = shooterAnglePhi[0];
