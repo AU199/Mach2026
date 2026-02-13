@@ -54,7 +54,7 @@ public final class Constants {
       System.out.println(e.getStackTrace());
     }
   }
-  public static final Transform3d kRobotToCam = new Transform3d(20, 0,20 ,new Rotation3d(0,0,0));
+  public static final Transform3d kRobotToCam = new Transform3d(0,0 ,0,new Rotation3d(0,Math.toRadians(40),0));
   public static final int LEDLENGHT = 60;
   public static final int LEDPORT = 8; 
 }

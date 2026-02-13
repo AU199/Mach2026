@@ -13,9 +13,14 @@ import org.photonvision.targeting.PhotonTrackedTarget;
 
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.numbers.N8;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -26,31 +31,38 @@ import frc.robot.Robot;
 public class photon extends SubsystemBase{
         
     PhotonCamera camera;
+    // private final mEstiamateConsumer estConsumer;
     PhotonPoseEstimator photonEstimator;
     private Matrix<N3,N1> curStdevs;
     CommandSwerveDrivetrain swerveDriveBase;
+    StructPublisher<Pose3d> cameraPose =  NetworkTableInstance.getDefault()
+            .getStructTopic("CameraPose Estimate", Pose3d.struct).publish();
 
-
-    public photon(CommandSwerveDrivetrain swerveDriveBase ){
+    int tick = 0;
+    public photon(CommandSwerveDrivetrain swerveDriveBase){
         this.swerveDriveBase = swerveDriveBase;
-        this.camera = new PhotonCamera("AprilTagDetection");
+        this.camera = new PhotonCamera("MainCamera");
         photonEstimator =
                 new PhotonPoseEstimator(Constants.kTagLayout, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, Constants.kRobotToCam);
         photonEstimator.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
     }
     public void getResults(){
-        var visionEstimates = camera.getAllUnreadResults();
-        for (var visionEstimate: visionEstimates){    
-                var multiTagVision = visionEstimate.multitagResult;
-                if(multiTagVision.isPresent()){
-                    var transform3dPos = multiTagVision.get().estimatedPose.best;    
-                    Pose2d pose2dPos = transform3dToPose2d(transform3dPos);
-                    System.out.println("Estimated x: " +pose2dPos.getX() + "\nEstimated y: "+pose2dPos.getY() + "\nEstimated yaw: "+ pose2dPos.getRotation());
-                // swerveDrive.addVisionMeasurement(pose2dPos, 0);
-                }
+        var VisionEstimates = camera.getAllUnreadResults();
+        for(var VisionEstimate:VisionEstimates){
+            Optional<EstimatedRobotPose> estimatedPoseInitial = photonEstimator.estimateCoprocMultiTagPose(VisionEstimate);   
+            Matrix<N3,N3> cameMatrix = camera.getCameraMatrix().orElse(null);
+            if (cameMatrix == null){
+                System.out.println("NO CAM MATRIX");
+            }
+            Matrix<N8,N1> distOffsetMatrix = camera.getDistCoeffs().orElse(null);
+            if(distOffsetMatrix == null){
+                System.out.println("NO DIST OFFSET");
+            }
+            Optional<EstimatedRobotPose> estimatedPoseBetter = photonEstimator.estimateConstrainedSolvepnpPose(VisionEstimate, cameMatrix, distOffsetMatrix, estimatedPoseInitial.get().estimatedPose, false, 1.0);
+        }
+        
     }
 
-    }
 
     public Pose2d transform3dToPose2d(Transform3d transforming){
         return new Pose2d(transforming.getMeasureX(),transforming.getMeasureY(),transforming.getRotation().toRotation2d());
@@ -62,10 +74,18 @@ public class photon extends SubsystemBase{
         return null;
     }
         
+    // @FunctionalInterface
+    // public static interface mEstiamateConsumer{
+    //     public void accept(Pose2d pose, double timestamp, Matrix<N3,N1>estimationSTDevs);
+    // }
 
     @Override
     public void periodic(){
-        getResults();
+        tick += 1;
+        if(tick >=100){
+            getResults();
+            tick = 0;
     }
+    }   
 
 }

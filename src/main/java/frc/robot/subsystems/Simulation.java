@@ -238,7 +238,7 @@ public class Simulation extends SubsystemBase {
         this.iterations = 0;
         while (iterations <= iterationCount) {
             double horizontalSpeed = Math.sqrt(Math.pow(velocity.getX(), 2) + Math.pow(velocity.getY(), 2));
-            double maxTime = (Diff / Math.min(horizontalSpeed, 0.1));
+            double maxTime = (Diff / Math.max(horizontalSpeed, 0.1));
 
             double[] deltas = NewtonRappingSon(velocity, initalPosition, epsilon, dt, maxTime, hubPosition);
             if (Math.hypot(deltas[2], deltas[3]) < tolerance) {
