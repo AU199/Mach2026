@@ -9,6 +9,8 @@ import java.nio.file.Paths;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -25,6 +27,7 @@ public final class Constants {
   public static class OperatorConstants {
     public static final int kDriverControllerPort = 0; 
   }
+  public static final double robotRadius = 12.5*0.0254;
     
   public static final int pivotMotorId = 0;
   public static final int rollerMotorId = 0;
@@ -33,10 +36,17 @@ public final class Constants {
   public static final int frontShooter2Id = 0;
   public static final int backShooterId = 0;
   public static final int hoodMotorId = 0;
+  public static final int hangArmId = 15;
 
   public static final double pivotKP = 0;
   public static final double pivotKI = 0;
   public static final double pivotKD = 0;
+
+  public static final Pose2d blueHubPose = new Pose2d(182.11*0.0254, 158.84*0.0254, new Rotation2d(0));
+  public static final Pose2d redHubPose = new Pose2d(469.11*0.0254, 158.84*0.0254, new Rotation2d(0));
+  public static final double hubZ = 0;
+
+  public static final double shooterHeight = 0;
 
   public static final double IntakeDeployPos = 0;
   public static final double IntakeRetractPos = 0;

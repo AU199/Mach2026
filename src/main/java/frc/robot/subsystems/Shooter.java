@@ -55,10 +55,10 @@ public class Shooter extends SubsystemBase{
         this.drivebase = drivetrain;
         this.isBlue = isBlue;
         if (isBlue) {
-            hubPose = new Pose2d(182.11*0.0254, 158.84*0.0254, new Rotation2d(0));
+            hubPose = Constants.blueHubPose;
         }
         else {
-            hubPose = new Pose2d(469.11*0.0254, 158.84*0.0254, new Rotation2d(0));
+            hubPose = Constants.redHubPose;
         }
 
     }
@@ -130,7 +130,8 @@ public class Shooter extends SubsystemBase{
             shootAngle = getAngleFromDist(hubDist);
             hoodMotor.setControl(pivotAngleRequest.withPosition(shootAngle));
             SmartDashboard.putNumber("shooterangle", shootAngle);
-            FuelSim.getInstance().spawnFuel(new Translation3d(currentPose.getX(),currentPose.getY(),0), new Translation3d(4*Math.cos(currentYaw),4*Math.sin(currentYaw),Math.sin(shootAngle)*10));
+            double shotSpeed = 4;
+            FuelSim.getInstance().spawnFuel(new Translation3d(currentPose.getX(),currentPose.getY(),0), new Translation3d(-shotSpeed*Math.cos(currentYaw)*Math.cos(shootAngle),-shotSpeed*Math.sin(currentYaw)*Math.cos(shootAngle),shotSpeed*Math.sin(shootAngle)*2));
 
         });
     }

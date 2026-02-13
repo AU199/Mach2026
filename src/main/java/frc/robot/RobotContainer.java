@@ -21,6 +21,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.subsystems.HangArm;
 import frc.robot.subsystems.Shooter;
 
 public class RobotContainer {
@@ -40,7 +41,8 @@ public class RobotContainer {
 
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
 
-    public final Shooter shooter = new Shooter(drivetrain,true,m_field);    
+    public final Shooter shooter = new Shooter(drivetrain,true,m_field);   
+    public final HangArm hangArm = new HangArm(); 
     
     public RobotContainer() {
         FuelSim.getInstance();
@@ -61,6 +63,8 @@ public class RobotContainer {
         );
 
         joystick.a().whileTrue(shooter.droneStrike());
+        joystick.b().whileTrue(hangArm.runHangArm(3));
+        joystick.x().whileTrue(hangArm.runHangArm(-3));
 
         // Idle while the robot is disabled. This ensures the configured
         // neutral mode is applied to the drive motors while disabled.
