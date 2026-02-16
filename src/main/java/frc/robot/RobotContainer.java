@@ -42,12 +42,9 @@ public class RobotContainer {
 
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
 
-<<<<<<< HEAD
     public final Shooter shooter = new Shooter(drivetrain,true,m_field);   
     public final HangArm hangArm = new HangArm(); 
-=======
     // public final Shooter shooter = new Shooter(drivetrain,true,m_field);    
->>>>>>> Sang&Akul-Shooter
     
     public RobotContainer() {
         FuelSim.getInstance();
@@ -67,15 +64,12 @@ public class RobotContainer {
             )
         );
 
-<<<<<<< HEAD
         joystick.a().whileTrue(shooter.droneStrike());
         joystick.b().whileTrue(hangArm.runHangArm(3));
         joystick.x().whileTrue(hangArm.runHangArm(-3));
-=======
         joystick.y().onTrue(new InstantCommand(() -> drivetrain.seedFieldCentric()));
 
         // joystick.a().whileTrue(shooter.droneStrike());
->>>>>>> Sang&Akul-Shooter
 
         // Idle while the robot is disabled. This ensures the configured
         // neutral mode is applied to the drive motors while disabled.
