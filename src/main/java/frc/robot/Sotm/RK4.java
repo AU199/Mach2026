@@ -8,6 +8,7 @@ import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import frc.robot.Constants;
+import frc.robot.Sotm.BallError;
 
 public class RK4 {
     private double standardFluidDensityOfAir = 1.2250;
@@ -86,7 +87,7 @@ public class RK4 {
         return new BallState(newPosition, newVelocity);
     }
 
-    public void calculateError() {
+    public BallError calculateError() {
         Vector position = VecBuilder.fill(shooterPose.getX(), shooterPose.getY(), Constants.shooterHeight);
 
         Vector velocity = ballInitialLinearVelocity;
@@ -107,7 +108,7 @@ public class RK4 {
             } else if (zPosition < 0) {
                 xError = Double.NaN;
                 yError = Double.NaN;
-                return;
+                return new BallError(xError, yError);
             }
 
             ballState = calculateRK4Step(position, angularVelocity);
@@ -118,13 +119,7 @@ public class RK4 {
 
         xError = targetPose.getX() - position.get(0);
         yError = targetPose.getY() - position.get(1);
-    }
 
-    public double getXError() {
-        return xError;
-    }
-
-    public double getYError() {
-        return yError;
+        return new BallError(xError, yError);
     }
 }
