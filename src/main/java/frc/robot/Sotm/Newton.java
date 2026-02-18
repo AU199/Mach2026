@@ -38,7 +38,7 @@ public class Newton {
     public BallError calculateError(double theta, double phi, double ballInitialLinearSpeedRelativeToShooter, double ballInitialAngularSpeedRelativeToShooter) {
         ballInitialLinearVelocityRelativeToRobot = VecBuilder.fill(
             ballInitialLinearSpeedRelativeToShooter * Math.cos(theta) * Math.cos(phi), 
-            ballInitialLinearSpeedRelativeToShooter * Math.cos(theta) * Math.sin(theta), 
+            ballInitialLinearSpeedRelativeToShooter * Math.cos(theta) * Math.sin(theta),  // Maybe sin(phi)
             ballInitialLinearSpeedRelativeToShooter * Math.sin(theta));
 
         ballInitialAngularVelocityRelativeToRobot = VecBuilder.fill(
@@ -50,26 +50,30 @@ public class Newton {
             robotFieldRelativeVelocity.vyMetersPerSecond, 0)
             .plus(ballInitialLinearVelocityRelativeToRobot);
 
-        targetPose = hubPose; // Probably changing this later
+        ballInitialAngularVelocityRelativeToField = VecBuilder.fill(1); // Find this later
+
+        targetPose = hubPose; // Add ability to change this later
         RK4 rk4 = new RK4(targetPose, robotFieldRelativeVelocity, ballInitialLinearVelocityRelativeToField, ballInitialAngularVelocityRelativeToField, shooterPose, dt);
 
         return rk4.calculateError();
     }
 
     public ShotAngles findOptimalTrajectory() {
-        double angularVelocity = Math.sqrt(Math.pow(robotFieldRelativeVelocity.vxMetersPerSecond, 2) + Math.pow(robotFieldRelativeVelocity.vyMetersPerSecond, 2))/Constants.robotRadius;
+        double angularVelocity = robotFieldRelativeVelocity.omegaRadiansPerSecond;
+        // double angularVelocity = Math.sqrt(Math.pow(robotFieldRelativeVelocity.vxMetersPerSecond, 2) + Math.pow(robotFieldRelativeVelocity.vyMetersPerSecond, 2))/Constants.robotRadius;
         Trajectory trajectory = new Trajectory(robotPose, robotFieldRelativeVelocity, angularVelocity);
         ShotAngles idealShotAngle = trajectory.getIdealShotAngles();
         BallError idealErrors, thetaAdjustedErrors, phiAdjustedErrors;
 
-        double shootVelocity = 8.5;
-        idealErrors = calculateError(idealShotAngle.getTheta(), idealShotAngle.getPhi(), shootVelocity, angularVelocity); // Find launch speed later
-        thetaAdjustedErrors = calculateError(idealShotAngle.getTheta() + epsilon, idealShotAngle.getPhi(), shootVelocity, angularVelocity);
-        phiAdjustedErrors = calculateError(idealShotAngle.getPhi(), idealShotAngle.getPhi() + epsilon, shootVelocity, angularVelocity);
+        double ballInitialVelocity = Constants.ballInitialVelocity; // Find launch speed later
+        idealErrors = calculateError(idealShotAngle.getTheta(), idealShotAngle.getPhi(), ballInitialVelocity, angularVelocity);
+        thetaAdjustedErrors = calculateError(idealShotAngle.getTheta() + epsilon, idealShotAngle.getPhi(), ballInitialVelocity, angularVelocity);
+        phiAdjustedErrors = calculateError(idealShotAngle.getTheta(), idealShotAngle.getPhi() + epsilon, ballInitialVelocity, angularVelocity);
 
         Derivative thetaDerivatives = new Derivative(thetaAdjustedErrors.getxError() - idealErrors.getxError(), thetaAdjustedErrors.getyError() - idealErrors.getyError(), epsilon);
         Derivative phiDerivatives = new Derivative(phiAdjustedErrors.getxError() - idealErrors.getxError(), phiAdjustedErrors.getyError() - idealErrors.getyError(), epsilon);
 
+        // Jacobians might be wrong
         double optimalPhi = (thetaDerivatives.getDerivatives()[1] * (idealErrors.getxError() - hubPose.getX()) - thetaDerivatives.getDerivatives()[0] - (idealErrors.getyError() - hubPose.getY())) / (thetaDerivatives.getDerivatives()[0] * phiDerivatives.getDerivatives()[1] - thetaDerivatives.getDerivatives()[1] * phiDerivatives.getDerivatives()[0]);
         double optimalTheta = (-(idealErrors.getyError() - hubPose.getY()) - optimalPhi * phiDerivatives.getDerivatives()[1]) / thetaDerivatives.getDerivatives()[1];
 

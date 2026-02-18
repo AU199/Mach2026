@@ -81,8 +81,8 @@ public class RK4 {
         m4 = velocity.plus(k3.times(dt));
         k4 = calculateAcceleration(velocity.plus(k3.times(dt)));
 
-        Vector newPosition = m1.plus(m2.times(2)).plus(m3.times(2)).plus(m4).times(dt/6);
-        Vector newVelocity = k1.plus(k2.times(2)).plus(k3.times(2)).plus(k4).times(dt/6);
+        Vector newPosition = position.plus(m1.plus(m2.times(2)).plus(m3.times(2)).plus(m4).times(dt/6));
+        Vector newVelocity = velocity.plus(k1.plus(k2.times(2)).plus(k3.times(2)).plus(k4).times(dt/6));
 
         return new BallState(newPosition, newVelocity);
     }
@@ -90,8 +90,8 @@ public class RK4 {
     public BallError calculateError() {
         Vector position = VecBuilder.fill(shooterPose.getX(), shooterPose.getY(), Constants.shooterHeight);
 
-        Vector velocity = ballInitialLinearVelocity;
-        Vector angularVelocity = ballInitialAngularVelocity;
+        Vector linearVelocity = ballInitialLinearVelocity;
+        Vector angularVelocity = ballInitialAngularVelocity; // There's some weird angularVelocity stuff going on. Will review later
 
         boolean hasGoneAboveHub = false;
 
@@ -111,10 +111,10 @@ public class RK4 {
                 return new BallError(xError, yError);
             }
 
-            ballState = calculateRK4Step(position, angularVelocity);
+            ballState = calculateRK4Step(position, linearVelocity);
 
             position = ballState.getPosition();
-            velocity = ballState.getVelocity();
+            linearVelocity = ballState.getVelocity();
         }
 
         xError = targetPose.getX() - position.get(0);
