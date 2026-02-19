@@ -38,7 +38,7 @@ public class Newton {
     public BallError calculateError(double theta, double phi, double ballInitialLinearSpeedRelativeToShooter, double ballInitialAngularSpeedRelativeToShooter) {
         ballInitialLinearVelocityRelativeToRobot = VecBuilder.fill(
             ballInitialLinearSpeedRelativeToShooter * Math.cos(theta) * Math.cos(phi), 
-            ballInitialLinearSpeedRelativeToShooter * Math.cos(theta) * Math.sin(theta),  // Maybe sin(phi)
+            ballInitialLinearSpeedRelativeToShooter * Math.cos(theta) * Math.sin(phi),
             ballInitialLinearSpeedRelativeToShooter * Math.sin(theta));
 
         ballInitialAngularVelocityRelativeToRobot = VecBuilder.fill(
@@ -50,7 +50,14 @@ public class Newton {
             robotFieldRelativeVelocity.vyMetersPerSecond, 0)
             .plus(ballInitialLinearVelocityRelativeToRobot);
 
-        ballInitialAngularVelocityRelativeToField = VecBuilder.fill(1); // Find this later
+        double heading = robotPose.getRotation().getRadians();
+        double wx_robot = ballInitialAngularSpeedRelativeToShooter * Math.cos(phi);
+        double wy_robot = ballInitialAngularSpeedRelativeToShooter * Math.sin(phi);
+
+        ballInitialAngularVelocityRelativeToField = VecBuilder.fill(
+            wx_robot * Math.cos(heading) - wy_robot * Math.sin(heading),
+            wx_robot * Math.sin(heading) + wy_robot * Math.cos(heading),
+            robotFieldRelativeVelocity.omegaRadiansPerSecond); // Claude equation please check
 
         targetPose = hubPose; // Add ability to change this later
         RK4 rk4 = new RK4(targetPose, robotFieldRelativeVelocity, ballInitialLinearVelocityRelativeToField, ballInitialAngularVelocityRelativeToField, shooterPose, dt);
@@ -58,17 +65,15 @@ public class Newton {
         return rk4.calculateError();
     }
 
-    public ShotAngles findOptimalTrajectory() {
+    public ShotAngles findOptimalTrajectory(ShotAngles currentGuess) {
         double angularVelocity = robotFieldRelativeVelocity.omegaRadiansPerSecond;
         // double angularVelocity = Math.sqrt(Math.pow(robotFieldRelativeVelocity.vxMetersPerSecond, 2) + Math.pow(robotFieldRelativeVelocity.vyMetersPerSecond, 2))/Constants.robotRadius;
-        Trajectory trajectory = new Trajectory(robotPose, robotFieldRelativeVelocity, angularVelocity);
-        ShotAngles idealShotAngle = trajectory.getIdealShotAngles();
         BallError idealErrors, thetaAdjustedErrors, phiAdjustedErrors;
 
         double ballInitialVelocity = Constants.ballInitialVelocity; // Find launch speed later
-        idealErrors = calculateError(idealShotAngle.getTheta(), idealShotAngle.getPhi(), ballInitialVelocity, angularVelocity);
-        thetaAdjustedErrors = calculateError(idealShotAngle.getTheta() + epsilon, idealShotAngle.getPhi(), ballInitialVelocity, angularVelocity);
-        phiAdjustedErrors = calculateError(idealShotAngle.getTheta(), idealShotAngle.getPhi() + epsilon, ballInitialVelocity, angularVelocity);
+        idealErrors = calculateError(currentGuess.getTheta(), currentGuess.getPhi(), ballInitialVelocity, angularVelocity);
+        thetaAdjustedErrors = calculateError(currentGuess.getTheta() + epsilon, currentGuess.getPhi(), ballInitialVelocity, angularVelocity);
+        phiAdjustedErrors = calculateError(currentGuess.getTheta(), currentGuess.getPhi() + epsilon, ballInitialVelocity, angularVelocity);
 
         Derivative thetaDerivatives = new Derivative(thetaAdjustedErrors.getxError() - idealErrors.getxError(), thetaAdjustedErrors.getyError() - idealErrors.getyError(), epsilon);
         Derivative phiDerivatives = new Derivative(phiAdjustedErrors.getxError() - idealErrors.getxError(), phiAdjustedErrors.getyError() - idealErrors.getyError(), epsilon);

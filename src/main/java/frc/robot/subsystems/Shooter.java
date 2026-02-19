@@ -26,7 +26,12 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.FuelSim;
+import frc.robot.Sotm.BallError;
+import frc.robot.Sotm.Newton;
+import frc.robot.Sotm.ShotAngles;
+import frc.robot.Sotm.Trajectory;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.Sotm.Trajectory;
 
 public class Shooter extends SubsystemBase{
     TalonFX frontShooter1 = new TalonFX(Constants.frontShooter1Id);
@@ -96,9 +101,9 @@ public class Shooter extends SubsystemBase{
         return Math.sqrt(Math.pow(transform.getX(), 2) + Math.pow(transform.getY(), 2));
     }
 
-    private Pose2d getFuturePose(Pose2d pose, ChassisSpeeds velocity, double airtime) {
-        double futureX = pose.getX() + velocity.vxMetersPerSecond * airtime;
-        double futureY = pose.getY() + velocity.vyMetersPerSecond * airtime;
+    private Pose2d getFuturePose(Pose2d robotPose, ChassisSpeeds velocity, double airtime) {
+        double futureX = robotPose.getX() + velocity.vxMetersPerSecond * airtime;
+        double futureY = robotPose.getY() + velocity.vyMetersPerSecond * airtime;
         return new Pose2d(futureX, futureY, new Rotation2d(0));
     }
 
@@ -129,12 +134,37 @@ public class Shooter extends SubsystemBase{
             publisher.set(new Pose3d(futurePose.getX(), futurePose.getY(), 0,new Rotation3d(0,0,currentYaw)));
             shootAngle = getAngleFromDist(hubDist);
             hoodMotor.setControl(pivotAngleRequest.withPosition(shootAngle));
+            // Make it turn
             SmartDashboard.putNumber("shooterangle", shootAngle);
             double shotSpeed = 4;
             FuelSim.getInstance().spawnFuel(new Translation3d(currentPose.getX(),currentPose.getY(),0), new Translation3d(-shotSpeed*Math.cos(currentYaw)*Math.cos(shootAngle),-shotSpeed*Math.sin(currentYaw)*Math.cos(shootAngle),shotSpeed*Math.sin(shootAngle)*2));
-
         });
     }
+
+    public Command droneStrikeRK4() {
+        return run(() -> {
+            Pose2d robotPose = drivebase.getState().Pose;
+            ChassisSpeeds robotRobotRelativeVelocity = drivebase.getState().Speeds;
+            ChassisSpeeds robotFieldRelativeVelocity = ChassisSpeeds.fromRobotRelativeSpeeds(robotRobotRelativeVelocity, robotPose.getRotation());
+            double angularVelocity = robotFieldRelativeVelocity.omegaRadiansPerSecond;
+
+            Trajectory trajectory = new Trajectory(robotPose, robotFieldRelativeVelocity, angularVelocity);
+            ShotAngles currentAngles = trajectory.getIdealShotAngles();
+
+            for (int i = 0; i < iterationCount; i++) {
+                Newton newton = new Newton(robotPose, robotPose, hubPose, robotFieldRelativeVelocity); // Change first robotPose to shooterPose later
+                
+                currentAngles = newton.findOptimalTrajectory(currentAngles);
+            }
+
+            hoodMotor.setControl(pivotAngleRequest.withPosition(currentAngles.getTheta()));
+            // Make it turn
+            SmartDashboard.putNumber("shooterangle", currentAngles.getTheta());
+            double shotSpeed = 4;
+            FuelSim.getInstance().spawnFuel(new Translation3d(robotPose.getX(),robotPose.getY(),0), new Translation3d(-shotSpeed*Math.cos(currentAngles.getPhi())*Math.cos(currentAngles.getPhi()),-shotSpeed*Math.sin(currentAngles.getPhi())*Math.cos(currentAngles.getPhi()),shotSpeed*Math.sin(currentAngles.getPhi())*2));
+        });
+    }
+
     @Override
     public void periodic(){
         
