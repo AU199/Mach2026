@@ -48,6 +48,7 @@ public final class Constants {
 
   public static final double shooterHeight = 0;
   public static final double ballInitialVelocity = 8.5;
+  public static final double ballInitialAngularVelocity = 5;
 
   public static final double IntakeDeployPos = 0;
   public static final double IntakeRetractPos = 0;

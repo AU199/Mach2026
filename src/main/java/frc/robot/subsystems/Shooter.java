@@ -1,13 +1,8 @@
 package frc.robot.subsystems;
 
-import java.lang.reflect.Array;
-import java.time.Period;
-import java.util.concurrent.Flow.Publisher;
-
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.google.flatbuffers.FlatBufferBuilder;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -15,10 +10,8 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation3d;
-import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -26,11 +19,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.FuelSim;
-import frc.robot.Sotm.BallError;
 import frc.robot.Sotm.Newton;
 import frc.robot.Sotm.ShotAngles;
-import frc.robot.Sotm.Trajectory;
-import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.Sotm.Trajectory;
 
 public class Shooter extends SubsystemBase{
@@ -48,9 +38,6 @@ public class Shooter extends SubsystemBase{
     Pose2d hubPose;
     double currentYaw = 0;
 
-
-    // private static final InterpolatingTreeMap LOOKUP_TABLE = new InterpolatingTreeMap(null, null);
-
     public Shooter(CommandSwerveDrivetrain drivetrain, boolean isBlue, Field2d field) {
         Slot0Configs pivotConfig = new Slot0Configs();
         pivotConfig.kP = Constants.pivotKP;
@@ -58,7 +45,6 @@ public class Shooter extends SubsystemBase{
         pivotConfig.kD = Constants.pivotKD;
         this.field = field;
         this.drivebase = drivetrain;
-        this.isBlue = isBlue;
         if (isBlue) {
             hubPose = Constants.blueHubPose;
         }
@@ -148,20 +134,26 @@ public class Shooter extends SubsystemBase{
             ChassisSpeeds robotFieldRelativeVelocity = ChassisSpeeds.fromRobotRelativeSpeeds(robotRobotRelativeVelocity, robotPose.getRotation());
             double angularVelocity = robotFieldRelativeVelocity.omegaRadiansPerSecond;
 
-            Trajectory trajectory = new Trajectory(robotPose, robotFieldRelativeVelocity, angularVelocity);
+            Trajectory trajectory = new Trajectory(robotPose, hubPose, robotFieldRelativeVelocity, angularVelocity);
             ShotAngles currentAngles = trajectory.getIdealShotAngles();
 
             for (int i = 0; i < iterationCount; i++) {
                 Newton newton = new Newton(robotPose, robotPose, hubPose, robotFieldRelativeVelocity); // Change first robotPose to shooterPose later
-                
-                currentAngles = newton.findOptimalTrajectory(currentAngles);
+                ShotAngles anglesFromNewton = newton.findOptimalTrajectory(currentAngles);
+                if (!(Double.isNaN(anglesFromNewton.getTheta()) || Double.isNaN(anglesFromNewton.getPhi()))) {
+                    currentAngles = anglesFromNewton;
+                }
             }
+            double theta = currentAngles.getTheta();
+            double phi   = currentAngles.getPhi();
 
-            hoodMotor.setControl(pivotAngleRequest.withPosition(currentAngles.getTheta()));
+            hoodMotor.setControl(pivotAngleRequest.withPosition(theta));
+            publisher.set(new Pose3d(robotPose.getX(), robotPose.getY(), 0,new Rotation3d(0,0,phi)));
             // Make it turn
-            SmartDashboard.putNumber("shooterangle", currentAngles.getTheta());
-            double shotSpeed = 4;
-            FuelSim.getInstance().spawnFuel(new Translation3d(robotPose.getX(),robotPose.getY(),0), new Translation3d(-shotSpeed*Math.cos(currentAngles.getPhi())*Math.cos(currentAngles.getPhi()),-shotSpeed*Math.sin(currentAngles.getPhi())*Math.cos(currentAngles.getPhi()),shotSpeed*Math.sin(currentAngles.getPhi())*2));
+            SmartDashboard.putNumber("shooterangle", theta);
+            double shotSpeed = 8.5;
+
+            FuelSim.getInstance().spawnFuel(new Translation3d(robotPose.getX(), robotPose.getY(), 0), new Translation3d(shotSpeed * Math.cos(theta) * Math.cos(phi), shotSpeed * Math.cos(theta) * Math.sin(phi), shotSpeed * Math.sin(theta)));
         });
     }
 

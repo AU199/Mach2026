@@ -12,7 +12,7 @@ import frc.robot.Sotm.BallError;
 
 public class RK4 {
     private double standardFluidDensityOfAir = 1.2250;
-    private double areaOfBall = Math.PI * Math.pow(5.91 / 2 * 0.0762, 2);
+    private double areaOfBall = Math.PI * Math.pow(5.91 / 2 * 0.0254, 2);
     private double dragCoefficient = 0.46;
     private double liftCoefficient = 0.5;
     private double carlsenCoefficient = (1 / 2) * standardFluidDensityOfAir * areaOfBall * liftCoefficient;
@@ -34,8 +34,7 @@ public class RK4 {
     private BallState ballState;
 
     private Vector calculateDragAcceleration(Vector ballLinearVelocity) {
-        Vector dragForce = ballLinearVelocity
-            .times((-1 / 2) * standardFluidDensityOfAir * dragCoefficient * areaOfBall * ballLinearVelocity.norm());
+        Vector dragForce = ballLinearVelocity.times(-0.5 * standardFluidDensityOfAir * dragCoefficient * areaOfBall * ballLinearVelocity.norm());
         Vector dragAcceleration = dragForce.div(ballMass);
         return dragAcceleration;
     }
@@ -51,10 +50,11 @@ public class RK4 {
         return gravityAcceleration;
     }
 
-    public RK4(Pose2d targetPose, ChassisSpeeds robotVelocity,
+    public RK4(Pose2d targetPose, Pose2d shooterPose, ChassisSpeeds robotVelocity,
             Vector ballInitialLinearVelocityRelativeToField, Vector ballInitialAngularVelocityRelativeToField,
             Pose2d ballInitialPose, double dt) {
         this.targetPose = targetPose;
+        this.shooterPose = shooterPose;
 
         this.dt = dt;
 
@@ -91,11 +91,14 @@ public class RK4 {
         Vector position = VecBuilder.fill(shooterPose.getX(), shooterPose.getY(), Constants.shooterHeight);
 
         Vector linearVelocity = ballInitialLinearVelocity;
-        Vector angularVelocity = ballInitialAngularVelocity; // There's some weird angularVelocity stuff going on. Will review later
 
         boolean hasGoneAboveHub = false;
 
-        while (true) {
+        int stepCount = 0;
+        int maxStep = 1000;
+        while (stepCount < maxStep) {
+            stepCount++;
+
             double zPosition = position.get(2);
             boolean isAboveHub = zPosition > Constants.hubZ;
 

@@ -65,8 +65,10 @@ public class RobotContainer {
         );
 
         joystick.a().whileTrue(shooter.droneStrike());
-        joystick.b().whileTrue(hangArm.runHangArm(3));
-        joystick.x().whileTrue(hangArm.runHangArm(-3));
+        joystick.b().whileTrue(shooter.droneStrikeRK4());
+        
+        // joystick.b().whileTrue(hangArm.runHangArm(3));
+        // joystick.x().whileTrue(hangArm.runHangArm(-3));
         joystick.y().onTrue(new InstantCommand(() -> drivetrain.seedFieldCentric()));
 
         // joystick.a().whileTrue(shooter.droneStrike());
