@@ -29,13 +29,13 @@ public final class Constants {
   }
   public static final double robotRadius = 12.5*0.0254;
     
-  public static final int pivotMotorId = 0;
-  public static final int rollerMotorId = 0;
-  public static final int feederMotorId = 0;
-  public static final int frontShooter1Id = 0;
-  public static final int frontShooter2Id = 0;
-  public static final int backShooterId = 0;
-  public static final int hoodMotorId = 0;
+  public static final int pivotMotorId = 1;
+  public static final int rollerMotorId = 2;
+  public static final int feederMotorId = 3;
+  public static final int frontShooter1Id = 4;
+  public static final int frontShooter2Id = 5;
+  public static final int backShooterId = 6;
+  public static final int hoodMotorId = 7;
   public static final int hangArmId = 15;
 
   public static final double pivotKP = 0;
