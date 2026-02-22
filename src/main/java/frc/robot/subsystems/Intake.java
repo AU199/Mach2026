@@ -1,5 +1,9 @@
 package frc.robot.subsystems;
 
+import java.util.function.BooleanSupplier;
+
+import javax.naming.spi.DirStateFactory.Result;
+
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -13,7 +17,14 @@ public class Intake extends SubsystemBase {
     private TalonFX rollerMotor = new TalonFX(Constants.rollerMotorId);
     private PositionVoltage deployRequest = new PositionVoltage(Constants.IntakeDeployPos).withSlot(0);
     private PositionVoltage retractRequest = new PositionVoltage(Constants.IntakeRetractPos).withSlot(0);
-
+    BooleanSupplier isIntakeDeployed = () -> {
+        boolean result = Math.abs(pivotMotor.getPosition().getValueAsDouble() - Constants.IntakeDeployPos) < 0.08;
+      return result;
+    };
+      BooleanSupplier isIntakeRetracted = () -> {
+        boolean result = Math.abs(pivotMotor.getPosition().getValueAsDouble() - Constants.IntakeRetractPos) < 0.08;
+      return result;
+    };
 
     public Intake() {
         Slot0Configs pivotConfig = new Slot0Configs();
@@ -27,7 +38,8 @@ public class Intake extends SubsystemBase {
             pivotMotor.setControl(deployRequest);
         }, () -> {
             pivotMotor.set(0);
-        }).until(() -> Math.abs(pivotMotor.getPosition().getValueAsDouble() - Constants.IntakeDeployPos) > 0.08);
+           
+        }).until(isIntakeDeployed);
 
     //     return start(() -> {
     //         pivotMotor.setControl(request);
@@ -39,7 +51,7 @@ public class Intake extends SubsystemBase {
             pivotMotor.setControl(retractRequest);
         }, () -> {
             pivotMotor.set(0);
-        }).until(() -> Math.abs(pivotMotor.getPosition().getValueAsDouble() - Constants.IntakeRetractPos) > 0.08);
+    ;}).until(isIntakeRetracted);
     }
 
     public Command runRoller() {
