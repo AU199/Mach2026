@@ -24,8 +24,9 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Shooter;
-import frc.robot.subsystems.Simulation;
+// import frc.robot.subsystems.Simulation;
 import frc.robot.subsystems.photon;
+import frc.robot.util.FuelSim;
 
 public class RobotContainer {
     private double MaxSpeed = 0.2 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
@@ -44,7 +45,7 @@ public class RobotContainer {
     
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
     public final photon camera = new photon(drivetrain);
-    // public final Shooter shooter = new Shooter(drivetrain,true,m_field);    
+    public final Shooter shooter = new Shooter(drivetrain,true,m_field);    
     
     public RobotContainer() {
         FuelSim.getInstance();

@@ -15,7 +15,7 @@ public class Lights extends SubsystemBase {
         this.mLed = new AddressableLED(port);
         this.mLed.setLength(lenght);
         this.mLed.setData(mbuffer);
-        this.mLed.setColorOrder(AddressableLED.ColorOrder.kRBG);
+        // this.mLed.setColorOrder(AddressableLED.ColorOrder.kRBG);
     }
     public void startLED(){
         mLed.start();

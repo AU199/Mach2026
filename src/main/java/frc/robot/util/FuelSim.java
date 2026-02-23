@@ -1,4 +1,4 @@
-package frc.robot;
+package frc.robot.util;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -8,7 +8,7 @@ import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
-import frc.robot.subsystems.Simulation;
+import frc.robot.subsystems.Simulation.RK4;
 import java.util.ArrayList;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -82,11 +82,12 @@ public class FuelSim {
     private class Fuel {
         private Translation3d pos;
         private Translation3d vel;
-        Simulation simulation;
+        private double omega;
+        RK4 simulation;
         private Fuel(Translation3d pos, Translation3d vel, Translation3d omega) {
             this.pos = pos;
             this.vel = vel;
-            simulation = new Simulation(0.46, 0.2, omega, new Pose3d());
+            simulation = new RK4(0.46, 0.2, 0);
         }
 
         private Fuel(Translation3d pos) {
@@ -96,7 +97,7 @@ public class FuelSim {
         private void update() {
             pos = pos.plus(vel.times(PERIOD / subticks));
             if (pos.getZ() > FUEL_RADIUS) {
-                Translation3d acceleration = simulation.acceleration(vel).times(PERIOD / subticks);
+                Translation3d acceleration = simulation.acceleration(vel,new Translation3d()).times(PERIOD / subticks);
                 vel = vel.plus(acceleration);
             }
             if (Math.abs(vel.getZ()) < 0.05 && pos.getZ() <= FUEL_RADIUS + 0.03) {
