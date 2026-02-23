@@ -60,6 +60,7 @@ public class RobotContainer {
     }
 
     private void configureBindings() {
+        controller1.a().whileTrue(shooter.shooterOn());
         // Note that X is defined as forward according to WPILib convention,
         // and Y is defined as to the left according to WPILib convention.
         drivetrain.setDefaultCommand(
@@ -71,17 +72,17 @@ public class RobotContainer {
                         .withRotationalRate(-joystick.getRawAxis(2) * MaxAngularRate) // Drive counterclockwise with
                                                                                       // negative X (left)
                 ));
-        controller1.a().whileTrue(intake.runRoller());
+        //controller1.a().whileTrue(intake.runRoller());
         //controller1.b().whileTrue();
-        controller1.x().whileTrue(hangArm.runHangArm(-1));
-        controller1.y().whileTrue(hangArm.runHangArm(1));
+        //controller1.x().whileTrue(hangArm.runHangArm(-1));
+        //controller1.y().whileTrue(hangArm.runHangArm(1));
 
-        controller2.a().whileTrue(shooter.shooterOn());
+        //controller2.a().whileTrue(shooter.shooterOn());
         // controller2.b().whileTrue();
-        controller2.x().whileTrue(feeder.feederOn(0.7));
-        controller2.y().whileTrue(feeder.feederOn(-0.7));
+        //controller2.x().whileTrue(feeder.feederOn(0.7));
+        //controller2.y().whileTrue(feeder.feederOn(-0.7));
 
-        controller1.back().onTrue(new InstantCommand(() -> drivetrain.zeroGyro()));
+       // controller1.back().onTrue(new InstantCommand(() -> drivetrain.zeroGyro()));
         // drive with speed at .5 while left trigger is held, for testing
         // controller1.leftTrigger(.5).whileTrue(
         // drivetrain.applyRequest(() ->
