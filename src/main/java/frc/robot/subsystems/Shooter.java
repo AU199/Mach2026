@@ -56,9 +56,9 @@ public class Shooter extends SubsystemBase{
 
     public Command shooterOn() {
         return startEnd(() -> {
-            frontShooter1.set(1);
-            frontShooter2.set(1);
-            backShooter.set(1);
+            frontShooter1.set(.1);
+            frontShooter2.set(.1);
+            backShooter.set(.1);
         }, () -> {
             frontShooter1.set(0);
             frontShooter2.set(0);
