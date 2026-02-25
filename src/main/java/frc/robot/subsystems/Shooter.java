@@ -27,10 +27,10 @@ import frc.robot.Sotm.ShotAngles;
 import frc.robot.Sotm.Trajectory;
 
 public class Shooter extends SubsystemBase{
-    TalonFX frontShooter1 = new TalonFX(Constants.frontShooter1Id);
-    TalonFX frontShooter2 = new TalonFX(Constants.frontShooter2Id);
-    TalonFX backShooter = new TalonFX(Constants.backShooterId);
-    TalonFX hoodMotor = new TalonFX(Constants.hoodMotorId);
+    TalonFX frontShooter1 = new TalonFX(Constants.frontShooter1Id, "DriveBase");
+    TalonFX frontShooter2 = new TalonFX(Constants.frontShooter2Id, "DriveBase");
+    TalonFX backShooter = new TalonFX(Constants.backShooterId, "DriveBase");
+    TalonFX hoodMotor = new TalonFX(Constants.hoodMotorId, "DriveBase");
     PositionVoltage pivotAngleRequest = new PositionVoltage(0).withSlot(0);
     boolean isBlue;
     Field2d field;
@@ -61,7 +61,7 @@ public class Shooter extends SubsystemBase{
         return startEnd(() -> {
             frontShooter1.set(1);
             frontShooter2.set(1);
-            backShooter.set(1);
+            backShooter.set(-1);
         }, () -> {
             frontShooter1.set(0);
             frontShooter2.set(0);
@@ -69,6 +69,15 @@ public class Shooter extends SubsystemBase{
         });
     }
 
+    public Command pivotMotorOn(double speed) {
+        return startEnd(() -> {
+            hoodMotor.set(speed);
+            System.out.println("running el hood:" + speed);
+        }, () -> {
+            hoodMotor.set(-0.025);
+            System.out.println("par'e correr el hood");
+        });
+    }
     public Command setPivotAngle(double angle) {
         return startEnd(() -> {
             hoodMotor.setControl(pivotAngleRequest.withPosition(angle));
