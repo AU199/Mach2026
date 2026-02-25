@@ -11,7 +11,7 @@ public class Newton {
     private ChassisSpeeds robotFieldRelativeVelocity;
     
     private Vector ballInitialLinearVelocityRelativeToRobot;
-    private Vector ballInitialAngularVelocityRelativeToRobot;
+    private double ballInitialAngularSpeedRelativeToRobot;
     private Vector ballInitialLinearVelocityRelativeToField;
     private Vector ballInitialAngularVelocityRelativeToField;
 
@@ -20,21 +20,22 @@ public class Newton {
     private Pose2d hubPose;
     private Pose2d targetPose;
 
-    private double dt = 0.05;
-    private double epsilon = 0.001;
+    private double dt = 0.001;
+    private double epsilon = 1e-4;
 
-    public Newton(Pose2d shooterPose, Pose2d robotPose, Pose2d hubPose, ChassisSpeeds robotVelocity) {
+    public Newton(Pose2d shooterPose, Pose2d robotPose, Pose2d hubPose, ChassisSpeeds robotVelocity, double angularSpeedRelativeToRobot) {
         this.shooterPose = shooterPose;
         this.robotPose = robotPose;
         this.robotRobotRelativeVelocity = robotVelocity;
         this.robotFieldRelativeVelocity = ChassisSpeeds.fromRobotRelativeSpeeds(robotVelocity, robotPose.getRotation());
         this.hubPose = hubPose;
+        this.ballInitialAngularSpeedRelativeToRobot = angularSpeedRelativeToRobot;
     }
 
-    public BallError calculateError(double theta, double phi, double ballInitialLinearSpeedRelativeToShooter, double ballInitialAngularSpeedRelativeToShooter) {
+    public BallError calculateError(double theta, double phi, double ballInitialLinearSpeedRelativeToShooter) {
         double heading = robotPose.getRotation().getRadians();
-        double wx_robot = ballInitialAngularSpeedRelativeToShooter * Math.cos(phi);
-        double wy_robot = ballInitialAngularSpeedRelativeToShooter * Math.sin(phi);
+        double wx_robot = -ballInitialAngularSpeedRelativeToRobot * Math.cos(phi);
+        double wy_robot = ballInitialAngularSpeedRelativeToRobot * Math.sin(phi);
         
         ballInitialLinearVelocityRelativeToRobot = VecBuilder.fill(
             ballInitialLinearSpeedRelativeToShooter * Math.cos(theta) * Math.cos(phi), 
@@ -44,8 +45,6 @@ public class Newton {
         double vx_robot = ballInitialLinearVelocityRelativeToRobot.get(0);
         double vy_robot = ballInitialLinearVelocityRelativeToRobot.get(1);
         double vz_robot = ballInitialLinearVelocityRelativeToRobot.get(2);
-
-        ballInitialAngularVelocityRelativeToRobot = VecBuilder.fill( 0, ballInitialAngularSpeedRelativeToShooter, 0);
 
         double vx_field = vx_robot * Math.cos(heading) - vy_robot * Math.sin(heading);
         double vy_field = vx_robot * Math.sin(heading) + vy_robot * Math.cos(heading);
@@ -66,14 +65,13 @@ public class Newton {
     }
 
     public ShotAngles findOptimalTrajectory(ShotAngles currentGuess) {
-        double angularVelocity = Constants.ballInitialAngularVelocity;
         // double angularVelocity = Math.sqrt(Math.pow(robotFieldRelativeVelocity.vxMetersPerSecond, 2) + Math.pow(robotFieldRelativeVelocity.vyMetersPerSecond, 2))/Constants.robotRadius;
         BallError idealErrors, thetaAdjustedErrors, phiAdjustedErrors;
 
-        double ballInitialVelocity = Constants.ballInitialVelocity; // Find launch speed later
-        idealErrors = calculateError(currentGuess.getTheta(), currentGuess.getPhi(), ballInitialVelocity, angularVelocity);
-        thetaAdjustedErrors = calculateError(currentGuess.getTheta() + epsilon, currentGuess.getPhi(), ballInitialVelocity, angularVelocity);
-        phiAdjustedErrors = calculateError(currentGuess.getTheta(), currentGuess.getPhi() + epsilon, ballInitialVelocity, angularVelocity);
+        double ballInitialVelocity = Constants.ballInitialVelocityFromShooter; // Find launch speed later
+        idealErrors = calculateError(currentGuess.getTheta(), currentGuess.getPhi(), ballInitialVelocity);
+        thetaAdjustedErrors = calculateError(currentGuess.getTheta() + epsilon, currentGuess.getPhi(), ballInitialVelocity);
+        phiAdjustedErrors = calculateError(currentGuess.getTheta(), currentGuess.getPhi() + epsilon, ballInitialVelocity);
 
         Derivative thetaDerivatives = new Derivative(thetaAdjustedErrors.getxError() - idealErrors.getxError(), thetaAdjustedErrors.getyError() - idealErrors.getyError(), epsilon);
         Derivative phiDerivatives = new Derivative(phiAdjustedErrors.getxError() - idealErrors.getxError(), phiAdjustedErrors.getyError() - idealErrors.getyError(), epsilon);
@@ -86,10 +84,10 @@ public class Newton {
 
         double ex = idealErrors.getxError();
         double ey = idealErrors.getyError();
-        double det = dEx_dTheta * dEy_dPhi - dEy_dTheta * dEx_dPhi;
+        double det = dEx_dTheta * dEy_dPhi - dEx_dPhi * dEy_dTheta;
 
-        double deltaTheta = (-ex * dEy_dPhi + ey * dEx_dPhi) / det;
-        double deltaPhi = (-ey * dEx_dTheta + ex * dEy_dTheta) / det;
+        double deltaPhi = (ex * dEy_dTheta - ey * dEx_dTheta) / det;
+        double deltaTheta = (-ex - dEy_dPhi * dEx_dPhi) / dEx_dTheta;
 
         return new ShotAngles(currentGuess.getTheta() + deltaTheta, currentGuess.getPhi() + deltaPhi);
     }

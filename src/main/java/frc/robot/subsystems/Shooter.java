@@ -1,9 +1,12 @@
 package frc.robot.subsystems;
 
+import edu.wpi.first.math.Vector;
+
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -132,13 +135,13 @@ public class Shooter extends SubsystemBase{
             Pose2d robotPose = drivebase.getState().Pose;
             ChassisSpeeds robotRobotRelativeVelocity = drivebase.getState().Speeds;
             ChassisSpeeds robotFieldRelativeVelocity = ChassisSpeeds.fromRobotRelativeSpeeds(robotRobotRelativeVelocity, robotPose.getRotation());
-            double angularVelocity = robotFieldRelativeVelocity.omegaRadiansPerSecond;
-
-            Trajectory trajectory = new Trajectory(robotPose, hubPose, robotFieldRelativeVelocity, angularVelocity);
+           
+            double robotAngularSpeed = robotFieldRelativeVelocity.omegaRadiansPerSecond;
+            Trajectory trajectory = new Trajectory(robotPose, hubPose, robotFieldRelativeVelocity);
             ShotAngles currentAngles = trajectory.getIdealShotAngles();
 
             for (int i = 0; i < iterationCount; i++) {
-                Newton newton = new Newton(robotPose, robotPose, hubPose, robotFieldRelativeVelocity); // Change first robotPose to shooterPose later
+                Newton newton = new Newton(robotPose, robotPose, hubPose, robotFieldRelativeVelocity, robotAngularSpeed); // Change first robotPose to shooterPose later
                 ShotAngles anglesFromNewton = newton.findOptimalTrajectory(currentAngles);
                 if (!(Double.isNaN(anglesFromNewton.getTheta()) || Double.isNaN(anglesFromNewton.getPhi()))) {
                     currentAngles = anglesFromNewton;

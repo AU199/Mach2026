@@ -64,24 +64,27 @@ public class RobotContainer {
         // and Y is defined as to the left according to WPILib convention.
         drivetrain.setDefaultCommand(
                 // Drivetrain will execute this command periodically
-                drivetrain.applyRequest(() -> drive.withVelocityX(joystick.getRawAxis(1) * MaxSpeed) // Drive forward
+                drivetrain.applyRequest(() -> drive.withVelocityX(controller1.getRawAxis(1) * MaxSpeed) // Drive forward
                                                                                                      // with negative Y
                                                                                                      // (forward)
-                        .withVelocityY(joystick.getRawAxis(0) * MaxSpeed) // Drive left with negative X (left)
-                        .withRotationalRate(-joystick.getRawAxis(2) * MaxAngularRate) // Drive counterclockwise with
+                        .withVelocityY(controller1.getRawAxis(0) * MaxSpeed) // Drive left with negative X (left)
+                        .withRotationalRate(-controller1.getRawAxis(2) * MaxAngularRate) // Drive counterclockwise with
                                                                                       // negative X (left)
                 ));
-        controller1.a().whileTrue(intake.runRoller());
+        // controller1.a().whileTrue(intake.runRoller());
         //controller1.b().whileTrue();
-        controller1.x().whileTrue(hangArm.runHangArm(-1));
-        controller1.y().whileTrue(hangArm.runHangArm(1));
+        // controller1.x().whileTrue(hangArm.runHangArm(-1));
+        // controller1.y().whileTrue(hangArm.runHangArm(1));
 
-        controller2.a().whileTrue(shooter.shooterOn());
+        controller1.x().whileTrue(shooter.droneStrikeRK4());
+        controller1.y().onTrue(new InstantCommand(() -> FuelSim.getInstance().clearFuel()));
+
+        // controller2.a().whileTrue(shooter.shooterOn());
         // controller2.b().whileTrue();
-        controller2.x().whileTrue(feeder.feederOn(0.7));
-        controller2.y().whileTrue(feeder.feederOn(-0.7));
+        // controller2.x().whileTrue(feeder.feederOn(0.7));
+        // controller2.y().whileTrue(feeder.feederOn(-0.7));
 
-        controller1.back().onTrue(new InstantCommand(() -> drivetrain.zeroGyro()));
+        // controller1.back().onTrue(new InstantCommand(() -> drivetrain.zeroGyro()));
         // drive with speed at .5 while left trigger is held, for testing
         // controller1.leftTrigger(.5).whileTrue(
         // drivetrain.applyRequest(() ->
