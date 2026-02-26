@@ -86,8 +86,8 @@ public class RobotContainer {
 
         // controller2.a().whileTrue(shooter.shooterOn());
         // controller2.b().whileTrue();
-        // controller2.x().whileTrue(feeder.feederOn(0.7));
-        // controller2.y().whileTrue(feeder.feederOn(-0.7));
+        controller1.a().whileTrue(feeder.feederOn(0.7));
+        controller1.b().whileTrue(feeder.feederOn(-0.7));
 
         // controller1.back().onTrue(new InstantCommand(() -> drivetrain.zeroGyro()));
         // drivetrain.setDefaultCommand(

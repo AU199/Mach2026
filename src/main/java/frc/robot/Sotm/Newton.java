@@ -13,6 +13,7 @@ public class Newton {
     private Vector ballInitialLinearVelocityRelativeToRobot;
     private double ballInitialAngularSpeedRelativeToRobot;
     private Vector ballInitialLinearVelocityRelativeToField;
+    private double ballInitialAngularSpeedRelativeToField;
     private Vector ballInitialAngularVelocityRelativeToField;
 
     private Pose2d shooterPose;
@@ -23,23 +24,22 @@ public class Newton {
     private double dt = 0.001;
     private double epsilon = 1e-4;
 
-    public Newton(Pose2d shooterPose, Pose2d robotPose, Pose2d hubPose, ChassisSpeeds robotVelocity, double angularSpeedRelativeToRobot) {
+    public Newton(Pose2d shooterPose, Pose2d robotPose, Pose2d hubPose, ChassisSpeeds robotFieldRelativeVelocity) {
         this.shooterPose = shooterPose;
         this.robotPose = robotPose;
-        this.robotRobotRelativeVelocity = robotVelocity;
-        this.robotFieldRelativeVelocity = ChassisSpeeds.fromRobotRelativeSpeeds(robotVelocity, robotPose.getRotation());
+        this.robotFieldRelativeVelocity = robotFieldRelativeVelocity;
         this.hubPose = hubPose;
-        this.ballInitialAngularSpeedRelativeToRobot = angularSpeedRelativeToRobot;
     }
 
     public BallError calculateError(double theta, double phi, double ballInitialLinearSpeedRelativeToShooter) {
         double heading = robotPose.getRotation().getRadians();
-        double wx_robot = -ballInitialAngularSpeedRelativeToRobot * Math.cos(phi);
-        double wy_robot = ballInitialAngularSpeedRelativeToRobot * Math.sin(phi);
+        double robotPhi = heading - phi;
+        // double wx_robot = -ballInitialAngularSpeedRelativeToRobot * Math.cos(phi);
+        // double wy_robot = ballInitialAngularSpeedRelativeToRobot * Math.sin(phi);
         
         ballInitialLinearVelocityRelativeToRobot = VecBuilder.fill(
-            ballInitialLinearSpeedRelativeToShooter * Math.cos(theta) * Math.cos(phi), 
-            ballInitialLinearSpeedRelativeToShooter * Math.cos(theta) * Math.sin(phi),
+            ballInitialLinearSpeedRelativeToShooter * Math.cos(theta) * Math.cos(robotPhi), 
+            ballInitialLinearSpeedRelativeToShooter * Math.cos(theta) * Math.sin(robotPhi),
             ballInitialLinearSpeedRelativeToShooter * Math.sin(theta));
 
         double vx_robot = ballInitialLinearVelocityRelativeToRobot.get(0);
@@ -53,10 +53,14 @@ public class Newton {
             vy_field + robotFieldRelativeVelocity.vyMetersPerSecond,
             vz_robot);
 
+        // ballInitialAngularVelocityRelativeToField = VecBuilder.fill(
+        //     wx_robot * Math.cos(heading) - wy_robot * Math.sin(heading),
+        //     wx_robot * Math.sin(heading) + wy_robot * Math.cos(heading),
+        //     0); // Claude code please check
         ballInitialAngularVelocityRelativeToField = VecBuilder.fill(
-            wx_robot * Math.cos(heading) - wy_robot * Math.sin(heading),
-            wx_robot * Math.sin(heading) + wy_robot * Math.cos(heading),
-            0); // Claude code please check
+            Constants.ballInitialSpinFromShooter * Math.cos(theta) * Math.sin(phi),
+            Constants.ballInitialSpinFromShooter * -Math.cos(theta) * Math.cos(phi),
+            0);
 
         targetPose = hubPose; // Add ability to change this later
         RK4 rk4 = new RK4(targetPose, shooterPose, robotFieldRelativeVelocity, ballInitialLinearVelocityRelativeToField, ballInitialAngularVelocityRelativeToField, shooterPose, dt);
@@ -86,8 +90,11 @@ public class Newton {
         double ey = idealErrors.getyError();
         double det = dEx_dTheta * dEy_dPhi - dEx_dPhi * dEy_dTheta;
 
-        double deltaPhi = (ex * dEy_dTheta - ey * dEx_dTheta) / det;
-        double deltaTheta = (-ex - dEy_dPhi * dEx_dPhi) / dEx_dTheta;
+        // First is akul second is claude
+        // double deltaPhi = (ex * dEy_dTheta - ey * dEx_dTheta) / det;
+        // double deltaTheta = (-ex - dEy_dPhi * dEx_dPhi) / dEx_dTheta;
+        double deltaTheta = (-dEy_dPhi * ex + dEx_dPhi * ey) / det;
+        double deltaPhi = ( dEy_dTheta * ex - dEx_dTheta * ey) / det;
 
         return new ShotAngles(currentGuess.getTheta() + deltaTheta, currentGuess.getPhi() + deltaPhi);
     }

@@ -31,7 +31,7 @@ public final class Constants {
     
   public static final int pivotMotorId = 20;
   public static final int rollerMotorId = 14;
-  public static final int feederMotorId = 16;
+  public static final int kickerMotorId = 16;
   public static final int frontShooter1Id = 17;
   public static final int frontShooter2Id = 18;
   public static final int backShooterId = 19;
@@ -51,6 +51,7 @@ public final class Constants {
   public static final double shooterPositionY = 0;
 
   public static final double ballInitialVelocityFromShooter = 8.5;
+  public static final double ballInitialSpinFromShooter = 100;
 
   public static final double IntakeDeployPos = 0;
   public static final double IntakeRetractPos = 0;

@@ -24,7 +24,7 @@ import frc.robot.Constants;
 import frc.robot.FuelSim;
 import frc.robot.Sotm.Newton;
 import frc.robot.Sotm.ShotAngles;
-import frc.robot.Sotm.Trajectory;
+import frc.robot.Sotm.IdealTrajectory;
 
 public class Shooter extends SubsystemBase{
     TalonFX frontShooter1 = new TalonFX(Constants.frontShooter1Id, "DriveBase");
@@ -145,12 +145,12 @@ public class Shooter extends SubsystemBase{
             ChassisSpeeds robotRobotRelativeVelocity = drivebase.getState().Speeds;
             ChassisSpeeds robotFieldRelativeVelocity = ChassisSpeeds.fromRobotRelativeSpeeds(robotRobotRelativeVelocity, robotPose.getRotation());
            
-            double robotAngularSpeed = robotFieldRelativeVelocity.omegaRadiansPerSecond;
-            Trajectory trajectory = new Trajectory(robotPose, hubPose, robotFieldRelativeVelocity);
-            ShotAngles currentAngles = trajectory.getIdealShotAngles();
+            double fieldRelativeRobotAngularSpeed = robotFieldRelativeVelocity.omegaRadiansPerSecond;
+            IdealTrajectory idealTrajectory = new IdealTrajectory(robotPose, hubPose, robotFieldRelativeVelocity);
+            ShotAngles currentAngles = idealTrajectory.getIdealShotAngles();
 
             for (int i = 0; i < iterationCount; i++) {
-                Newton newton = new Newton(robotPose, robotPose, hubPose, robotFieldRelativeVelocity, robotAngularSpeed); // Change first robotPose to shooterPose later
+                Newton newton = new Newton(robotPose, robotPose, hubPose, robotFieldRelativeVelocity); // Change first robotPose to shooterPose later
                 ShotAngles anglesFromNewton = newton.findOptimalTrajectory(currentAngles);
                 if (!(Double.isNaN(anglesFromNewton.getTheta()) || Double.isNaN(anglesFromNewton.getPhi()))) {
                     currentAngles = anglesFromNewton;
@@ -165,6 +165,8 @@ public class Shooter extends SubsystemBase{
             SmartDashboard.putNumber("shooterangle", theta);
             double shotSpeed = 8.5;
 
+            phi = idealTrajectory.getIdealShotAngles().getPhi();
+            theta = idealTrajectory.getIdealShotAngles().getTheta();
             FuelSim.getInstance().spawnFuel(new Translation3d(robotPose.getX(), robotPose.getY(), 0), new Translation3d(shotSpeed * Math.cos(theta) * Math.cos(phi), shotSpeed * Math.cos(theta) * Math.sin(phi), shotSpeed * Math.sin(theta)));
         });
     }

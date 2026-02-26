@@ -15,7 +15,7 @@ public class RK4 {
     private double areaOfBall = Math.PI * Math.pow(5.91 / 2 * 0.0254, 2);
     private double dragCoefficient = 0.46;
     private double liftCoefficient = 0.5;
-    private double carlsenCoefficient = (1 / 2) * standardFluidDensityOfAir * areaOfBall * liftCoefficient;
+    private double carlsenCoefficient = (0.5) * standardFluidDensityOfAir * areaOfBall * liftCoefficient;
 
     private double dt;
 
