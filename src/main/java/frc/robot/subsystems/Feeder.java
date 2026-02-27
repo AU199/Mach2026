@@ -7,8 +7,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
 public class Feeder extends SubsystemBase{
-    TalonFX kickerMotor = new TalonFX(Constants.kickerMotorId, "DriveBase");
-
+    TalonFX kickerMotor = new TalonFX(Constants.feederMotorId, "DriveBase");
+ 
     public Feeder() {}
 
     public Command feederOn(double speed) {

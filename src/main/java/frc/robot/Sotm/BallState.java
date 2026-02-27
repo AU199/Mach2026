@@ -1,21 +1,22 @@
 package frc.robot.Sotm;
 
 import edu.wpi.first.math.Vector;
+import edu.wpi.first.math.numbers.N3;
 
 public class BallState {
-    private Vector position;
-    private Vector velocity;
+    private Vector<N3> position;
+    private Vector<N3> velocity;
 
-    public BallState(Vector position, Vector velocity) {
+    public BallState(Vector<N3> position, Vector<N3> velocity) {
         this.position = position;
         this.velocity = velocity;
     }
 
-    public Vector getPosition() {
+    public Vector<N3> getPosition() {
         return position;
     }
 
-    public Vector getVelocity() {
+    public Vector<N3> getVelocity() {
         return velocity;
     }
 }
