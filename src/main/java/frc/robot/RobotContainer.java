@@ -63,7 +63,17 @@ public class RobotContainer {
         controller1.a().whileTrue(shooter.shooterOn());
         controller1.leftBumper().whileTrue(shooter.pivotMotorOn(.25));
         controller1.rightBumper().whileTrue(shooter.pivotMotorOn(-.25));
-
+     controller1.back().onTrue(Commands.sequence(
+            shooter.shooterOn().withTimeout(2),
+            shooter.setPivotAngle(0.5).withTimeout(1),
+            shooter.setPivotAngle(0).withTimeout(1),
+            intake.deployIntake().withTimeout(1),
+            intake.runRoller().withTimeout(2),
+            intake.retractIntake().withTimeout(1),
+            hangArm.runHangArm(-1).withTimeout(2),
+            hangArm.runHangArm(1).withTimeout(2),
+            feeder.feederOn(0.7).withTimeout(2)
+        ));
 
         // Note that X is defined as forward according to WPILib convention,
         // and Y is defined as to the left according to WPILib convention.
