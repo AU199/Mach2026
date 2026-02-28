@@ -61,4 +61,12 @@ public class Intake extends SubsystemBase {
             rollerMotor.set(0);
         });
     }
+
+    public Command runPivotSetSpeed(double speed) {
+        return startEnd(() -> {
+            rollerMotor.set(speed);
+        }, () -> {
+            rollerMotor.set(0);
+        });
+    }
 }

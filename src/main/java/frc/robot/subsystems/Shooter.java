@@ -154,9 +154,9 @@ public class Shooter extends SubsystemBase{
             if (!(Double.isNaN(anglesFromNewton.getTheta()) || Double.isNaN(anglesFromNewton.getPhi()))) {
                 currentAngles = anglesFromNewton;
             }
-            // else {
-                
-            // }
+            else {
+                return;
+            }
             
             theta = currentAngles.getTheta();
             phi = currentAngles.getPhi();

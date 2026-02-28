@@ -22,21 +22,22 @@ public final class Constants {
     /** Half-diagonal of robot, used for angular velocity estimation (meters) */
     public static final double robotRadius = 12.5 * 0.0254; // 12.5 inches → meters
 
-    
-    public static final int pivotMotorId    = 20;
-    public static final int rollerMotorId   = 14;
+    public static final int hoodMotorId     = 13;
+    public static final int kickerMotorId   = 14;
+    public static final int levitatorMotorId = 15;
     public static final int feederMotorId   = 16;
     public static final int frontShooter1Id = 17;
     public static final int frontShooter2Id = 18;
     public static final int backShooterId   = 19;
-    public static final int hoodMotorId     = 13;
-    public static final int hangArmId       = 15;
-
+    public static final int pivotMotorId    = 20;
+    public static final int rollerMotorId   = 21;
     
     public static final double pivotKP = 0;
     public static final double pivotKI = 0;
     public static final double pivotKD = 0;
-
+    public static final double levitatorKP = 0;
+    public static final double levitatorKI = 0;
+    public static final double levitatorKD = 0;
    
     public static final double FIELD_WIDTH = 8.04; // meters
     public static final Pose2d blueHubPose = new Pose2d(4.61, FIELD_WIDTH / 2.0, new Rotation2d(0));
@@ -47,15 +48,15 @@ public final class Constants {
     public static final double hubZ = 1.8288;
 
     /** Height of the shooter exit point above the field floor, meters. Measure on robot. */
-    public static final double shooterHeight = 1.0;
+    public static final double shooterHeight = 0.3;
 
     /** Shooter exit position offset from robot center, meters. Measure on robot. */
     public static final double shooterPositionX = 0.2; // forward
     public static final double shooterPositionY = 0.0; // lateral
 
     /** Ball exit speed from shooter, m/s. Tune from shooter characterization. */
-    public static final double ballInitialVelocityFromShooter = 8.5;
-    public static final double ballInitialSpinFromShooter = 10;
+    public static final double ballInitialVelocityFromShooter = 10;
+    public static final double ballInitialSpinFromShooter = 100;
 
     // ── Intake positions (encoder units — tune before deploy) ────────────────
     public static final double IntakeDeployPos  = 0;

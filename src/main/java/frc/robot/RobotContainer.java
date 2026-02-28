@@ -22,8 +22,8 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
-import frc.robot.subsystems.HangArm;
 import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.Levitator;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.Feeder;
 
@@ -48,7 +48,7 @@ public class RobotContainer {
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
 
     public final Shooter shooter = new Shooter(drivetrain, true, m_field);
-    public final HangArm hangArm = new HangArm();
+    public final Levitator levitator = new Levitator();
     public final Intake intake = new Intake();
     public final Feeder feeder = new Feeder();
     // public final Shooter shooter = new Shooter(drivetrain,true,m_field);
@@ -81,8 +81,10 @@ public class RobotContainer {
         // controller1.x().whileTrue(hangArm.runHangArm(-1));
         // controller1.y().whileTrue(hangArm.runHangArm(1));
 
-        controller1.x().whileTrue(shooter.droneStrikeRK4());
-        controller1.y().onTrue(new InstantCommand(() -> FuelSim.getInstance().clearFuel()));
+        // controller1.x().whileTrue(shooter.droneStrikeRK4());
+        // controller1.y().onTrue(new InstantCommand(() -> FuelSim.getInstance().clearFuel()));
+        controller1.x().onTrue(intake.runPivotSetSpeed(-0.05));
+        controller1.y().onTrue(intake.runPivotSetSpeed(0.05));
 
         // controller2.a().whileTrue(shooter.shooterOn());
         // controller2.b().whileTrue();
