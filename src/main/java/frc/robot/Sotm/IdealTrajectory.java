@@ -54,6 +54,10 @@ public class IdealTrajectory {
         double thetaHigh = Math.atan((v2 + sqrtDisc) / denom);
         double thetaLow  = Math.atan((v2 - sqrtDisc) / denom);
         double theta = thetaHigh;
+
+        if (theta > 75) {
+            return new ShotAngles(Double.NaN, Double.NaN);
+        }
         
         return new ShotAngles(theta, phi);
     }

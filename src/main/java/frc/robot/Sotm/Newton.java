@@ -3,9 +3,12 @@ package frc.robot.Sotm;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants;
+import frc.robot.FuelSim;
 
 /**
  * Newton's method optimizer for shoot-on-the-move trajectory.
@@ -21,7 +24,6 @@ public class Newton {
 
    
     private final ChassisSpeeds robotFieldRelativeVelocity;
-    private final Pose2d shooterPose;
     private final Pose2d robotPose;
     private final Pose2d hubPose;
     private final double ballAngularSpeedRelativeToRobot; // rad/s, spin speed from shooter wheel
@@ -31,18 +33,16 @@ public class Newton {
     private static final double EPSILON = 1e-4;   // finite difference step for Jacobian
 
     
-    private static final int    MAX_ITER      = 20;
+    private static final int    MAX_ITER      = 30;
     private static final double CONVERGE_TOL  = 1e-4; // meters — stop when error < 0.1mm
 
     
 
     
     public Newton(
-            Pose2d shooterPose,
             Pose2d robotPose,
             Pose2d hubPose,
             ChassisSpeeds robotFieldRelativeVelocity) {
-        this.shooterPose = shooterPose;
         this.robotPose = robotPose;
         this.hubPose = hubPose;
         this.robotFieldRelativeVelocity = robotFieldRelativeVelocity;
@@ -88,11 +88,9 @@ public class Newton {
         // ── Run RK4 ──
         RK4 rk4 = new RK4(
             hubPose,
-            shooterPose,
-            robotFieldRelativeVelocity,
+            robotPose,
             ballLinearVelocity,
             ballAngularVelocity,
-            shooterPose,
             DT
         );
 
@@ -150,10 +148,14 @@ public class Newton {
             theta += deltaTheta;
             phi   += deltaPhi;
 
+            // Don't clamp (we just won't shoot if it's over 75)
             // Clamp theta to physically valid range [0, PI/2]
-            theta = Math.max(0.0, Math.min(Math.PI / 2.0, theta));
+            // theta = Math.max(0.0, Math.min(Math.PI / 2.0, theta));
         }
 
+        if (theta > 75) {
+            return new ShotAngles(Double.NaN, Double.NaN);
+        }
         return new ShotAngles(theta, phi);
     }
 }

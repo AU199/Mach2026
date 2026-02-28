@@ -6,16 +6,19 @@ import static edu.wpi.first.units.Units.Pounds;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants;
+import frc.robot.FuelSim;
 
 
 public class RK4 {
 
     
     private static final double AIR_DENSITY     = 1.2250;                                   // kg/m^3 at sea level
-    private static final double DRAG_COEFF      = 0.46;                                     // dimensionless, smooth sphere
+    private static final double DRAG_COEFF      = 10000.46;                                     // dimensionless, smooth sphere
     private static final double LIFT_COEFF      = 0.5;                                      // Magnus lift coefficient
     private static final double BALL_RADIUS_IN  = 5.91 / 2.0;                               // inches
     private static final double BALL_AREA       = Math.PI * Math.pow(BALL_RADIUS_IN * 0.0254, 2); // m^2
@@ -35,10 +38,8 @@ public class RK4 {
     public RK4(
             Pose2d targetPose,
             Pose2d shooterPose,
-            ChassisSpeeds robotFieldRelativeVelocity,       // kept for API compatibility, robot vel already baked into ball vel
             Vector<N3> ballInitialLinearVelocityRelativeToField,
             Vector<N3> ballInitialAngularVelocityRelativeToField,
-            Pose2d ballInitialPose,                         // unused — ball starts at shooterPose + shooterHeight
             double dt) {
         this.targetPose = targetPose;
         this.shooterPose = shooterPose;
@@ -60,8 +61,9 @@ public class RK4 {
         double speed = v.norm();
         if (speed < 1e-9) return VecBuilder.fill(0, 0, 0);
         double scalar = -0.5 * AIR_DENSITY * DRAG_COEFF * BALL_AREA * speed / BALL_MASS_KG;
-        return VecBuilder.fill(0, 0, 0); // Temporary for now
-        // return v.times(scalar);
+        // return VecBuilder.fill(0, 0, 0); // Temporary for now
+        SmartDashboard.putNumber("DragScalar", scalar);
+        return v.times(scalar);
     }
 
     
@@ -69,8 +71,11 @@ public class RK4 {
         if (ballInitialAngularVelocity == null) return VecBuilder.fill(0, 0, 0);
         Vector<N3> omegaCrossV = cross(ballInitialAngularVelocity, v);
         double scalar = MAGNUS_COEFF / BALL_MASS_KG;
-        return VecBuilder.fill(0, 0, 0); // Temporary for now — gravity only
-        // return omegaCrossV.times(scalar);
+
+        // return VecBuilder.fill(0, 0, 0); // Temporary for now — gravity only
+        SmartDashboard.putNumber("mango", omegaCrossV.times(scalar).norm());
+
+        return omegaCrossV.times(scalar);
     }
 
 
@@ -120,7 +125,7 @@ public class RK4 {
         Vector<N3> velocity = ballInitialLinearVelocity;
 
         boolean hasGoneAboveHub = false;
-        final int maxSteps = 5000;
+        final int maxSteps = 1000;
 
         for (int step = 0; step < maxSteps; step++) {
             double z = position.get(2);

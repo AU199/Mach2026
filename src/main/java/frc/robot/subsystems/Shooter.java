@@ -21,6 +21,7 @@ import frc.robot.Constants;
 import frc.robot.FuelSim;
 import frc.robot.Sotm.ShotAngles;
 import frc.robot.Sotm.IdealTrajectory;
+import frc.robot.Sotm.Newton;
 
 public class Shooter extends SubsystemBase{
     TalonFX frontShooter1 = new TalonFX(Constants.frontShooter1Id, "DriveBase");
@@ -147,12 +148,25 @@ public class Shooter extends SubsystemBase{
             double theta = currentAngles.getTheta();
             double phi   = currentAngles.getPhi();
 
+            Newton newton = new Newton(robotPose, hubPose, robotFieldRelativeVelocity);
+
+            ShotAngles anglesFromNewton = newton.findOptimalTrajectory(currentAngles);
+            if (!(Double.isNaN(anglesFromNewton.getTheta()) || Double.isNaN(anglesFromNewton.getPhi()))) {
+                currentAngles = anglesFromNewton;
+            }
+            // else {
+                
+            // }
+            
+            theta = currentAngles.getTheta();
+            phi = currentAngles.getPhi();
+
             hoodMotor.setControl(pivotAngleRequest.withPosition(theta));
             publisher.set(new Pose3d(robotPose.getX(), robotPose.getY(), 0, new Rotation3d(0, 0, phi)));
-            SmartDashboard.putNumber("shooterangle", theta);
 
             double shotSpeed = Constants.ballInitialVelocityFromShooter;
             // Spawn fuel ball in FuelSim with velocity from shot angles
+
             FuelSim.getInstance().spawnFuel(
                 new Translation3d(robotPose.getX(), robotPose.getY(), Constants.shooterHeight),
                 new Translation3d(

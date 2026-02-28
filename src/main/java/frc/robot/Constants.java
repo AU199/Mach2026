@@ -44,7 +44,7 @@ public final class Constants {
 
     // ── Shooting geometry ─────────────────────────────────────────────────────
     /** Height of the hub opening (top of the ball's entry path), meters */
-    public static final double hubZ = 2.64;
+    public static final double hubZ = 1.8288;
 
     /** Height of the shooter exit point above the field floor, meters. Measure on robot. */
     public static final double shooterHeight = 1.0;

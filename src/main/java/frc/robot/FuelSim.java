@@ -219,6 +219,99 @@ public class FuelSim {
         }
     }
 
+    private class StaticFuel {
+        private Translation3d pos;
+        private Translation3d vel;
+
+        private StaticFuel(Translation3d pos, Translation3d vel) {
+            this.pos = pos;
+            this.vel = vel;
+        }
+
+        private StaticFuel(Translation3d pos) {
+            this(pos, new Translation3d());
+        }
+
+        private void update() {
+            // pos = pos.plus(vel.times(PERIOD / subticks));
+            // if (pos.getZ() > FUEL_RADIUS) {
+            //     vel = vel.plus(GRAVITY.times(PERIOD / subticks));
+            // }
+            // if (Math.abs(vel.getZ()) < 0.05 && pos.getZ() <= FUEL_RADIUS + 0.03) {
+            //     vel = new Translation3d(vel.getX(), vel.getY(), 0);
+            //     vel = vel.times(1 - FRICTION * PERIOD / subticks);
+            //     // pos = new Translation3d(pos.getX(), pos.getY(), FUEL_RADIUS);
+            // }
+            // handleFieldCollisions();
+        }
+
+        // private void handleXZLineCollision(Translation3d lineStart, Translation3d lineEnd) {
+        //     if (pos.getY() < lineStart.getY() || pos.getY() > lineEnd.getY()) return; // not within y range
+        //     // Convert into 2D
+        //     Translation2d start2d = new Translation2d(lineStart.getX(), lineStart.getZ());
+        //     Translation2d end2d = new Translation2d(lineEnd.getX(), lineEnd.getZ());
+        //     Translation2d pos2d = new Translation2d(pos.getX(), pos.getZ());
+        //     Translation2d lineVec = end2d.minus(start2d);
+
+        //     // Get closest point on line
+        //     Translation2d projected =
+        //             start2d.plus(lineVec.times(pos2d.minus(start2d).dot(lineVec) / lineVec.getSquaredNorm()));
+
+        //     if (projected.getDistance(start2d) + projected.getDistance(end2d) > lineVec.getNorm())
+        //         return; // projected point not on line
+        //     double dist = pos2d.getDistance(projected);
+        //     if (dist > FUEL_RADIUS) return; // not intersecting line
+        //     // Back into 3D
+        //     Translation3d normal = new Translation3d(-lineVec.getY(), 0, lineVec.getX()).div(lineVec.getNorm());
+
+        //     // Apply collision response
+        //     pos = pos.plus(normal.times(FUEL_RADIUS - dist));
+        //     if (vel.dot(normal) > 0) return; // already moving away from line
+        //     vel = vel.minus(normal.times((1 + FIELD_COR) * vel.dot(normal)));
+        // }
+
+        // private void handleFieldCollisions() {
+            // floor and bumps
+            // for (int i = 0; i < FIELD_XZ_LINE_STARTS.length; i++) {
+            //     handleXZLineCollision(FIELD_XZ_LINE_STARTS[i], FIELD_XZ_LINE_ENDS[i]);
+            // }
+
+            // // edges
+            // if (pos.getX() < FUEL_RADIUS && vel.getX() < 0) {
+            //     pos = pos.plus(new Translation3d(FUEL_RADIUS - pos.getX(), 0, 0));
+            //     vel = vel.plus(new Translation3d(-(1 + FIELD_COR) * vel.getX(), 0, 0));
+            // } else if (pos.getX() > FIELD_LENGTH - FUEL_RADIUS && vel.getX() > 0) {
+            //     pos = pos.plus(new Translation3d(FIELD_LENGTH - FUEL_RADIUS - pos.getX(), 0, 0));
+            //     vel = vel.plus(new Translation3d(-(1 + FIELD_COR) * vel.getX(), 0, 0));
+            // }
+
+            // if (pos.getY() < FUEL_RADIUS && vel.getY() < 0) {
+            //     pos = pos.plus(new Translation3d(0, FUEL_RADIUS - pos.getY(), 0));
+            //     vel = vel.plus(new Translation3d(0, -(1 + FIELD_COR) * vel.getY(), 0));
+            // } else if (pos.getY() > FIELD_WIDTH - FUEL_RADIUS && vel.getY() > 0) {
+            //     pos = pos.plus(new Translation3d(0, FIELD_WIDTH - FUEL_RADIUS - pos.getY(), 0));
+            //     vel = vel.plus(new Translation3d(0, -(1 + FIELD_COR) * vel.getY(), 0));
+            // }
+
+            // hubs
+            // handleHubCollisions(Hub.BLUE_HUB);
+            // handleHubCollisions(Hub.RED_HUB);
+
+            // handleTrenchCollisions();
+        // }
+
+        // private void handleHubCollisions(Hub hub) {
+        //     hub.handleHubInteraction(this);
+        //     hub.fuelCollideSide(this);
+
+        //     double netCollision = hub.fuelHitNet(this);
+        //     if (netCollision != 0) {
+        //         pos = pos.plus(new Translation3d(netCollision, 0, 0));
+        //         vel = new Translation3d(-vel.getX() * NET_COR, vel.getY() * NET_COR, vel.getZ());
+        //     }
+        // }
+    }
+
     private static void handleFuelCollision(Fuel a, Fuel b) {
         Translation3d normal = a.pos.minus(b.pos);
         double distance = normal.getNorm();
