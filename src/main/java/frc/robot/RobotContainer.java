@@ -77,6 +77,29 @@ public class RobotContainer {
 
         // Note that X is defined as forward according to WPILib convention,
         // and Y is defined as to the left according to WPILib convention.
+        drivetrain.setDefaultCommand(
+                // Drivetrain will execute this command periodically
+                drivetrain.applyRequest(() -> drive.withVelocityX(controller1.getRawAxis(1) * MaxSpeed) // Drive forward
+                                                                                                     // with negative Y
+                                                                                                     // (forward)
+                        .withVelocityY(controller1.getRawAxis(0) * MaxSpeed) // Drive left with negative X (left)
+                        .withRotationalRate(-controller1.getRawAxis(2) * MaxAngularRate) // Drive counterclockwise with
+                                                                                      // negative X (left)
+                ));
+        // controller1.a().whileTrue(intake.runRoller());
+        //controller1.b().whileTrue();
+        // controller1.x().whileTrue(hangArm.runHangArm(-1));
+        // controller1.y().whileTrue(hangArm.runHangArm(1));
+
+        controller1.x().whileTrue(shooter.droneStrikeRK4());
+        controller1.y().onTrue(new InstantCommand(() -> FuelSim.getInstance().clearFuel()));
+
+        // controller2.a().whileTrue(shooter.shooterOn());
+        // controller2.b().whileTrue();
+        controller1.a().whileTrue(feeder.feederOn(0.7));
+        controller1.b().whileTrue(feeder.feederOn(-0.7));
+
+        // controller1.back().onTrue(new InstantCommand(() -> drivetrain.zeroGyro()));
         // drivetrain.setDefaultCommand(
         //         // Drivetrain will execute this command periodically
         //         drivetrain.applyRequest(() -> drive.withVelocityX(controller1.getRawAxis(1) * MaxSpeed) // Drive forward

@@ -19,9 +19,9 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.FuelSim;
-import frc.robot.Sotm.Newton;
 import frc.robot.Sotm.ShotAngles;
-import frc.robot.Sotm.Trajectory;
+import frc.robot.Sotm.IdealTrajectory;
+import frc.robot.Sotm.Newton;
 
 public class Shooter extends SubsystemBase{
     TalonFX frontShooter1 = new TalonFX(Constants.frontShooter1Id, "DriveBase");
@@ -141,34 +141,45 @@ public class Shooter extends SubsystemBase{
             Pose2d robotPose = drivebase.getState().Pose;
             ChassisSpeeds robotRobotRelativeVelocity = drivebase.getState().Speeds;
             ChassisSpeeds robotFieldRelativeVelocity = ChassisSpeeds.fromRobotRelativeSpeeds(robotRobotRelativeVelocity, robotPose.getRotation());
-            double angularVelocity = robotFieldRelativeVelocity.omegaRadiansPerSecond;
 
-            Trajectory trajectory = new Trajectory(robotPose, hubPose, robotFieldRelativeVelocity, angularVelocity);
-            ShotAngles currentAngles = trajectory.getIdealShotAngles();
+            IdealTrajectory idealTrajectory = new IdealTrajectory(robotPose, hubPose, robotFieldRelativeVelocity);
+            ShotAngles currentAngles = idealTrajectory.getIdealShotAngles();
 
-            for (int i = 0; i < iterationCount; i++) {
-                Newton newton = new Newton(robotPose, robotPose, hubPose, robotFieldRelativeVelocity); // Change first robotPose to shooterPose later
-                ShotAngles anglesFromNewton = newton.findOptimalTrajectory(currentAngles);
-                if (!(Double.isNaN(anglesFromNewton.getTheta()) || Double.isNaN(anglesFromNewton.getPhi()))) {
-                    currentAngles = anglesFromNewton;
-                }
-            }
             double theta = currentAngles.getTheta();
             double phi   = currentAngles.getPhi();
 
-            hoodMotor.setControl(pivotAngleRequest.withPosition(theta));
-            publisher.set(new Pose3d(robotPose.getX(), robotPose.getY(), 0,new Rotation3d(0,0,phi)));
-            // Make it turn
-            SmartDashboard.putNumber("shooterangle", theta);
-            double shotSpeed = 8.5;
+            Newton newton = new Newton(robotPose, hubPose, robotFieldRelativeVelocity);
 
-            FuelSim.getInstance().spawnFuel(new Translation3d(robotPose.getX(), robotPose.getY(), 0), new Translation3d(shotSpeed * Math.cos(theta) * Math.cos(phi), shotSpeed * Math.cos(theta) * Math.sin(phi), shotSpeed * Math.sin(theta)));
+            ShotAngles anglesFromNewton = newton.findOptimalTrajectory(currentAngles);
+            if (!(Double.isNaN(anglesFromNewton.getTheta()) || Double.isNaN(anglesFromNewton.getPhi()))) {
+                currentAngles = anglesFromNewton;
+            }
+            // else {
+                
+            // }
+            
+            theta = currentAngles.getTheta();
+            phi = currentAngles.getPhi();
+
+            hoodMotor.setControl(pivotAngleRequest.withPosition(theta));
+            publisher.set(new Pose3d(robotPose.getX(), robotPose.getY(), 0, new Rotation3d(0, 0, phi)));
+
+            double shotSpeed = Constants.ballInitialVelocityFromShooter;
+            // Spawn fuel ball in FuelSim with velocity from shot angles
+
+            FuelSim.getInstance().spawnFuel(
+                new Translation3d(robotPose.getX(), robotPose.getY(), Constants.shooterHeight),
+                new Translation3d(
+                    shotSpeed * Math.cos(theta) * Math.cos(phi),
+                    shotSpeed * Math.cos(theta) * Math.sin(phi),
+                    shotSpeed * Math.sin(theta)
+                )
+            );
         });
     }
 
     @Override
     public void periodic(){
-        
-        FuelSim.getInstance().stepSim();
+        // FuelSim is stepped in Robot.simulationPeriodic via updateSim() — don't double-step here
     }
 }
