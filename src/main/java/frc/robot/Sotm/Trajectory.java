@@ -41,7 +41,6 @@ public class Trajectory {
             theta = angles[1];  // Low angle
         }
 
-        // double phi = Math.atan2(heightDifference - robotPose.getY(), horizontalDistance - robotPose.getX());
         double phi = Math.atan2(dy, dx);
 
         return new ShotAngles(theta, phi);

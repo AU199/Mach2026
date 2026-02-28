@@ -18,11 +18,11 @@ public final class Constants {
         public static final int kDriverControllerPort = 0;
     }
 
-    // ── Robot geometry ──────────────────────────────────────────────────────
+    
     /** Half-diagonal of robot, used for angular velocity estimation (meters) */
     public static final double robotRadius = 12.5 * 0.0254; // 12.5 inches → meters
 
-    // ── Motor IDs ───────────────────────────────────────────────────────────
+    
     public static final int pivotMotorId    = 20;
     public static final int rollerMotorId   = 14;
     public static final int feederMotorId   = 16;
@@ -32,13 +32,12 @@ public final class Constants {
     public static final int hoodMotorId     = 13;
     public static final int hangArmId       = 15;
 
-    // ── Pivot PID ────────────────────────────────────────────────────────────
+    
     public static final double pivotKP = 0;
     public static final double pivotKI = 0;
     public static final double pivotKD = 0;
 
-    // ── Hub positions (2022 Rapid React) ─────────────────────────────────────
-    // These match FuelSim.Hub.BLUE_HUB and RED_HUB center translations exactly.
+   
     public static final double FIELD_WIDTH = 8.04; // meters
     public static final Pose2d blueHubPose = new Pose2d(4.61, FIELD_WIDTH / 2.0, new Rotation2d(0));
     public static final Pose2d redHubPose  = new Pose2d(16.51 - 4.61, FIELD_WIDTH / 2.0, new Rotation2d(0));
@@ -77,11 +76,7 @@ public final class Constants {
     public static AprilTagFieldLayout kTagLayout;
     static {
         try {
-            // To use a custom JSON instead, place it in src/main/deploy/AprilTags/ and do:
-            // kTagLayout = new AprilTagFieldLayout(
-            //     Filesystem.getDeployDirectory().toPath()
-            //         .resolve("AprilTags/2026-rebuilt-welded.json"));
-            // kTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026Reefscape);
+          
         } catch (Exception e) {
             e.printStackTrace();
             kTagLayout = null;

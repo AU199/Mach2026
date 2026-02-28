@@ -1,12 +1,9 @@
 package frc.robot.subsystems;
 
-import edu.wpi.first.math.Vector;
-
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 
-import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -22,8 +19,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.FuelSim;
-import frc.robot.Sotm.Newton;
-import frc.robot.Sotm.RK4;
 import frc.robot.Sotm.ShotAngles;
 import frc.robot.Sotm.IdealTrajectory;
 
@@ -145,40 +140,32 @@ public class Shooter extends SubsystemBase{
             Pose2d robotPose = drivebase.getState().Pose;
             ChassisSpeeds robotRobotRelativeVelocity = drivebase.getState().Speeds;
             ChassisSpeeds robotFieldRelativeVelocity = ChassisSpeeds.fromRobotRelativeSpeeds(robotRobotRelativeVelocity, robotPose.getRotation());
-           
-            double fieldRelativeRobotAngularSpeed = robotFieldRelativeVelocity.omegaRadiansPerSecond;
+
             IdealTrajectory idealTrajectory = new IdealTrajectory(robotPose, hubPose, robotFieldRelativeVelocity);
             ShotAngles currentAngles = idealTrajectory.getIdealShotAngles();
 
-            for (int i = 0; i < iterationCount; i++) {
-                // Newton newton = new Newton(robotPose, robotPose, hubPose, robotFieldRelativeVelocity); // Change first robotPose to shooterPose later
-                // ShotAngles anglesFromNewton = newton.findOptimalTrajectory(currentAngles);
-                // if (!(Double.isNaN(anglesFromNewton.getTheta()) || Double.isNaN(anglesFromNewton.getPhi()))) {
-                //     currentAngles = anglesFromNewton;
-                // }
-
-                // Fix this rk4 thing the parameters aren't right
-                RK4 rk4 = new RK4(robotPose, robotPose, robotFieldRelativeVelocity, null, null, robotPose, fieldRelativeRobotAngularSpeed);
-
-            }
             double theta = currentAngles.getTheta();
             double phi   = currentAngles.getPhi();
 
             hoodMotor.setControl(pivotAngleRequest.withPosition(theta));
-            publisher.set(new Pose3d(robotPose.getX(), robotPose.getY(), 0,new Rotation3d(0,0,phi)));
-            // Make it turn
+            publisher.set(new Pose3d(robotPose.getX(), robotPose.getY(), 0, new Rotation3d(0, 0, phi)));
             SmartDashboard.putNumber("shooterangle", theta);
-            double shotSpeed = 8.5;
 
-            // phi = idealTrajectory.getIdealShotAngles().getPhi();
-            // theta = idealTrajectory.getIdealShotAngles().getTheta();
-            FuelSim.getInstance().spawnFuel(new Translation3d(robotPose.getX(), robotPose.getY(), 0), new Translation3d(shotSpeed * Math.cos(theta) * Math.cos(phi), shotSpeed * Math.cos(theta) * Math.sin(phi), shotSpeed * Math.sin(theta)));
+            double shotSpeed = Constants.ballInitialVelocityFromShooter;
+            // Spawn fuel ball in FuelSim with velocity from shot angles
+            FuelSim.getInstance().spawnFuel(
+                new Translation3d(robotPose.getX(), robotPose.getY(), Constants.shooterHeight),
+                new Translation3d(
+                    shotSpeed * Math.cos(theta) * Math.cos(phi),
+                    shotSpeed * Math.cos(theta) * Math.sin(phi),
+                    shotSpeed * Math.sin(theta)
+                )
+            );
         });
     }
 
     @Override
     public void periodic(){
-        
-        FuelSim.getInstance().stepSim();
+        // FuelSim is stepped in Robot.simulationPeriodic via updateSim() — don't double-step here
     }
 }

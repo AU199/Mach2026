@@ -19,30 +19,24 @@ import frc.robot.Constants;
  */
 public class Newton {
 
-    // ── Inputs ──────────────────────────────────────────────────────────────
+   
     private final ChassisSpeeds robotFieldRelativeVelocity;
     private final Pose2d shooterPose;
     private final Pose2d robotPose;
     private final Pose2d hubPose;
     private final double ballAngularSpeedRelativeToRobot; // rad/s, spin speed from shooter wheel
 
-    // ── Simulation parameters ────────────────────────────────────────────────
+    
     private static final double DT      = 0.001;  // RK4 timestep (seconds)
     private static final double EPSILON = 1e-4;   // finite difference step for Jacobian
 
-    // ── Newton iteration parameters ──────────────────────────────────────────
+    
     private static final int    MAX_ITER      = 20;
     private static final double CONVERGE_TOL  = 1e-4; // meters — stop when error < 0.1mm
 
-    // ── Constructor ─────────────────────────────────────────────────────────
+    
 
-    /**
-     * @param shooterPose                 Field-relative position of shooter exit
-     * @param robotPose                   Field-relative robot pose
-     * @param hubPose                     Field-relative hub target
-     * @param robotRobotRelativeVelocity  Robot-relative chassis speeds (will be converted to field-relative)
-     * @param angularSpeedRelativeToRobot Shooter wheel spin speed (rad/s)
-     */
+    
     public Newton(
             Pose2d shooterPose,
             Pose2d robotPose,
@@ -55,16 +49,7 @@ public class Newton {
         this.ballAngularSpeedRelativeToRobot = Constants.ballInitialSpinFromShooter;
     }
 
-    // ── Core error function ─────────────────────────────────────────────────
-
-    /**
-     * Simulates a shot with given angles and speed, returns landing error vs hub.
-     *
-     * @param theta Elevation angle (radians)
-     * @param phi   Azimuth angle (radians, field-relative)
-     * @param speed Ball exit speed relative to shooter (m/s)
-     * @return x and y error at hub height (meters), or NaN if trajectory is invalid
-     */
+    
     public BallError calculateError(double theta, double phi, double speed) {
         double heading = robotPose.getRotation().getRadians();
 
@@ -114,29 +99,6 @@ public class Newton {
         return rk4.calculateError(ballLinearVelocity);
     }
 
-    // ── Newton's method optimizer ────────────────────────────────────────────
-
-    /**
-     * Iteratively refines shot angles using Newton's method with a numerical Jacobian.
-     *
-     * Solves: [xError(theta, phi), yError(theta, phi)] = [0, 0]
-     *
-     * The Jacobian J is:
-     *   | dEx/dTheta   dEx/dPhi |
-     *   | dEy/dTheta   dEy/dPhi |
-     *
-     * Newton step: [Δtheta, Δphi]ᵀ = -J⁻¹ · [ex, ey]ᵀ
-     *
-     * J⁻¹ = (1/det) * | dEy/dPhi    -dEx/dPhi  |
-     *                  | -dEy/dTheta  dEx/dTheta |
-     *
-     * So:
-     *   Δtheta = -(dEy/dPhi * ex - dEx/dPhi * ey) / det
-     *   Δphi   = -(-dEy/dTheta * ex + dEx/dTheta * ey) / det
-     *
-     * @param initialGuess Starting angles (from Trajectory analytic solution)
-     * @return Optimized ShotAngles, or the best guess if convergence fails
-     */
     public ShotAngles findOptimalTrajectory(ShotAngles initialGuess) {
         double theta = initialGuess.getTheta();
         double phi   = initialGuess.getPhi();
