@@ -14,6 +14,7 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -37,7 +38,7 @@ public class Shooter extends SubsystemBase {
     PositionVoltage pivotAngleRequest = new PositionVoltage(0).withSlot(0);
     boolean isBlue;
     Field2d field;
-    double shooterVelocity = 10;
+    double shooterVelocity = 8;
     CommandSwerveDrivetrain drivebase;
     StructPublisher<Pose3d> publisher = NetworkTableInstance.getDefault()
             .getStructTopic("FuturePose", Pose3d.struct).publish();
@@ -134,25 +135,17 @@ public class Shooter extends SubsystemBase {
             Pose2d futurePose = new Pose2d();
             double airTime;
             double shootAngle;
-
+   
             ChassisSpeeds velocity = ChassisSpeeds.fromRobotRelativeSpeeds(drivebase.getState().Speeds,
                     currentPose.getRotation());
-
-            for (int i = 0; i <= iterationCount; i++) {
-                airTime = getTimeFromDist(hubDist, shooterVelocity);
-                futurePose = getFuturePose(currentPose, velocity, airTime);
-                hubDist = getDistFromHub(futurePose);
-            }
             currentYaw = getYaw(futurePose);
             shootAngle = getAngleFromDist(hubDist, shooterVelocity);
             SmartDashboard.putNumber("shooterangleBefore", Math.toDegrees(shootAngle));
-            SmartDashboard.putNumber("hub height changer", hubDist/10);
-            Pose3d futurePosition = new Pose3d(futurePose.getX(), futurePose.getY(), 0, new Rotation3d(0, 0, currentYaw));
-            publisher.set(futurePosition);
+            Transform2d robotVelocity = new Transform2d(velocity.vxMetersPerSecond,velocity.vyMetersPerSecond,new Rotation2d(currentYaw));
 
             if (!Double.isNaN(shootAngle)){
-                double[] shooterAnglePhi = simulation.findThetaPhi(shooterVelocity, 45,futurePosition,shootAngle,
-                    epsilon, 10, 0.01,0.5);
+                double[] shooterAnglePhi = simulation.findThetaPhi(shooterVelocity, robotVelocity,45, new Pose3d(currentPose),shootAngle,
+                    epsilon, 10, 0.01,0.05);
                     
                 shootAngle = shooterAnglePhi[0];
                 currentYaw = shooterAnglePhi[1];

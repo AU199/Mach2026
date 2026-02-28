@@ -3,7 +3,9 @@ import java.util.function.ToDoubleBiFunction;
 
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.subsystems.Simulation.helperClasses.*;
@@ -32,12 +34,12 @@ public class Simulation {
      * @param tolerance      the tolerance allowed for the simulation
      * @return the new theta and phi for a better shot
      */
-    public double[] findThetaPhi(double initalVelocity, double initalOmega,Pose3d initalPosition,
+    public double[] findThetaPhi(double initalVelocity, Transform2d robotVelocity,double initalOmega,Pose3d initalPosition,
             double initalTheta, Float epsilon,
             int iterationCount, double dt, double tolerance) {
         // System.out.println(hubPosition);
         double initialPhi = initalPosition.getRotation().getZ();
-        velocity velocity = new velocity(initalVelocity, initalTheta, initialPhi);
+        velocity velocity = new velocity(initalVelocity, robotVelocity,initalTheta);
         System.out.println(velocity);
         Transform3d positionDifference = initalPosition.minus(hubPosition);
         System.out.println(hubPosition);

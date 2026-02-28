@@ -51,7 +51,7 @@ public class ElasticWrapper {
             Elastic.sendNotification(notification
             .withLevel(NotificationLevel.ERROR)
             .withTitle("FMS")
-            .withDescription("Game Specific Message didn't return anything, if this is not in the early game BADDDDD, IF AT COMP MAKE SURE WITH FT")
+            .withDescription("Game Specific Message didn't return anything, if this is not in the early game BADDDDD, IF AT COMP MAKE SURE WITH FTA")
             .withDisplaySeconds(5));
             SmartDashboard.putBoolean("Hub Active", true);
             return;   
@@ -72,15 +72,9 @@ public class ElasticWrapper {
             .withDescription("Transition Shift")
             .withDisplaySeconds(4)
             );
-            if(alliance.equals(Alliance.Red)){
-                SmartDashboard.putBoolean("Hub Active", RedActive);
-            }else if(alliance.equals(Alliance.Blue)){
-                SmartDashboard.putBoolean("Hub Active", !RedActive);
-
-            }else{
-                SmartDashboard.putBoolean("Hub Active", RedActive);
-            }
+            SmartDashboard.putBoolean("Hub Active", true);
         }
+        
     }
 
 }

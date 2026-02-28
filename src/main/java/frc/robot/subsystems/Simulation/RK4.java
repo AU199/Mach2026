@@ -49,14 +49,14 @@ public class RK4 {
      * @return The acceleration vector
      */
     public Translation3d acceleration(Translation3d currVelocity, Translation3d omega) {
-        // if (currVelocity.getNorm() < 1e-5) {
-        // return gravity;
-        // }
+        if (currVelocity.getNorm() < 1e-5) {
+        return gravity;
+        }
         double DragMag = (0.5 * rho * CD * A * Math.pow(currVelocity.getNorm(), 2)) / mass;
-        Translation3d DragAccel = currVelocity.times(-DragMag / currVelocity.getNorm());
+        Translation3d DragAccel = currVelocity.times(DragMag / currVelocity.getNorm());
         double magnusCoeff = (0.5 * rho * CL * A * radius) / mass;
         Translation3d MagnusAccel = new Translation3d(omega.cross(currVelocity)).times(magnusCoeff);
-        return gravity.plus(DragAccel).plus(MagnusAccel);
+        return gravity.plus(MagnusAccel).plus(DragAccel);
     }
 
     /**

@@ -29,7 +29,7 @@ import frc.robot.subsystems.photon;
 import frc.robot.util.FuelSim;
 
 public class RobotContainer {
-    private double MaxSpeed = 0.2 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
+    private double MaxSpeed = 0.6 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
     private double MaxAngularRate = 0.4 * RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
 
     /* Setting up bindings for necessary control of the swerve drive platform */
@@ -67,8 +67,8 @@ public class RobotContainer {
 
         joystick.y().onTrue(new InstantCommand(() -> drivetrain.seedFieldCentric()));
 
-        // joystick.a().whileTrue(shooter.droneStrike());
-        // joystick.x().whileTrue(new InstantCommand(() -> FuelSim.getInstance().clearFuel()));
+        joystick.a().whileTrue(shooter.droneStrike());
+        joystick.x().whileTrue(new InstantCommand(() -> FuelSim.getInstance().clearFuel()));
         // joystick.rightBumper().whileTrue(new InstantCommand(() -> shooter.IncreaseSpeed()));
         // joystick.leftBumper().whileTrue(new InstantCommand(() -> shooter.DecreaseSpeed()));
         // Idle while the robot is disabled. This ensures the configured

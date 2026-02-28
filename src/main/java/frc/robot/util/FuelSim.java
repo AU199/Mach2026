@@ -97,8 +97,7 @@ public class FuelSim {
         private void update() {
             pos = pos.plus(vel.times(PERIOD / subticks));
             if (pos.getZ() > FUEL_RADIUS) {
-                Translation3d acceleration = simulation.acceleration(vel,new Translation3d()).times(PERIOD / subticks);
-                vel = vel.plus(acceleration);
+                vel = vel.plus(GRAVITY.times(PERIOD/subticks));
             }
             if (Math.abs(vel.getZ()) < 0.05 && pos.getZ() <= FUEL_RADIUS + 0.03) {
                 vel = new Translation3d(vel.getX(), vel.getY(), 0);

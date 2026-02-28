@@ -43,17 +43,7 @@ public final class Constants {
   public static final double IntakeDeployPos = 0;
   public static final double IntakeRetractPos = 0;
   public static final double G = 9.81;
-  public static final double HeightFromShooterToHubINCHES = 72;
-  public static final String Path = Paths.get("").toAbsolutePath().toString()+"src\\\\main\\\\java\\\\frc\\\\robot\\\\AprilTags\\\\2026-rebuilt-welded.json";
-  public static AprilTagFieldLayout kTagLayout;
-  static{ 
-    try{
-      kTagLayout = new AprilTagFieldLayout(Path);
-  
-    }catch(IOException e){
-      System.out.println(e.getStackTrace());
-    }
-  }
+  public static final double HeightFromShooterToHubINCHES = 72;;
   public static final Transform3d kRobotToCam = new Transform3d(0,0 ,0,new Rotation3d(0,Math.toRadians(40),0));
   public static final int LEDLENGHT = 60;
   public static final int LEDPORT = 8; 

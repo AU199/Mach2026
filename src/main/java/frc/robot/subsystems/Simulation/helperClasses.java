@@ -1,5 +1,8 @@
 package frc.robot.subsystems.Simulation;
 
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 
 public class helperClasses {
@@ -24,11 +27,19 @@ public class helperClasses {
         public double velocity;
         public double theta;
         public double phi;
+        public Transform2d robotVelocity;
 
         public velocity(double velocity, double theta, double phi) {
             this.velocity = velocity;
             this.theta = theta;
             this.phi = phi;
+        }
+        public velocity(double velocity, Transform2d robotVelocity, double theta){
+            this.theta = theta;
+            this.phi = robotVelocity.getRotation().getRadians();
+            velocity tempVelocityBall = new velocity(velocity,this.theta,this.phi); 
+            this.velocity = new Translation3d(robotVelocity.getX(),robotVelocity.getY(),0).plus(new Translation3d(tempVelocityBall.getX(), tempVelocityBall.getY(),tempVelocityBall.getZ())).getNorm();
+
         }
 
         public velocity() {

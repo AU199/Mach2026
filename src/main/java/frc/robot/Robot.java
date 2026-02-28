@@ -10,12 +10,16 @@ import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Lights;
+import frc.robot.subsystems.photon;
 import frc.robot.util.FuelSim;
 
 public class Robot extends TimedRobot {
     private Command m_autonomousCommand;
     private Lights mLights;
+    private photon vision;
+    private CommandSwerveDrivetrain drivetrain;
     private final RobotContainer m_robotContainer;
     
     /* log and replay timestamp and joystick data */
@@ -25,8 +29,9 @@ public class Robot extends TimedRobot {
     
     public Robot() {
         m_robotContainer = new RobotContainer();
-        mLights = new Lights(Constants.LEDLENGHT, Constants.LEDPORT);
-        mLights.startLED();
+        drivetrain = m_robotContainer.drivetrain;
+        vision = new photon(drivetrain);
+        
     }
 
     @Override
@@ -86,5 +91,9 @@ public class Robot extends TimedRobot {
     @Override
     public void simulationPeriodic() {
         FuelSim.getInstance().updateSim();
+        var debugField = vision.getSimDebugField();
+        vision.simulationPeriodic(drivetrain.getState().Pose);
+        debugField.getObject("EstimatedRobot").setPose(drivetrain.getState().Pose);
+        
     }
 }
