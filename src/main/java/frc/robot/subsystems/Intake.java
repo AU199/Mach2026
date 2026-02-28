@@ -13,8 +13,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
 public class Intake extends SubsystemBase {
-    private TalonFX pivotMotor = new TalonFX(Constants.pivotMotorId);
-    private TalonFX rollerMotor = new TalonFX(Constants.rollerMotorId);
+    private TalonFX pivotMotor = new TalonFX(Constants.pivotMotorId, "DriveBase");
+    private TalonFX rollerMotor = new TalonFX(Constants.rollerMotorId, "DriveBase");
     private PositionVoltage deployRequest = new PositionVoltage(Constants.IntakeDeployPos).withSlot(0);
     private PositionVoltage retractRequest = new PositionVoltage(Constants.IntakeRetractPos).withSlot(0);
     BooleanSupplier isIntakeDeployed = () -> {

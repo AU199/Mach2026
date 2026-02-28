@@ -54,11 +54,11 @@ public class Shooter extends SubsystemBase{
 
     }
 
-    public Command shooterOn() {
+    public Command shooterOn(double speed) {
         return startEnd(() -> {
-            frontShooter1.set(1);
-            frontShooter2.set(1);
-            backShooter.set(-1);
+            frontShooter1.set(speed);
+            frontShooter2.set(speed);
+            backShooter.set(-speed);
         }, () -> {
             frontShooter1.set(0);
             frontShooter2.set(0);
@@ -180,6 +180,8 @@ public class Shooter extends SubsystemBase{
 
     @Override
     public void periodic(){
-        // FuelSim is stepped in Robot.simulationPeriodic via updateSim() — don't double-step here
+        SmartDashboard.putNumber("Shooter Motor 1", frontShooter1.getVelocity().getValueAsDouble());
+        SmartDashboard.putNumber("Shooter Motor 2", frontShooter2.getVelocity().getValueAsDouble());
+        SmartDashboard.putNumber("Shooter Motor Back", backShooter.getVelocity().getValueAsDouble());
     }
 }

@@ -17,7 +17,7 @@ public class Levitator extends SubsystemBase {
     public static final double LEVITATOR_RETRACT_POSITION = 100.0;
 
     public Levitator() {
-        levitatorMotor = new TalonFX(Constants.levitatorMotorId, "DriverBase");
+        levitatorMotor = new TalonFX(Constants.levitatorMotorId, "DriveBase");
         positionVoltage = new PositionVoltage(0).withSlot(0);
    
         levitatorPIDConstants = new Slot0Configs();
