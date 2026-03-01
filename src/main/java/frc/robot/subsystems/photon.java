@@ -18,6 +18,7 @@ import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -49,16 +50,7 @@ public class photon extends SubsystemBase {
             .getStructTopic("CameraPose Estimate", Pose3d.struct).publish();
 
     int tick = 0;
-    private AprilTagFieldLayout kTagLayout;
-    {
-        try {
-            kTagLayout = new AprilTagFieldLayout(Paths.get("").toAbsolutePath().toString()
-                    + "\\\\src\\\\main\\\\java\\\\frc\\\\robot\\\\AprilTags\\\\2026-rebuilt-welded.json");
-        } catch (IOException e) {
-            System.out.println(e);
-        }
-    }
-
+    private AprilTagFieldLayout kTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
     public photon(CommandSwerveDrivetrain swerveDriveBase) {
         this.swerveDriveBase = swerveDriveBase;
         this.camera = new PhotonCamera("MainCamera");
@@ -74,8 +66,8 @@ public class photon extends SubsystemBase {
             cameraProp.setCalibration(960, 720, Rotation2d.fromDegrees(90));
             cameraProp.setCalibError(0.35, 0.10);
             cameraProp.setFPS(15);
-            cameraProp.setAvgLatencyMs(50);
-            cameraProp.setLatencyStdDevMs(15);
+            cameraProp.setAvgLatencyMs(35);
+            cameraProp.setLatencyStdDevMs(5);
 
             photonCameraSim = new PhotonCameraSim(camera, cameraProp);
 
@@ -103,6 +95,10 @@ public class photon extends SubsystemBase {
             }
             Optional<EstimatedRobotPose> estimatedPoseBetter = photonEstimator.estimateConstrainedSolvepnpPose(
                     VisionEstimate, cameMatrix, distOffsetMatrix, estimatedPoseInitial.get().estimatedPose, false, 1.0);
+            estimatedPoseBetter.ifPresentOrElse(
+                est -> {
+                    swerveDriveBase.addVisionMeasurement(est.estimatedPose.toPose2d(), est.timestampSeconds);
+                }, null);
         }
 
     }
@@ -111,15 +107,27 @@ public class photon extends SubsystemBase {
         var results = camera.getAllUnreadResults();
 
         for (PhotonPipelineResult result : results) {
+        // System.out.println("Got a result with " + result.getTargets().size() + " targets");
             var visionEstimate = photonEstimator.estimateCoprocMultiTagPose(result);
             if (visionEstimate.isEmpty()) {
                 visionEstimate = photonEstimator.estimateLowestAmbiguityPose(result);
             }
+            Matrix<N3, N3> cameMatrix = camera.getCameraMatrix().orElse(null);
+            if (cameMatrix == null) {
+                System.out.println("NO CAM MATRIX");
+            }
+            Matrix<N8, N1> distOffsetMatrix = camera.getDistCoeffs().orElse(null);
+            if (distOffsetMatrix == null) {
+                System.out.println("NO DIST OFFSET");
+            }
+            photonEstimator.estimateConstrainedSolvepnpPose(
+                    result, cameMatrix, distOffsetMatrix, visionEstimate.get().estimatedPose, false, 1.0);
             visionEstimate.ifPresentOrElse(
                         est ->
                                 {getSimDebugField()
                                         .getObject("VisionEstimation")
                                         .setPose(est.estimatedPose.toPose2d());
+                                    cameraPose.accept(est.estimatedPose);
                                 }
                         ,
                         () -> {
@@ -142,26 +150,9 @@ public class photon extends SubsystemBase {
         return visionSystemSim.getDebugField();
     }
 
-    // @FunctionalInterface
-    // public static interface mEstiamateConsumer{
-    // public void accept(Pose2d pose, double timestamp,
-    // Matrix<N3,N1>estimationSTDevs);
-    // }
-
     public void simulationPeriodic(Pose2d robotpose){
         visionSystemSim.update(robotpose);
+        getResultsSim();
     }
-
-
-    // @Override
-    // public void periodic() {
-    //     tick += 1;
-    //     if (Robot.isReal()) {
-    //         if (tick >= 100) {
-    //             getResults();
-    //             tick = 0;
-    //         }
-    //     }
-    // }
 
 }
