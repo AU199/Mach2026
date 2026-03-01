@@ -28,7 +28,7 @@ import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.Feeder;
 
 public class RobotContainer {
-    private double MaxSpeed = 0.4 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top
+    private double MaxSpeed = 0.2 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top
                                                                                         // speed
     private double MaxAngularRate = 0.6 * RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per
                                                                                             // second max angular
@@ -60,21 +60,21 @@ public class RobotContainer {
     }
 
     private void configureBindings() {
-        controller1.a().whileTrue(shooter.shooterOn(1));
-        controller1.b().whileTrue(feeder.feederOn(1));
-        controller1.leftBumper().whileTrue(shooter.pivotMotorOn(.25));
-        controller1.rightBumper().whileTrue(shooter.pivotMotorOn(-.25));
-     controller1.back().onTrue(Commands.sequence(
-            shooter.shooterOn(0.75).withTimeout(2),
-            // shooter.setPivotAngle(0.5).withTimeout(1),
-            // shooter.setPivotAngle(0).withTimeout(1),
-            // intake.deployIntake().withTimeout(1),
-            intake.runRoller().withTimeout(2),
-            // intake.retractIntake().withTimeout(1),
-            levitator.lift().withTimeout(2),
-            levitator.retract().withTimeout(2),
-            feeder.feederOn(0.7).withTimeout(2)
-        )); 
+    //     controller1.a().whileTrue(shooter.shooterOn(1));
+    //     controller1.b().whileTrue(feeder.feederOn(1));
+    //     controller1.leftBumper().whileTrue(shooter.pivotMotorOn(.25));
+    //     controller1.rightBumper().whileTrue(shooter.pivotMotorOn(-.25));
+    //  controller1.back().onTrue(Commands.sequence(
+    //         shooter.shooterOn(0.75).withTimeout(2),
+    //         // shooter.setPivotAngle(0.5).withTimeout(1),
+    //         // shooter.setPivotAngle(0).withTimeout(1),
+    //         // intake.deployIntake().withTimeout(1),
+    //         intake.runRoller().withTimeout(2),
+    //         // intake.retractIntake().withTimeout(1),
+    //         levitator.lift().withTimeout(2),
+    //         levitator.retract().withTimeout(2),
+    //         feeder.feederOn(0.7).withTimeout(2)
+    //     )); 
 
         // Note that X is defined as forward according to WPILib convention,
         // and Y is defined as to the left according to WPILib convention.
@@ -84,7 +84,7 @@ public class RobotContainer {
                                                                                                      // with negative Y
                                                                                                      // (forward)
                         .withVelocityY(controller1.getRawAxis(0) * MaxSpeed) // Drive left with negative X (left)
-                        .withRotationalRate(-controller1.getRawAxis(2) * MaxAngularRate) // Drive counterclockwise with
+                        .withRotationalRate(-controller1.getRawAxis(4) * MaxAngularRate) // Drive counterclockwise with
                                                                                       // negative X (left)
                 ));
         // controller1.a().whileTrue(intake.runRoller());
@@ -92,8 +92,17 @@ public class RobotContainer {
         // controller1.x().whileTrue(hangArm.runHangArm(-1));
         // controller1.y().whileTrue(hangArm.runHangArm(1));
 
-        // controller1.x().whileTrue(shooter.droneStrikeRK4());
-        // controller1.y().onTrue(new InstantCommand(() -> FuelSim.getInstance().clearFuel()));
+        controller1.x().whileTrue(shooter.droneStrikeRK4());
+        controller1.y().onTrue(new InstantCommand(() -> FuelSim.getInstance().clearFuel()));
+
+        // controller1.x().whileTrue(intake.setIntakePosition(Constants.IntakeDeployPos, 0.1, 0.5));
+        // controller1.y().whileTrue(intake.setIntakePosition(Constants.IntakeRetractPos, 0.025, 0.1));
+        // controller1.a().whileTrue(intake.runPivotSetSpeed(0.1));
+        // controller1.b().whileTrue(intake.runPivotSetSpeed(-0.1));
+        // controller1.rightBumper().whileTrue(intake.runRoller(0.5));
+        // controller1.rightTrigger(0.5).whileTrue(shooter.shooterOn(0.6));
+        // controller1.leftTrigger(0.5).whileTrue(feeder.feederOn(1));
+
         // controller1.x().onTrue(intake.runPivotSetSpeed(-0.05));
         // controller1.y().onTrue(intake.runPivotSetSpeed(0.05));
 
@@ -122,7 +131,7 @@ public class RobotContainer {
         // controller2.x().whileTrue(feeder.feederOn(0.7));
         //controller2.y().whileTrue(feeder.feederOn(-0.7));
 
-       // controller1.back().onTrue(new InstantCommand(() -> drivetrain.zeroGyro()));
+       controller1.leftBumper().onTrue(new InstantCommand(() -> drivetrain.resetRotation(new Rotation2d(0))));
         // drive with speed at .5 while left trigger is held, for testing
         // controller1.leftTrigger(.5).whileTrue(
         // drivetrain.applyRequest(() ->

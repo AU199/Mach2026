@@ -32,12 +32,18 @@ public final class Constants {
     public static final int pivotMotorId    = 20;
     public static final int rollerMotorId   = 21;
     
-    public static final double pivotKP = 0;
-    public static final double pivotKI = 0;
-    public static final double pivotKD = 0;
+    public static final double intakePivotKP = 0.1;
+    public static final double intakePivotKI = 0;
+    public static final double intakePivotKD = 0;
     public static final double levitatorKP = 0;
     public static final double levitatorKI = 0;
     public static final double levitatorKD = 0;
+    public static final double shooterPivotKP = 0;
+    public static final double shooterPivotKI = 0;
+    public static final double shooterPivotKD = 0;
+    public static final double hoodPivotKP = 0.1;
+    public static final double hoodPivotKI = 0.0;
+    public static final double hoodPivotKD = 0.0;
    
     public static final double FIELD_WIDTH = 8.04; // meters
     public static final Pose2d blueHubPose = new Pose2d(4.61, FIELD_WIDTH / 2.0, new Rotation2d(0));
@@ -55,11 +61,11 @@ public final class Constants {
     public static final double shooterPositionY = 0.0; // lateral
 
     /** Ball exit speed from shooter, m/s. Tune from shooter characterization. */
-    public static final double ballInitialVelocityFromShooter = 10;
+    public static final double ballInitialVelocityFromShooter = 9.5;
     public static final double ballInitialSpinFromShooter = 100;
 
     // ── Intake positions (encoder units — tune before deploy) ────────────────
-    public static final double IntakeDeployPos  = 0;
+    public static final double IntakeDeployPos  = 25;
     public static final double IntakeRetractPos = 0;
 
     // ── Vision ───────────────────────────────────────────────────────────────

@@ -7,6 +7,7 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants;
 
 
@@ -15,7 +16,7 @@ public class RK4 {
     
     private static final double AIR_DENSITY     = 1.2250;                                   // kg/m^3 at sea level
     private static final double DRAG_COEFF      = 0.46;                                     // dimensionless, smooth sphere
-    private static final double LIFT_COEFF      = 0.5;                                      // Magnus lift coefficient
+    private static final double LIFT_COEFF      = 0.1;                                      // Magnus lift coefficient
     private static final double BALL_RADIUS_IN  = 5.91 / 2.0;                               // inches
     private static final double BALL_AREA       = Math.PI * Math.pow(BALL_RADIUS_IN * 0.0254, 2); // m^2
     private static final double BALL_MASS_KG    = Kilograms.convertFrom(0.5, Pounds);
@@ -28,6 +29,7 @@ public class RK4 {
     private final double dt;
     private final Pose2d targetPose;
     private final Pose2d shooterPose;
+    private final Vector<N3> ballInitialLinearVelocity;
     private final Vector<N3> ballInitialAngularVelocity; // field-relative, constant throughout flight
 
     
@@ -39,17 +41,9 @@ public class RK4 {
             double dt) {
         this.targetPose = targetPose;
         this.shooterPose = shooterPose;
+        this.ballInitialLinearVelocity = ballInitialAngularVelocityRelativeToField;
         this.ballInitialAngularVelocity = ballInitialAngularVelocityRelativeToField;
         this.dt = dt;
-    }
-
-    
-    private Vector<N3> cross(Vector<N3> a, Vector<N3> b) {
-        return VecBuilder.fill(
-            a.get(1) * b.get(2) - a.get(2) * b.get(1),
-            a.get(2) * b.get(0) - a.get(0) * b.get(2),
-            a.get(0) * b.get(1) - a.get(1) * b.get(0)
-        );
     }
 
     
@@ -58,18 +52,19 @@ public class RK4 {
         if (speed < 1e-9) return VecBuilder.fill(0, 0, 0);
         double scalar = -0.5 * AIR_DENSITY * DRAG_COEFF * BALL_AREA * speed / BALL_MASS_KG;
         
-        // return VecBuilder.fill(0, 0, 0); // Temporary for now
-        return v.times(scalar);
+        return VecBuilder.fill(0, 0, 0); // Temporary for now
+        // return v.times(scalar);
     }
 
     
     private Vector<N3> magnusAcceleration(Vector<N3> v) {
         if (ballInitialAngularVelocity == null) return VecBuilder.fill(0, 0, 0);
-        Vector<N3> omegaCrossV = cross(ballInitialAngularVelocity, v);
+        // Vector<N3> omegaCrossV = cross(ballInitialAngularVelocity, v);
+        Vector omegaCrossV = Vector.cross(ballInitialAngularVelocity, v);
         double scalar = MAGNUS_COEFF / BALL_MASS_KG;
 
-        // return VecBuilder.fill(0, 0, 0); // Temporary for now — gravity only
-        return omegaCrossV.times(scalar);
+        return VecBuilder.fill(0, 0, 0); // Temporary for now
+        // return omegaCrossV.times(scalar);
     }
 
 
@@ -105,15 +100,13 @@ public class RK4 {
         Vector<N3> newVel = vel.plus(
             (k1.plus(k2.times(2.0)).plus(k3.times(2.0)).plus(k4)).times(dt / 6.0)
         );
-        System.out.println(m1);
-        System.out.println(m2);
-        System.out.println(m3);
-        System.out.println(m4);
         return new BallState(newPos, newVel);
     }
 
 
-    public BallError calculateError(Vector<N3> ballInitialLinearVelocity) {
+    public BallError calculateError() {
+        double[] velocityArray = {ballInitialLinearVelocity.get(0), ballInitialLinearVelocity.get(1), ballInitialLinearVelocity.get(2)};
+        SmartDashboard.putNumberArray("Ball Inital Linear Velocity", velocityArray);
         Vector<N3> position = VecBuilder.fill(
             shooterPose.getX(),
             shooterPose.getY(),
@@ -130,18 +123,19 @@ public class RK4 {
             // Track whether ball has cleared hub height
             if (z >= Constants.hubZ) {
                 hasGoneAboveHub = true;
-                System.out.println("redeem");
             }
 
             // Ball has gone above hub and is now descending back through hub height — done
             if (hasGoneAboveHub && z < Constants.hubZ) {
-                System.out.println("redeem1");
+                SmartDashboard.putBoolean("CanReachHubZ", true);
+                hasGoneAboveHub = true;
                 break;
             }
 
             // Ball hit the ground before clearing hub — bad trajectory
             if (z < 0.0) {
-                System.out.println("redeem2");
+                System.out.println("Hit ground before hub Z");
+                SmartDashboard.putBoolean("CanReachHubZ", false);
                 return new BallError(Double.NaN, Double.NaN);
             }
 
@@ -158,6 +152,8 @@ public class RK4 {
 
         double xError = targetPose.getX() - position.get(0);
         double yError = targetPose.getY() - position.get(1);
+
+        SmartDashboard.putBoolean("CanReachHubZ", true);
         return new BallError(xError, yError);
     }
 }

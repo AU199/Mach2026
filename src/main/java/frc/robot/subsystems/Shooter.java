@@ -1,9 +1,12 @@
 package frc.robot.subsystems;
 
+import java.util.function.BooleanSupplier;
+
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 
+import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -40,9 +43,9 @@ public class Shooter extends SubsystemBase{
 
     public Shooter(CommandSwerveDrivetrain drivetrain, boolean isBlue, Field2d field) {
         Slot0Configs pivotConfig = new Slot0Configs();
-        pivotConfig.kP = Constants.pivotKP;
+        pivotConfig.kP = Constants.shooterPivotKP;
         pivotConfig.kI = 0;
-        pivotConfig.kD = Constants.pivotKD;
+        pivotConfig.kD = Constants.shooterPivotKD;
         this.field = field;
         this.drivebase = drivetrain;
         if (isBlue) {
@@ -51,8 +54,7 @@ public class Shooter extends SubsystemBase{
         else {
             hubPose = Constants.redHubPose;
         }
-
-    }
+    };
 
     public Command shooterOn(double speed) {
         return startEnd(() -> {
@@ -66,21 +68,42 @@ public class Shooter extends SubsystemBase{
         });
     }
 
-    public Command pivotMotorOn(double speed) {
-        return startEnd(() -> {
-            hoodMotor.set(speed);
-            System.out.println("running el hood:" + speed);
-        }, () -> {
-            hoodMotor.set(-0.025);
-            System.out.println("par'e correr el hood");
-        });
+    // public Command pivotMotorOn(double speed) {
+    //     return startEnd(() -> {
+    //         hoodMotor.set(speed);
+    //         System.out.println("running el hood:" + speed);
+    //     }, () -> {
+    //         hoodMotor.set(-0.025);
+    //         System.out.println("par'e correr el hood");
+    //     });
+    // }
+    // public Command setPivotAngle(double angle) {
+    //     return startEnd(() -> {
+    //         hoodMotor.setControl(pivotAngleRequest.withPosition(angle));
+    //     }, () -> {
+    //         hoodMotor.set(0);
+    //     });
+    // }
+
+    public BooleanSupplier hoodReachedPosition(double targetPosition) {
+        BooleanSupplier hoodReachedPosition = () -> {
+            boolean result = Math.abs(hoodMotor.getPosition().getValueAsDouble() - targetPosition) < 0.08;
+            return result;
+        };
+        return hoodReachedPosition;
     }
-    public Command setPivotAngle(double angle) {
-        return startEnd(() -> {
-            hoodMotor.setControl(pivotAngleRequest.withPosition(angle));
-        }, () -> {
-            hoodMotor.set(0);
-        });
+
+    public Command setHoodPosition(double targetPosition) {
+        return runEnd(
+            () -> {
+                double error = targetPosition - hoodMotor.getPosition().getValueAsDouble();
+                double output = error * Constants.hoodPivotKP;
+                hoodMotor.set(output);
+            },
+            () -> {
+                hoodMotor.set(0);
+            }
+        ).until(hoodReachedPosition(targetPosition));
     }
 
     private double getTimeFromDist(double dist) {
@@ -148,18 +171,25 @@ public class Shooter extends SubsystemBase{
             double theta = currentAngles.getTheta();
             double phi   = currentAngles.getPhi();
 
+            SmartDashboard.putNumber("Ideal Theta", theta);
+            SmartDashboard.putNumber("Ideal Phi",  phi);
+
             Newton newton = new Newton(robotPose, hubPose, robotFieldRelativeVelocity);
 
             ShotAngles anglesFromNewton = newton.findOptimalTrajectory(currentAngles);
             if (!(Double.isNaN(anglesFromNewton.getTheta()) || Double.isNaN(anglesFromNewton.getPhi()))) {
+                System.out.println("Newton returned");
                 currentAngles = anglesFromNewton;
             }
             else {
+                System.out.println("Shot was NaN");
                 return;
             }
             
             theta = currentAngles.getTheta();
             phi = currentAngles.getPhi();
+            SmartDashboard.putNumber("Newton Theta", theta);
+            SmartDashboard.putNumber("Newton Phi", phi);            
 
             hoodMotor.setControl(pivotAngleRequest.withPosition(theta));
             publisher.set(new Pose3d(robotPose.getX(), robotPose.getY(), 0, new Rotation3d(0, 0, phi)));
@@ -167,21 +197,21 @@ public class Shooter extends SubsystemBase{
             double shotSpeed = Constants.ballInitialVelocityFromShooter;
             // Spawn fuel ball in FuelSim with velocity from shot angles
 
+            Vector ballLinearVelocity = newton.getBallLinearVelocity();
+            if (ballLinearVelocity == null) {
+                System.out.println("Ball Velocity Null");
+                return;
+            }
+ 
             FuelSim.getInstance().spawnFuel(
                 new Translation3d(robotPose.getX(), robotPose.getY(), Constants.shooterHeight),
-                new Translation3d(
-                    shotSpeed * Math.cos(theta) * Math.cos(phi),
-                    shotSpeed * Math.cos(theta) * Math.sin(phi),
-                    shotSpeed * Math.sin(theta)
-                )
+                new Translation3d(ballLinearVelocity)
             );
         });
     }
 
     @Override
     public void periodic(){
-        SmartDashboard.putNumber("Shooter Motor 1", frontShooter1.getVelocity().getValueAsDouble());
-        SmartDashboard.putNumber("Shooter Motor 2", frontShooter2.getVelocity().getValueAsDouble());
-        SmartDashboard.putNumber("Shooter Motor Back", backShooter.getVelocity().getValueAsDouble());
+
     }
 }

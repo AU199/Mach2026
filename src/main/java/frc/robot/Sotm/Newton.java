@@ -1,5 +1,7 @@
 package frc.robot.Sotm;
 
+import java.lang.reflect.Array;
+
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -29,14 +31,14 @@ public class Newton {
     private final double ballAngularSpeedRelativeToRobot; // rad/s, spin speed from shooter wheel
 
     
-    private static final double DT      = 0.001;  // RK4 timestep (seconds)
-    private static final double EPSILON = 1e-4;   // finite difference step for Jacobian
+    private static final double DT      = 0.01;  // RK4 timestep (seconds)
+    private static final double EPSILON = 1e-3;   // finite difference step for Jacobian
 
     
     private static final int    MAX_ITER      = 30;
     private static final double CONVERGE_TOL  = 1e-4; // meters — stop when error < 0.1mm
 
-    
+    private Vector finalBallLinearVelocity;
 
     
     public Newton(
@@ -49,8 +51,7 @@ public class Newton {
         this.ballAngularSpeedRelativeToRobot = Constants.ballInitialSpinFromShooter;
     }
 
-    
-    public BallError calculateError(double theta, double phi, double speed) {
+    public Vector<N3> calculateBallLinearVelocity(double theta, double phi, double speed) {
         double heading = robotPose.getRotation().getRadians();
 
         // ── Ball linear velocity in robot frame ──
@@ -71,19 +72,13 @@ public class Newton {
 
         Vector<N3> ballLinearVelocity = VecBuilder.fill(vx_field, vy_field, vz_field);
 
-        // ── Ball angular velocity ──
-        // Shooter wheel spins around an axis perpendicular to the shot direction
-        // (pure backspin/topspin). Spin axis in robot frame is perpendicular to shot
-        // direction in the horizontal plane: (-sin(phiRobot), cos(phiRobot), 0)
-        // This produces backspin (top of ball moving opposite to travel).
-        double wx_robot = -ballAngularSpeedRelativeToRobot * Math.sin(phiRobot);
-        double wy_robot =  ballAngularSpeedRelativeToRobot * Math.cos(phiRobot);
+        return ballLinearVelocity;
+    }
 
-        // Rotate angular velocity into field frame
-        double wx_field = wx_robot * Math.cos(heading) - wy_robot * Math.sin(heading);
-        double wy_field = wx_robot * Math.sin(heading) + wy_robot * Math.cos(heading);
-
-        Vector<N3> ballAngularVelocity = VecBuilder.fill(wx_field, wy_field, 0.0);
+    public BallError calculateError(double theta, double phi, double speed) {
+        Vector<N3> ballLinearVelocity = calculateBallLinearVelocity(theta, phi, speed);
+        // Vector ballAngularVelocity = phi;
+        Vector<N3> ballAngularVelocity = VecBuilder.fill(0, 0, 0);
 
         // ── Run RK4 ──
         RK4 rk4 = new RK4(
@@ -94,7 +89,11 @@ public class Newton {
             DT
         );
 
-        return rk4.calculateError(ballLinearVelocity);
+        return rk4.calculateError();
+    }
+
+    public Vector getBallLinearVelocity() {
+        return finalBallLinearVelocity;
     }
 
     public ShotAngles findOptimalTrajectory(ShotAngles initialGuess) {
@@ -102,19 +101,38 @@ public class Newton {
         double phi   = initialGuess.getPhi();
         double speed = Constants.ballInitialVelocityFromShooter;
 
+        double deltaTheta = 0;
+        double deltaPhi = 0;
+
+        double[] iterationThetas = new double[MAX_ITER + 1];
+        double[] iterationPhis = new double[MAX_ITER + 1];
+
+        iterationThetas[0] = initialGuess.getTheta();
+        iterationPhis[0] = initialGuess.getPhi();
+
+        double[] xErrors = new double[MAX_ITER];
+        double[] yErrors = new double[MAX_ITER];
+
         for (int iter = 0; iter < MAX_ITER; iter++) {
             BallError e0 = calculateError(theta, phi, speed);
 
-            // NaN means trajectory hit ground — give up and return current best
+            // NaN means trajectory hit ground — give up and return NaN
             if (Double.isNaN(e0.getxError()) || Double.isNaN(e0.getyError())) {
-                break;
+                // Step overshot into bad territory, halve the last step and retry
+                theta -= deltaTheta / 2.0;
+                phi -= deltaPhi / 2.0;
+                continue;
             }
 
             double ex = e0.getxError();
             double ey = e0.getyError();
 
+            xErrors[iter] = ex;
+            yErrors[iter] = ey;
+
             // Converged
             if (Math.abs(ex) < CONVERGE_TOL && Math.abs(ey) < CONVERGE_TOL) {
+                finalBallLinearVelocity = calculateBallLinearVelocity(theta, phi, speed);
                 break;
             }
 
@@ -124,6 +142,7 @@ public class Newton {
 
             // Guard: if perturbed trajectories are also NaN, Jacobian is unusable
             if (Double.isNaN(eThetaPlus.getxError()) || Double.isNaN(ePhiPlus.getxError())) {
+                finalBallLinearVelocity = calculateBallLinearVelocity(theta, phi, speed);
                 break;
             }
 
@@ -136,26 +155,41 @@ public class Newton {
 
             // Singular or near-singular Jacobian — can't invert
             if (Math.abs(det) < 1e-10) {
+                finalBallLinearVelocity = calculateBallLinearVelocity(theta, phi, speed);
                 break;
             }
 
             // ── Correct 2x2 Newton step ──
             // Δtheta = -(dEy/dPhi * ex - dEx/dPhi * ey) / det
             // Δphi   = -(-dEy/dTheta * ex + dEx/dTheta * ey) / det
-            double deltaTheta = -(dEy_dPhi * ex - dEx_dPhi * ey) / det;
-            double deltaPhi   = -(-dEy_dTheta * ex + dEx_dTheta * ey) / det;
+            // deltaTheta = -(dEy_dPhi * ex - dEx_dPhi * ey) / det;
+            // deltaPhi   = -(-dEy_dTheta * ex + dEx_dTheta * ey) / det;
+
+            deltaPhi = (dEy_dTheta * ex - dEx_dTheta * ey) / det;
+            deltaTheta = (-ey - deltaPhi * dEy_dPhi) / dEy_dTheta;
 
             theta += deltaTheta;
             phi   += deltaPhi;
+
+            iterationThetas[iter + 1] = theta;
+            iterationPhis[iter + 1] = phi;
 
             // Don't clamp (we just won't shoot if it's over 75)
             // Clamp theta to physically valid range [0, PI/2]
             // theta = Math.max(0.0, Math.min(Math.PI / 2.0, theta));
         }
 
-        if (theta > 75) {
-            return new ShotAngles(Double.NaN, Double.NaN);
-        }
+        // if (theta > Math.toRadians(75)) {
+        //     System.out.println("Exceeds radian limit");
+        //     return new ShotAngles(Double.NaN, Double.NaN);
+        // }
+
+        SmartDashboard.putNumberArray("Iteration Theta", iterationThetas);
+        SmartDashboard.putNumberArray("Iteration Phi", iterationPhis);
+        SmartDashboard.putNumberArray("X Errors", xErrors);
+        SmartDashboard.putNumberArray("Y Errors", yErrors);        
+
+        finalBallLinearVelocity = calculateBallLinearVelocity(theta, phi, speed);
         return new ShotAngles(theta, phi);
     }
 }
