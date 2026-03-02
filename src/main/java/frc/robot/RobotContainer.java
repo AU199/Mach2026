@@ -92,7 +92,7 @@ public class RobotContainer {
         // controller1.x().whileTrue(hangArm.runHangArm(-1));
         // controller1.y().whileTrue(hangArm.runHangArm(1));
 
-        controller1.x().whileTrue(shooter.droneStrikeRK4());
+        controller1.x().whileTrue(shooter.droneStrikeRK4(shooter.getHubPose(), 1)); // spinDirection: 1.0 = backspin, -1.0 = topspin
         controller1.y().onTrue(new InstantCommand(() -> FuelSim.getInstance().clearFuel()));
 
         // controller1.x().whileTrue(intake.setIntakePosition(Constants.IntakeDeployPos, 0.1, 0.5));

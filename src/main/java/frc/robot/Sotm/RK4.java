@@ -41,7 +41,7 @@ public class RK4 {
             double dt) {
         this.targetPose = targetPose;
         this.shooterPose = shooterPose;
-        this.ballInitialLinearVelocity = ballInitialAngularVelocityRelativeToField;
+        this.ballInitialLinearVelocity = ballInitialLinearVelocityRelativeToField;
         this.ballInitialAngularVelocity = ballInitialAngularVelocityRelativeToField;
         this.dt = dt;
     }
@@ -52,8 +52,8 @@ public class RK4 {
         if (speed < 1e-9) return VecBuilder.fill(0, 0, 0);
         double scalar = -0.5 * AIR_DENSITY * DRAG_COEFF * BALL_AREA * speed / BALL_MASS_KG;
         
-        return VecBuilder.fill(0, 0, 0); // Temporary for now
-        // return v.times(scalar);
+        // return VecBuilder.fill(0, 0, 0); // Temporary for now
+        return v.times(scalar);
     }
 
     
@@ -63,8 +63,8 @@ public class RK4 {
         Vector omegaCrossV = Vector.cross(ballInitialAngularVelocity, v);
         double scalar = MAGNUS_COEFF / BALL_MASS_KG;
 
-        return VecBuilder.fill(0, 0, 0); // Temporary for now
-        // return omegaCrossV.times(scalar);
+        // return VecBuilder.fill(0, 0, 0); // Temporary for now
+        return omegaCrossV.times(scalar);
     }
 
 

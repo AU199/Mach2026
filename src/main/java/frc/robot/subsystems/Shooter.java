@@ -34,6 +34,7 @@ public class Shooter extends SubsystemBase{
     PositionVoltage pivotAngleRequest = new PositionVoltage(0).withSlot(0);
     boolean isBlue;
     Field2d field;
+    int tick = 0;
     CommandSwerveDrivetrain drivebase;
     StructPublisher<Pose3d> publisher = NetworkTableInstance.getDefault()
             .getStructTopic("FuturePose", Pose3d.struct).publish();
@@ -55,6 +56,10 @@ public class Shooter extends SubsystemBase{
             hubPose = Constants.redHubPose;
         }
     };
+
+    public Pose2d getHubPose() {
+        return hubPose;
+    }
 
     public Command shooterOn(double speed) {
         return startEnd(() -> {
@@ -159,13 +164,14 @@ public class Shooter extends SubsystemBase{
         });
     }
 
-    public Command droneStrikeRK4() {
+    // spinDirection: 1.0 = backspin, -1.0 = topspin
+    public Command droneStrikeRK4(Pose2d targetPose, double spinDirection) {
         return run(() -> {
             Pose2d robotPose = drivebase.getState().Pose;
             ChassisSpeeds robotRobotRelativeVelocity = drivebase.getState().Speeds;
             ChassisSpeeds robotFieldRelativeVelocity = ChassisSpeeds.fromRobotRelativeSpeeds(robotRobotRelativeVelocity, robotPose.getRotation());
 
-            IdealTrajectory idealTrajectory = new IdealTrajectory(robotPose, hubPose, robotFieldRelativeVelocity);
+            IdealTrajectory idealTrajectory = new IdealTrajectory(robotPose, targetPose, robotFieldRelativeVelocity);
             ShotAngles currentAngles = idealTrajectory.getIdealShotAngles();
 
             double theta = currentAngles.getTheta();
@@ -174,7 +180,7 @@ public class Shooter extends SubsystemBase{
             SmartDashboard.putNumber("Ideal Theta", theta);
             SmartDashboard.putNumber("Ideal Phi",  phi);
 
-            Newton newton = new Newton(robotPose, hubPose, robotFieldRelativeVelocity);
+            Newton newton = new Newton(robotPose, targetPose, robotFieldRelativeVelocity, spinDirection);
 
             ShotAngles anglesFromNewton = newton.findOptimalTrajectory(currentAngles);
             if (!(Double.isNaN(anglesFromNewton.getTheta()) || Double.isNaN(anglesFromNewton.getPhi()))) {
@@ -197,21 +203,23 @@ public class Shooter extends SubsystemBase{
             double shotSpeed = Constants.ballInitialVelocityFromShooter;
             // Spawn fuel ball in FuelSim with velocity from shot angles
 
-            Vector ballLinearVelocity = newton.getBallLinearVelocity();
+            Vector ballLinearVelocity = newton.getFinalBallLinearVelocity();
             if (ballLinearVelocity == null) {
                 System.out.println("Ball Velocity Null");
                 return;
             }
- 
-            FuelSim.getInstance().spawnFuel(
-                new Translation3d(robotPose.getX(), robotPose.getY(), Constants.shooterHeight),
-                new Translation3d(ballLinearVelocity)
-            );
+            if(tick >= 20){
+                FuelSim.getInstance().spawnFuel(
+                    new Translation3d(robotPose.getX(), robotPose.getY(), Constants.shooterHeight),
+                    new Translation3d(ballLinearVelocity)
+                );
+                tick = 0;
+            }
         });
     }
 
     @Override
     public void periodic(){
-
+        tick += 1;
     }
 }

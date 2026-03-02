@@ -40,15 +40,19 @@ public class Newton {
 
     private Vector finalBallLinearVelocity;
 
+    private double spinDirection;
+
     
     public Newton(
             Pose2d robotPose,
             Pose2d hubPose,
-            ChassisSpeeds robotFieldRelativeVelocity) {
+            ChassisSpeeds robotFieldRelativeVelocity,
+            double spinDirection) {
         this.robotPose = robotPose;
         this.hubPose = hubPose;
         this.robotFieldRelativeVelocity = robotFieldRelativeVelocity;
         this.ballAngularSpeedRelativeToRobot = Constants.ballInitialSpinFromShooter;
+        this.spinDirection = spinDirection;
     }
 
     public Vector<N3> calculateBallLinearVelocity(double theta, double phi, double speed) {
@@ -77,8 +81,8 @@ public class Newton {
 
     public BallError calculateError(double theta, double phi, double speed) {
         Vector<N3> ballLinearVelocity = calculateBallLinearVelocity(theta, phi, speed);
-        // Vector ballAngularVelocity = phi;
-        Vector<N3> ballAngularVelocity = VecBuilder.fill(0, 0, 0);
+        
+        Vector<N3> ballAngularVelocity = VecBuilder.fill(spinDirection * -Math.sin(phi), spinDirection *  Math.cos(phi), 0).times(ballAngularSpeedRelativeToRobot);
 
         // ── Run RK4 ──
         RK4 rk4 = new RK4(
@@ -92,7 +96,7 @@ public class Newton {
         return rk4.calculateError();
     }
 
-    public Vector getBallLinearVelocity() {
+    public Vector getFinalBallLinearVelocity() {
         return finalBallLinearVelocity;
     }
 
@@ -118,7 +122,7 @@ public class Newton {
 
             // NaN means trajectory hit ground — give up and return NaN
             if (Double.isNaN(e0.getxError()) || Double.isNaN(e0.getyError())) {
-                // Step overshot into bad territory, halve the last step and retry
+                // Step overshot into bad territory, halve the last step and retryj
                 theta -= deltaTheta / 2.0;
                 phi -= deltaPhi / 2.0;
                 continue;
