@@ -30,7 +30,9 @@ public class Shooter extends SubsystemBase{
     TalonFX frontShooter1 = new TalonFX(Constants.frontShooter1Id, "DriveBase");
     TalonFX frontShooter2 = new TalonFX(Constants.frontShooter2Id, "DriveBase");
     TalonFX backShooter = new TalonFX(Constants.backShooterId, "DriveBase");
-    TalonFX hoodMotor = new TalonFX(Constants.hoodMotorId, "DriveBase");
+    
+    Hood hoodMotor = new Hood();
+
     PositionVoltage pivotAngleRequest = new PositionVoltage(0).withSlot(0);
     boolean isBlue;
     Field2d field;
@@ -90,27 +92,6 @@ public class Shooter extends SubsystemBase{
     //     });
     // }
 
-    public BooleanSupplier hoodReachedPosition(double targetPosition) {
-        BooleanSupplier hoodReachedPosition = () -> {
-            boolean result = Math.abs(hoodMotor.getPosition().getValueAsDouble() - targetPosition) < 0.08;
-            return result;
-        };
-        return hoodReachedPosition;
-    }
-
-    public Command setHoodPosition(double targetPosition) {
-        return runEnd(
-            () -> {
-                double error = targetPosition - hoodMotor.getPosition().getValueAsDouble();
-                double output = error * Constants.hoodPivotKP;
-                hoodMotor.set(output);
-            },
-            () -> {
-                hoodMotor.set(0);
-            }
-        ).until(hoodReachedPosition(targetPosition));
-    }
-
     private double getTimeFromDist(double dist) {
         return 2/dist;   
     }
@@ -156,7 +137,7 @@ public class Shooter extends SubsystemBase{
             currentYaw = getYaw(futurePose);
             publisher.set(new Pose3d(futurePose.getX(), futurePose.getY(), 0,new Rotation3d(0,0,currentYaw)));
             shootAngle = getAngleFromDist(hubDist);
-            hoodMotor.setControl(pivotAngleRequest.withPosition(shootAngle));
+            hoodMotor.setHoodPosition(shootAngle);
             // Make it turn
             SmartDashboard.putNumber("shooterangle", shootAngle);
             double shotSpeed = 4;
@@ -197,7 +178,7 @@ public class Shooter extends SubsystemBase{
             SmartDashboard.putNumber("Newton Theta", theta);
             SmartDashboard.putNumber("Newton Phi", phi);            
 
-            hoodMotor.setControl(pivotAngleRequest.withPosition(theta));
+            hoodMotor.setHoodPosition(theta);
             publisher.set(new Pose3d(robotPose.getX(), robotPose.getY(), 0, new Rotation3d(0, 0, phi)));
 
             double shotSpeed = Constants.ballInitialVelocityFromShooter;

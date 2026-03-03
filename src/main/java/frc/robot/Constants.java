@@ -41,10 +41,18 @@ public final class Constants {
     public static final double shooterPivotKP = 0;
     public static final double shooterPivotKI = 0;
     public static final double shooterPivotKD = 0;
+    
     public static final double hoodPivotKP = 0.1;
-    public static final double hoodPivotKI = 0.0;
-    public static final double hoodPivotKD = 0.0;
+    public static final double hoodPivotKI = 0;
+    public static final double hoodPivotKD = 0;
+    public static final double hoodPivotKS = 0.1;
+    public static final double hoodPivotKV = 0.0;
+    public static final double hoodPivotKG = 0.0;
+    public static final double hoodPivotKA = 0.0;
    
+    public static final double hoodMaxVelocity = 5;
+    public static final double hoodMaxAcceleration = 5;
+
     public static final double FIELD_WIDTH = 8.04; // meters
     public static final Pose2d blueHubPose = new Pose2d(4.61, FIELD_WIDTH / 2.0, new Rotation2d(0));
     public static final Pose2d redHubPose  = new Pose2d(16.51 - 4.61, FIELD_WIDTH / 2.0, new Rotation2d(0));
