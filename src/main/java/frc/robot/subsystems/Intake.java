@@ -19,14 +19,15 @@ public class Intake extends SubsystemBase {
     private TalonFX rollerMotor = new TalonFX(Constants.rollerMotorId, "DriveBase");
     private PositionVoltage deployRequest = new PositionVoltage(Constants.IntakeDeployPos).withSlot(0);
     private PositionVoltage retractRequest = new PositionVoltage(Constants.IntakeRetractPos).withSlot(0);
-    BooleanSupplier isIntakeDeployed = () -> {
-        boolean result = Math.abs(pivotMotor.getPosition().getValueAsDouble() - Constants.IntakeDeployPos) < 0.08;
-      return result;
-    };
-    BooleanSupplier isIntakeRetracted = () -> {
-        boolean result = Math.abs(pivotMotor.getPosition().getValueAsDouble() - Constants.IntakeRetractPos) < 0.08;
-      return result;
-    };
+
+    // BooleanSupplier isIntakeDeployed = () -> {
+    //     boolean result = Math.abs(pivotMotor.getPosition().getValueAsDouble() - Constants.IntakeDeployPos) < 0.08;
+    //   return result;
+    // };
+    // BooleanSupplier isIntakeRetracted = () -> {
+    //     boolean result = Math.abs(pivotMotor.getPosition().getValueAsDouble() - Constants.IntakeRetractPos) < 0.08;
+    //   return result;
+    // };
 
     public Intake() {
         Slot0Configs pivotConfig = new Slot0Configs();
@@ -51,7 +52,7 @@ public class Intake extends SubsystemBase {
             () -> {
                 pivotMotor.set(0);
             }
-        ).until(isIntakeDeployed);
+        ).until(() -> {boolean result = Math.abs(pivotMotor.getPosition().getValueAsDouble() - targetPosition) < 0.08; return result;});
 
         // return start(() -> {
         //     pivotMotor.setControl(request);

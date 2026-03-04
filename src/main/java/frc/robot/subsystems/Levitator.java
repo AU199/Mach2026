@@ -13,8 +13,8 @@ public class Levitator extends SubsystemBase {
 
     public static final double LEVITATOR_LIFT_TIME = 2.5;
     public static final double LEVITATOR_RETRACT_TIME = 2.5;
-    public static final double LEVITATOR_LIFT_POSITION = 10.0;
-    public static final double LEVITATOR_RETRACT_POSITION = 100.0;
+    public static final double LEVITATOR_LIFT_POSITION = -10.0;
+    public static final double LEVITATOR_RETRACT_POSITION = -100.0;
 
     public Levitator() {
         levitatorMotor = new TalonFX(Constants.levitatorMotorId, "DriveBase");
@@ -49,6 +49,14 @@ public class Levitator extends SubsystemBase {
         })
         .until(this::done_retracting)
         .withTimeout(LEVITATOR_RETRACT_TIME);
+    }
+
+    public Command runLevitator(double speed) {
+        return startEnd(() -> {
+            levitatorMotor.set(speed);
+        }, () -> {
+            levitatorMotor.set(0);
+        });
     }
 
     private boolean done_lifting(){

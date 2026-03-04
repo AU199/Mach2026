@@ -16,16 +16,18 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
+import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
-
+import frc.robot.Sotm.DroneStrike;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Levitator;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.Feeder;
+import frc.robot.subsystems.Hood;
 
 public class RobotContainer {
     private double MaxSpeed = 0.2 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top
@@ -36,18 +38,19 @@ public class RobotContainer {
 
     /* Setting up bindings for necessary control of the swerve drive platform */
     private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
-            .withDeadband(MaxSpeed * 0.04).withRotationalDeadband(MaxAngularRate * 0.04) // Add a 10% deadband
+            .withDeadband(MaxSpeed * 0.1).withRotationalDeadband(MaxAngularRate * 0.1) // Add a 10% deadband
             .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
     private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
     private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
 
     private final Telemetry logger = new Telemetry(MaxSpeed);
     private final Field2d m_field = new Field2d();
-    private final CommandXboxController controller1 = new CommandXboxController(0);
+    private final CommandPS4Controller controller1 = new CommandPS4Controller(0);
     private final CommandXboxController controller2 = new CommandXboxController(1);
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
 
     public final Shooter shooter = new Shooter(drivetrain, true, m_field);
+    public final Hood hood = new Hood();
     public final Levitator levitator = new Levitator();
     public final Intake intake = new Intake();
     public final Feeder feeder = new Feeder();
@@ -64,17 +67,17 @@ public class RobotContainer {
     //     controller1.b().whileTrue(feeder.feederOn(1));
     //     controller1.leftBumper().whileTrue(shooter.pivotMotorOn(.25));
     //     controller1.rightBumper().whileTrue(shooter.pivotMotorOn(-.25));
-    //  controller1.back().onTrue(Commands.sequence(
-    //         shooter.shooterOn(0.75).withTimeout(2),
-    //         // shooter.setPivotAngle(0.5).withTimeout(1),
-    //         // shooter.setPivotAngle(0).withTimeout(1),
-    //         // intake.deployIntake().withTimeout(1),
-    //         intake.runRoller().withTimeout(2),
-    //         // intake.retractIntake().withTimeout(1),
-    //         levitator.lift().withTimeout(2),
-    //         levitator.retract().withTimeout(2),
-    //         feeder.feederOn(0.7).withTimeout(2)
-    //     )); 
+     controller1.share().onTrue(Commands.sequence(
+            shooter.shooterOn(0.75).withTimeout(2),
+            // hood.setHoodPosition(0.5).withTimeout(1),
+            // hood.setHoodPosition(0).withTimeout(1),
+            intake.setIntakePosition(Constants.IntakeDeployPos, 0.1, 0.5).withTimeout(2),
+            intake.runRoller(.2).withTimeout(2),
+            intake.setIntakePosition(Constants.IntakeRetractPos, 0.025, 0.3).withTimeout(10),
+            levitator.lift().withTimeout(2),
+            levitator.retract().withTimeout(2),
+            feeder.feederOn(0.1).withTimeout(2)
+        ));
 
         // Note that X is defined as forward according to WPILib convention,
         // and Y is defined as to the left according to WPILib convention.
@@ -84,7 +87,7 @@ public class RobotContainer {
                                                                                                      // with negative Y
                                                                                                      // (forward)
                         .withVelocityY(controller1.getRawAxis(0) * MaxSpeed) // Drive left with negative X (left)
-                        .withRotationalRate(-controller1.getRawAxis(4) * MaxAngularRate) // Drive counterclockwise with
+                        .withRotationalRate(-controller1.getRawAxis(2) * MaxAngularRate) // Drive counterclockwise with
                                                                                       // negative X (left)
                 ));
         // controller1.a().whileTrue(intake.runRoller());
@@ -92,16 +95,20 @@ public class RobotContainer {
         // controller1.x().whileTrue(hangArm.runHangArm(-1));
         // controller1.y().whileTrue(hangArm.runHangArm(1));
 
-        controller1.x().whileTrue(shooter.droneStrikeRK4(shooter.getHubPose(), 1)); // spinDirection: 1.0 = backspin, -1.0 = topspin
-        controller1.y().onTrue(new InstantCommand(() -> FuelSim.getInstance().clearFuel()));
+        // controller1.x().whileTrue(new DroneStrike(drivetrain, shooter.getHubPose(), hood, 1)); // spinDirection: 1.0 = backspin, -1.0 = topspin
+        // controller1.y().onTrue(new InstantCommand(() -> FuelSim.getInstance().clearFuel()));
 
-        // controller1.x().whileTrue(intake.setIntakePosition(Constants.IntakeDeployPos, 0.1, 0.5));
-        // controller1.y().whileTrue(intake.setIntakePosition(Constants.IntakeRetractPos, 0.025, 0.1));
-        // controller1.a().whileTrue(intake.runPivotSetSpeed(0.1));
-        // controller1.b().whileTrue(intake.runPivotSetSpeed(-0.1));
-        // controller1.rightBumper().whileTrue(intake.runRoller(0.5));
-        // controller1.rightTrigger(0.5).whileTrue(shooter.shooterOn(0.6));
-        // controller1.leftTrigger(0.5).whileTrue(feeder.feederOn(1));
+        controller1.cross().whileTrue(intake.setIntakePosition(Constants.IntakeDeployPos, 0.1, 0.5));
+        controller1.triangle().whileTrue(intake.setIntakePosition(Constants.IntakeRetractPos, 0.025, 0.3));
+        // controller1.circle().whileTrue(intake.runPivotSetSpeed(0.1));
+        controller1.square().whileTrue(intake.runPivotSetSpeed(-0.1));
+        controller1.circle().whileTrue(intake.runRoller(0.35));
+        controller1.R1().whileTrue(intake.runRoller(0.3));
+        controller1.R2().whileTrue(shooter.shooterOn(0.6));
+        controller1.L2().whileTrue(feeder.feederOn(1));
+
+        controller1.povUp().whileTrue(levitator.runLevitator(-1));
+        controller1.povDown().whileTrue(levitator.runLevitator(1));
 
         // controller1.x().onTrue(intake.runPivotSetSpeed(-0.05));
         // controller1.y().onTrue(intake.runPivotSetSpeed(0.05));
@@ -123,15 +130,15 @@ public class RobotContainer {
         //         ));
         //controller1.a().whileTrue(intake.runRoller());
         //controller1.b().whileTrue();
-        //controller1.x().whileTrue(hangArm.runHangArm(-1));
-        //controller1.y().whileTrue(hangArm.runHangArm(1));
+        // controller1.x().whileTrue(levitator.runHangArm(-1));
+        // controller1.y().whileTrue(levitator.runHangArm(1));
 
         //controller2.a().whileTrue(shooter.shooterOn());
         // controller2.b().whileTrue();
         // controller2.x().whileTrue(feeder.feederOn(0.7));
         //controller2.y().whileTrue(feeder.feederOn(-0.7));
 
-       controller1.leftBumper().onTrue(new InstantCommand(() -> drivetrain.resetRotation(new Rotation2d(0))));
+       controller1.L1().onTrue(new InstantCommand(() -> drivetrain.resetRotation(new Rotation2d(0))));
         // drive with speed at .5 while left trigger is held, for testing
         // controller1.leftTrigger(.5).whileTrue(
         // drivetrain.applyRequest(() ->

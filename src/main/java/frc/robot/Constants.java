@@ -49,6 +49,7 @@ public final class Constants {
     public static final double hoodPivotKV = 0.0;
     public static final double hoodPivotKG = 0.0;
     public static final double hoodPivotKA = 0.0;
+    public static final double hoodHardStopAngle = 1.725;
    
     public static final double hoodMaxVelocity = 5;
     public static final double hoodMaxAcceleration = 5;

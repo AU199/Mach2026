@@ -145,60 +145,6 @@ public class Shooter extends SubsystemBase{
         });
     }
 
-    // spinDirection: 1.0 = backspin, -1.0 = topspin
-    public Command droneStrikeRK4(Pose2d targetPose, double spinDirection) {
-        return run(() -> {
-            Pose2d robotPose = drivebase.getState().Pose;
-            ChassisSpeeds robotRobotRelativeVelocity = drivebase.getState().Speeds;
-            ChassisSpeeds robotFieldRelativeVelocity = ChassisSpeeds.fromRobotRelativeSpeeds(robotRobotRelativeVelocity, robotPose.getRotation());
-
-            IdealTrajectory idealTrajectory = new IdealTrajectory(robotPose, targetPose, robotFieldRelativeVelocity);
-            ShotAngles currentAngles = idealTrajectory.getIdealShotAngles();
-
-            double theta = currentAngles.getTheta();
-            double phi   = currentAngles.getPhi();
-
-            SmartDashboard.putNumber("Ideal Theta", theta);
-            SmartDashboard.putNumber("Ideal Phi",  phi);
-
-            Newton newton = new Newton(robotPose, targetPose, robotFieldRelativeVelocity, spinDirection);
-
-            ShotAngles anglesFromNewton = newton.findOptimalTrajectory(currentAngles);
-            if (!(Double.isNaN(anglesFromNewton.getTheta()) || Double.isNaN(anglesFromNewton.getPhi()))) {
-                System.out.println("Newton returned");
-                currentAngles = anglesFromNewton;
-            }
-            else {
-                System.out.println("Shot was NaN");
-                return;
-            }
-            
-            theta = currentAngles.getTheta();
-            phi = currentAngles.getPhi();
-            SmartDashboard.putNumber("Newton Theta", theta);
-            SmartDashboard.putNumber("Newton Phi", phi);            
-
-            hoodMotor.setHoodPosition(theta);
-            publisher.set(new Pose3d(robotPose.getX(), robotPose.getY(), 0, new Rotation3d(0, 0, phi)));
-
-            double shotSpeed = Constants.ballInitialVelocityFromShooter;
-            // Spawn fuel ball in FuelSim with velocity from shot angles
-
-            Vector ballLinearVelocity = newton.getFinalBallLinearVelocity();
-            if (ballLinearVelocity == null) {
-                System.out.println("Ball Velocity Null");
-                return;
-            }
-            if(tick >= 20){
-                FuelSim.getInstance().spawnFuel(
-                    new Translation3d(robotPose.getX(), robotPose.getY(), Constants.shooterHeight),
-                    new Translation3d(ballLinearVelocity)
-                );
-                tick = 0;
-            }
-        });
-    }
-
     @Override
     public void periodic(){
         tick += 1;
