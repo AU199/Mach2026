@@ -32,7 +32,7 @@ public final class Constants {
     public static final int pivotMotorId    = 20;
     public static final int rollerMotorId   = 21;
     
-    public static final double intakePivotKP = 0.1;
+    public static final double intakePivotKP = 0.2;
     public static final double intakePivotKI = 0;
     public static final double intakePivotKD = 0;
     public static final double levitatorKP = 0;
@@ -42,12 +42,12 @@ public final class Constants {
     public static final double shooterPivotKI = 0;
     public static final double shooterPivotKD = 0;
     
-    public static final double hoodPivotKP = 0.1;
+    public static final double hoodPivotKP = 0.2;
     public static final double hoodPivotKI = 0;
     public static final double hoodPivotKD = 0;
-    public static final double hoodPivotKS = 0.1;
+    public static final double hoodPivotKS = 0;
     public static final double hoodPivotKV = 0.0;
-    public static final double hoodPivotKG = 0.0;
+    public static final double hoodPivotKG = -0.69;
     public static final double hoodPivotKA = 0.0;
     public static final double hoodHardStopAngle = 1.725;
    

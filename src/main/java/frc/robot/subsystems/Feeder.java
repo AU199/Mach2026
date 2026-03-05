@@ -14,7 +14,7 @@ public class Feeder extends SubsystemBase{
 
     public Command feederOn(double speed) {
         return startEnd(() -> {
-            //feederMotor.set(-speed);
+            feederMotor.set(-0.5);
             kickerMotor.set(-speed);
         }, () -> {
             feederMotor.set(0);
