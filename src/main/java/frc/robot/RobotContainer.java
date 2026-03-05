@@ -90,13 +90,6 @@ public class RobotContainer {
                         .withRotationalRate(-controller1.getRawAxis(2) * MaxAngularRate) // Drive counterclockwise with
                                                                                       // negative X (left)
                 ));
-        // controller1.a().whileTrue(intake.runRoller());
-        //controller1.b().whileTrue();
-        // controller1.x().whileTrue(hangArm.runHangArm(-1));
-        // controller1.y().whileTrue(hangArm.runHangArm(1));
-
-        // controller1.x().whileTrue(new DroneStrike(drivetrain, shooter.getHubPose(), hood, 1)); // spinDirection: 1.0 = backspin, -1.0 = topspin
-        // controller1.y().onTrue(new InstantCommand(() -> FuelSim.getInstance().clearFuel()));
 
         controller1.cross().whileTrue(intake.setIntakePosition(Constants.IntakeDeployPos, 0.1, 0.5));
         controller1.triangle().whileTrue(intake.setIntakePosition(Constants.IntakeRetractPos, 0.025, 0.3));
@@ -107,60 +100,12 @@ public class RobotContainer {
         controller1.R2().whileTrue(shooter.shooterOn(0.6));
         controller1.L2().whileTrue(feeder.feederOn(1));
 
-        // controller1.povUp().whileTrue(levitator.runLevitator(-1));
-        // controller1.povDown().whileTrue(levitator.runLevitator(1));
 
         controller1.povUp().whileTrue(hood.setHoodPosition(-0.25));
         controller1.povDown().whileTrue(hood.setHoodPosition(0.25));
         controller1.povRight().whileTrue(hood.setHoodPosition(0));
         controller1.povLeft().whileTrue(hood.setHoodPosition(Constants.hoodHardStopAngle));
 
-        // controller1.x().onTrue(intake.runPivotSetSpeed(-0.05));
-        // controller1.y().onTrue(intake.runPivotSetSpeed(0.05));
-
-        // controller1.a().whileTrue(shooter.shooterOn(0.75));
-        // controller2.b().whileTrue();
-        // controller1.a().whileTrue(feeder.feederOn(0.7));
-        // controller1.b().whileTrue(feeder.feederOn(-0.7));
-
-        // controller1.back().onTrue(new InstantCommand(() -> drivetrain.zeroGyro()));
-        // drivetrain.setDefaultCommand(
-        //         // Drivetrain will execute this command periodically
-        //         drivetrain.applyRequest(() -> drive.withVelocityX(controller1.getRawAxis(1) * MaxSpeed) // Drive forward
-        //                                                                                              // with negative Y
-        //                                                                                              // (forward)
-        //                 .withVelocityY(controller1.getRawAxis(0) * MaxSpeed) // Drive left with negative X (left)
-        //                 .withRotationalRate(-controller1.getRawAxis(2) * MaxAngularRate) // Drive counterclockwise with
-        //                                                                               // negative X (left)
-        //         ));
-        //controller1.a().whileTrue(intake.runRoller());
-        //controller1.b().whileTrue();
-        // controller1.x().whileTrue(levitator.runHangArm(-1));
-        // controller1.y().whileTrue(levitator.runHangArm(1));
-
-        //controller2.a().whileTrue(shooter.shooterOn());
-        // controller2.b().whileTrue();
-        // controller2.x().whileTrue(feeder.feederOn(0.7));
-        //controller2.y().whileTrue(feeder.feederOn(-0.7));
-
-       controller1.L1().onTrue(new InstantCommand(() -> drivetrain.resetRotation(new Rotation2d(0))));
-        // drive with speed at .5 while left trigger is held, for testing
-        // controller1.leftTrigger(.5).whileTrue(
-        // drivetrain.applyRequest(() ->
-        // drive.withVelocityX(joystick.getRawAxis(1) * MaxSpeed * 0.5)
-        // .withVelocityY(joystick.getRawAxis(0) * MaxSpeed * 0.5)
-        // .withRotationalRate(-joystick.getRawAxis(2) * MaxAngularRate * 0.5)
-        // )
-        // );
-
-        //controller2.leftBumper().onTrue(intake.deployIntake());
-        //controller2.rightBumper().onTrue(intake.retractIntake());
-        
-
-       // controller2.leftTrigger(.5).onTrue(shooter.droneStrike());
-        // controller2.rightTrigger(.5).onTrue();
-     //   controller2.leftBumper().onTrue(shooter.setPivotAngle(0.5));
-   //     controller2.rightBumper().onTrue(shooter.setPivotAngle(0));
 
         drivetrain.registerTelemetry(logger::telemeterize);
     }

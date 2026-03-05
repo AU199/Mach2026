@@ -17,7 +17,7 @@ public class Hood extends SubsystemBase{
     private final double sensorToMechanismRatio = 4 * (44/16);
 
     private double kp;
-    private double kg;    
+    private double kg;
     
     public Hood() {
         hoodMotor.setPosition(Constants.hoodHardStopAngle);
@@ -25,7 +25,7 @@ public class Hood extends SubsystemBase{
 
     public BooleanSupplier hoodReachedPosition(double targetPosition) {
         BooleanSupplier hoodReachedPosition = () -> {
-            boolean result = Math.abs(hoodMotor.getPosition().getValueAsDouble() / sensorToMechanismRatio - targetPosition) < 0.01;
+            boolean result = Math.abs(hoodMotor.getPosition().getValueAsDouble() - targetPosition) < 0.01;
             return result;
         };
         return hoodReachedPosition;
@@ -35,14 +35,15 @@ public class Hood extends SubsystemBase{
         hoodMotor.setPosition(Constants.hoodHardStopAngle);
     }
 
-    public Command setHoodPosition(double targetPosition) {
+    public Command setHoodPosition(double targetPositionMotor) {
         return runEnd(
             () -> {
+                double targetPositionMechanism = targetPositionMotor / sensorToMechanismRatio; // Mechanism rotations
                 double currentPosition = hoodMotor.getPosition().getValueAsDouble() / sensorToMechanismRatio; // Mechanism rotations
-                double error = targetPosition - currentPosition;
+                double error = targetPositionMechanism - currentPosition;
                 
                 SmartDashboard.putNumber("Error", error);
-                SmartDashboard.putNumber("Target Position", targetPosition);
+                SmartDashboard.putNumber("Target Position", targetPositionMechanism);
 
                 kp = error * Constants.hoodPivotKP;
                 kg = Constants.hoodPivotKG  * Math.cos(currentPosition * (2 * Math.PI));
@@ -53,7 +54,7 @@ public class Hood extends SubsystemBase{
             () -> {
                 hoodMotor.setVoltage(kg);
             }
-        ).until(hoodReachedPosition(targetPosition));
+        ).until(hoodReachedPosition(targetPositionMotor));
     }
     @Override
     public void periodic() {
