@@ -6,6 +6,8 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
+import org.photonvision.proto.Photon;
+
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
@@ -28,11 +30,12 @@ import frc.robot.subsystems.Levitator;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.Feeder;
 import frc.robot.subsystems.Hood;
+import frc.robot.subsystems.photon;
 
 public class RobotContainer {
-    private double MaxSpeed = 0.2 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top
+    private double MaxSpeed = 1 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top
                                                                                         // speed
-    private double MaxAngularRate = 0.6 * RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per
+    private double MaxAngularRate = 1 * RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per
                                                                                             // second max angular
                                                                                             // velocity
 
@@ -54,6 +57,7 @@ public class RobotContainer {
     public final Levitator levitator = new Levitator();
     public final Intake intake = new Intake();
     public final Feeder feeder = new Feeder();
+    public final photon photon = new photon(drivetrain);
     // public final Shooter shooter = new Shooter(drivetrain,true,m_field);
 
     public RobotContainer() {
@@ -83,10 +87,10 @@ public class RobotContainer {
         // and Y is defined as to the left according to WPILib convention.
         drivetrain.setDefaultCommand(
                 // Drivetrain will execute this command periodically
-                drivetrain.applyRequest(() -> drive.withVelocityX(controller1.getRawAxis(1) * MaxSpeed) // Drive forward
+                drivetrain.applyRequest(() -> drive.withVelocityX(Math.pow(controller1.getRawAxis(1), 3) * MaxSpeed) // Drive forward
                                                                                                      // with negative Y
                                                                                                      // (forward)
-                        .withVelocityY(controller1.getRawAxis(0) * MaxSpeed) // Drive left with negative X (left)
+                        .withVelocityY(Math.pow(controller1.getRawAxis(0), 3) * MaxSpeed) // Drive left with negative X (left)
                         .withRotationalRate(-controller1.getRawAxis(2) * MaxAngularRate) // Drive counterclockwise with
                                                                                       // negative X (left)
                 ));
@@ -97,14 +101,18 @@ public class RobotContainer {
         // controller1.square().whileTrue(intake.runPivotSetSpeed(-0.1));
         controller1.circle().whileTrue(intake.runRoller(0.35));
         controller1.R1().whileTrue(intake.runRoller(0.3));
-        controller1.R2().whileTrue(shooter.shooterOn(0.6));
+        controller1.R2().whileTrue(shooter.shooterOn(1));
         controller1.L2().whileTrue(feeder.feederOn(1));
 
+        controller1.L1().onTrue(new InstantCommand(() -> drivetrain.resetRotation(new Rotation2d(0))));
 
-        controller1.povUp().whileTrue(hood.setHoodPosition(-0.25));
-        controller1.povDown().whileTrue(hood.setHoodPosition(0.25));
-        controller1.povRight().whileTrue(hood.setHoodPosition(0));
-        controller1.povLeft().whileTrue(hood.setHoodPosition(Constants.hoodHardStopAngle));
+        controller1.povUp().whileTrue(levitator.runLevitator(1));
+        controller1.povDown().whileTrue(levitator.runLevitator(-1));
+
+        // controller1.povUp().whileTrue(hood.setHoodPosition(-0.25));
+        // controller1.povDown().whileTrue(hood.setHoodPosition(0.25));
+        // controller1.povRight().whileTrue(hood.setHoodPosition(0));
+        // controller1.povLeft().whileTrue(hood.setHoodPosition(Constants.hoodHardStopAngle));
 
 
         drivetrain.registerTelemetry(logger::telemeterize);
