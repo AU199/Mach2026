@@ -14,7 +14,7 @@ import frc.robot.Constants;
 public class Hood extends SubsystemBase{
     private TalonFX hoodMotor = new TalonFX(Constants.hoodMotorId, "DriveBase");
     
-    private final double sensorToMechanismRatio = 4 * (44/16);
+    private final double sensorToMechanismRatio = 11; // (48/12) * (44/16)
 
     private double kp;
     private double kg;
@@ -32,7 +32,7 @@ public class Hood extends SubsystemBase{
     }
 
     public void zeroHoodPosition() {
-        hoodMotor.setPosition(Constants.hoodHardStopAngle);
+        hoodMotor.setPosition(Constants.hoodHardStopAngle); // RETUNE
     }
 
     public Command setHoodPosition(double targetPositionMotor) {
@@ -40,13 +40,13 @@ public class Hood extends SubsystemBase{
             () -> {
                 double targetPositionMechanism = targetPositionMotor / sensorToMechanismRatio; // Mechanism rotations
                 double currentPosition = hoodMotor.getPosition().getValueAsDouble() / sensorToMechanismRatio; // Mechanism rotations
-                double error = targetPositionMechanism - currentPosition;
+                double error = targetPositionMechanism - currentPosition; // Mechanism rotations
                 
                 SmartDashboard.putNumber("Error", error);
                 SmartDashboard.putNumber("Target Position", targetPositionMechanism);
 
                 kp = error * Constants.hoodPivotKP;
-                kg = Constants.hoodPivotKG  * Math.cos(currentPosition * (2 * Math.PI));
+                kg = Constants.hoodPivotKG  * Math.cos(currentPosition * (2 * Math.PI)); // Convert to radians for trig function
                 SmartDashboard.putNumber("Cos", currentPosition * (2 * Math.PI));
 
                 hoodMotor.setVoltage(- kp + kg);

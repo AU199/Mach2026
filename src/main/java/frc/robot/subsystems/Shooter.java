@@ -31,7 +31,6 @@ public class Shooter extends SubsystemBase{
     TalonFX frontShooter2 = new TalonFX(Constants.frontShooter2Id, "DriveBase");
     TalonFX backShooter = new TalonFX(Constants.backShooterId, "DriveBase");
     
-    Hood hoodMotor = new Hood();
 
     PositionVoltage pivotAngleRequest = new PositionVoltage(0).withSlot(0);
     boolean isBlue;
@@ -113,7 +112,7 @@ public class Shooter extends SubsystemBase{
 
     private double getYaw(Pose2d futurePose) {
         Transform2d transform = futurePose.minus(hubPose);
-        return Math.atan(transform.getY()/transform.getX());
+        return Math.atan2(transform.getY(), transform.getX());
     }
     
     private int iterationCount = 3;
@@ -137,7 +136,7 @@ public class Shooter extends SubsystemBase{
             currentYaw = getYaw(futurePose);
             publisher.set(new Pose3d(futurePose.getX(), futurePose.getY(), 0,new Rotation3d(0,0,currentYaw)));
             shootAngle = getAngleFromDist(hubDist);
-            hoodMotor.setHoodPosition(shootAngle);
+            // hoodMotor.setHoodPosition(shootAngle);
             // Make it turn
             SmartDashboard.putNumber("shooterangle", shootAngle);
             double shotSpeed = 4;
