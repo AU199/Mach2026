@@ -57,7 +57,7 @@ public class RobotContainer {
     public final Levitator levitator = new Levitator();
     public final Intake intake = new Intake();
     public final Feeder feeder = new Feeder();
-    public final photon photon = new photon(drivetrain);
+    // public final photon photon = new photon(drivetrain);
     // public final Shooter shooter = new Shooter(drivetrain,true,m_field);
 
     public RobotContainer() {
@@ -109,10 +109,10 @@ public class RobotContainer {
         controller1.povUp().whileTrue(levitator.runLevitator(1));
         controller1.povDown().whileTrue(levitator.runLevitator(-1));
 
-        // controller1.povUp().whileTrue(hood.setHoodPosition(-0.25));
-        // controller1.povDown().whileTrue(hood.setHoodPosition(0.25));
-        // controller1.povRight().whileTrue(hood.setHoodPosition(0));
-        // controller1.povLeft().whileTrue(hood.setHoodPosition(Constants.hoodHardStopAngle));
+        controller1.povUp().whileTrue(hood.setHoodPosition(-0.25));
+        controller1.povDown().whileTrue(hood.setHoodPosition(0.25));
+        controller1.povRight().whileTrue(hood.setHoodPosition(0));
+        controller1.povLeft().whileTrue(hood.setHoodPosition(Constants.hoodHardStopAngle));
 
 
         drivetrain.registerTelemetry(logger::telemeterize);

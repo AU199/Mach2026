@@ -42,7 +42,7 @@ public final class Constants {
     public static final double shooterPivotKI = 0;
     public static final double shooterPivotKD = 0;
     
-    public static final double hoodPivotKP = 0.2;
+    public static final double hoodPivotKP = 1.5;
     public static final double hoodPivotKI = 0;
     public static final double hoodPivotKD = 0;
     public static final double hoodPivotKS = 0;
