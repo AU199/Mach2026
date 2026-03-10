@@ -1,7 +1,5 @@
 package frc.robot.Sotm;
 
-import java.lang.reflect.Array;
-
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -25,10 +23,11 @@ import frc.robot.FuelSim;
 public class Newton {
 
    
-    private final ChassisSpeeds robotFieldRelativeVelocity;
-    private final Pose2d robotPose;
-    private final Pose2d hubPose;
-    private final double ballAngularSpeedRelativeToRobot; // rad/s, spin speed from shooter wheel
+    private ChassisSpeeds robotFieldRelativeVelocity;
+    private Pose2d robotPose;
+    private Pose2d hubPose;
+    private double ballAngularSpeedRelativeToRobot; // rad/s, spin speed from shooter wheel
+    private double ballInitalSpeedFromShooter;
 
     
     private static final double DT      = 0.01;  // RK4 timestep (seconds)
@@ -39,23 +38,21 @@ public class Newton {
     private static final double CONVERGE_TOL  = 1e-4; // meters — stop when error < 0.1mm
 
     private Vector finalBallLinearVelocity;
-
-    private double spinDirection;
-
     
     public Newton(
             Pose2d robotPose,
             Pose2d hubPose,
             ChassisSpeeds robotFieldRelativeVelocity,
-            double spinDirection) {
+            double ballInitialSpeedFromShooter,
+            double ballInitialSpinFromShooter) {
         this.robotPose = robotPose;
         this.hubPose = hubPose;
         this.robotFieldRelativeVelocity = robotFieldRelativeVelocity;
-        this.ballAngularSpeedRelativeToRobot = Constants.ballInitialSpinFromShooter;
-        this.spinDirection = spinDirection;
+        this.ballAngularSpeedRelativeToRobot = ballInitialSpinFromShooter;
+        this.ballInitalSpeedFromShooter = ballInitialSpeedFromShooter;
     }
 
-    public Vector<N3> calculateBallLinearVelocity(double theta, double phi, double speed) {
+    public Vector<N3> calculateBallLinearVelocity(double theta, double phi, double ballSpeed) {
         double heading = robotPose.getRotation().getRadians();
 
         // ── Ball linear velocity in robot frame ──
@@ -63,9 +60,9 @@ public class Newton {
         // by subtracting the robot heading
         double phiRobot = phi - heading;
 
-        double vx_robot = speed * Math.cos(theta) * Math.cos(phiRobot);
-        double vy_robot = speed * Math.cos(theta) * Math.sin(phiRobot);
-        double vz_robot = speed * Math.sin(theta);
+        double vx_robot = ballSpeed * Math.cos(theta) * Math.cos(phiRobot);
+        double vy_robot = ballSpeed * Math.cos(theta) * Math.sin(phiRobot);
+        double vz_robot = ballSpeed * Math.sin(theta);
 
         // ── Rotate ball velocity into field frame and add robot velocity ──
         double vx_field = vx_robot * Math.cos(heading) - vy_robot * Math.sin(heading)
@@ -82,7 +79,7 @@ public class Newton {
     public BallError calculateError(double theta, double phi, double speed) {
         Vector<N3> ballLinearVelocity = calculateBallLinearVelocity(theta, phi, speed);
         
-        Vector<N3> ballAngularVelocity = VecBuilder.fill(spinDirection * -Math.sin(phi), spinDirection *  Math.cos(phi), 0).times(ballAngularSpeedRelativeToRobot);
+        Vector<N3> ballAngularVelocity = VecBuilder.fill(-Math.sin(phi), Math.cos(phi), 0).times(ballAngularSpeedRelativeToRobot);
 
         // ── Run RK4 ──
         RK4 rk4 = new RK4(
@@ -103,7 +100,7 @@ public class Newton {
     public ShotAngles findOptimalTrajectory(ShotAngles initialGuess) {
         double theta = initialGuess.getTheta();
         double phi   = initialGuess.getPhi();
-        double speed = Constants.ballInitialVelocityFromShooter;
+        double speed = ballInitalSpeedFromShooter;
 
         double deltaTheta = 0;
         double deltaPhi = 0;

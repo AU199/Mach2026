@@ -3,6 +3,7 @@ package frc.robot.Sotm;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -12,22 +13,54 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
 import frc.robot.FuelSim;
+import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Hood;
 
-public class DroneStrike extends Command{
-    public CommandSwerveDrivetrain drivetrain;
-    public Pose2d targetPose;
-    public Hood hoodMotor;
-    public double spinDirection;
-        
-    StructPublisher<Pose3d> publisher = NetworkTableInstance.getDefault().getStructTopic("FuturePose", Pose3d.struct).publish();
+import static edu.wpi.first.units.Units.*;
 
-    public DroneStrike(CommandSwerveDrivetrain drivetrain, Pose2d targetPose, Hood hoodMotor, double spinDirection) {
+import java.util.function.Supplier;
+
+import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+import com.ctre.phoenix6.swerve.SwerveRequest;
+
+public class DroneStrike extends Command{
+    private CommandSwerveDrivetrain drivetrain;
+    private Pose2d targetPose;
+    private Hood hoodMotor;
+
+    private Supplier<Double> controllerXAxis;
+    private Supplier<Double> controllerYAxis;
+
+    private double MaxSpeed = 1 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top
+                                                                                        // speed
+    private double MaxAngularRate = 1 * RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per
+                                                                                            // second max angular
+                                                                                            // velocity
+
+    private SwerveRequest.FieldCentricFacingAngle drive = new SwerveRequest.FieldCentricFacingAngle()
+        .withDeadband(MaxSpeed * 0.1).withRotationalDeadband(MaxAngularRate * 0.1) // Add a 10% deadband
+        .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
+
+    private double theta;
+    private double phi;
+
+    private double ballInitialSpeedFromShooter;
+    private double ballInitialSpinFromShooter;
+        
+    StructPublisher<Pose3d> publisher = NetworkTableInstance.getDefault().getStructTopic("RobotPose", Pose3d.struct).publish();
+
+    public DroneStrike(CommandSwerveDrivetrain drivetrain, Pose2d targetPose, Hood hoodMotor, double ballInitialSpeedFromShooter, double ballInitialSpinFromShooter,
+                            Supplier<Double> controllerXAxis, Supplier<Double> controllerYAxis) {
         this.drivetrain = drivetrain;
         this.targetPose = targetPose;
         this.hoodMotor = hoodMotor;
-        this.spinDirection = spinDirection;
+        this.ballInitialSpeedFromShooter = ballInitialSpeedFromShooter;
+        this.ballInitialSpinFromShooter = ballInitialSpinFromShooter;
+
+        this.controllerXAxis = controllerXAxis;
+        this.controllerYAxis = controllerYAxis;
+        addRequirements(drivetrain, hoodMotor);
     }
 
     @Override
@@ -40,16 +73,16 @@ public class DroneStrike extends Command{
             ChassisSpeeds robotRobotRelativeVelocity = drivetrain.getState().Speeds;
             ChassisSpeeds robotFieldRelativeVelocity = ChassisSpeeds.fromRobotRelativeSpeeds(robotRobotRelativeVelocity, robotPose.getRotation());
 
-            IdealTrajectory idealTrajectory = new IdealTrajectory(robotPose, targetPose, robotFieldRelativeVelocity);
+            IdealTrajectory idealTrajectory = new IdealTrajectory(robotPose, targetPose, robotFieldRelativeVelocity, ballInitialSpeedFromShooter);
             ShotAngles currentAngles = idealTrajectory.getIdealShotAngles();
 
-            double theta = currentAngles.getTheta();
-            double phi   = currentAngles.getPhi();
+            theta = currentAngles.getTheta();
+            phi   = currentAngles.getPhi();
 
             SmartDashboard.putNumber("Ideal Theta", theta);
             SmartDashboard.putNumber("Ideal Phi",  phi);
 
-            Newton newton = new Newton(robotPose, targetPose, robotFieldRelativeVelocity, spinDirection);
+            Newton newton = new Newton(robotPose, targetPose, robotFieldRelativeVelocity, ballInitialSpeedFromShooter, ballInitialSpinFromShooter);
 
             ShotAngles anglesFromNewton = newton.findOptimalTrajectory(currentAngles);
             if (!(Double.isNaN(anglesFromNewton.getTheta()) || Double.isNaN(anglesFromNewton.getPhi()))) {
@@ -58,6 +91,12 @@ public class DroneStrike extends Command{
             }
             else {
                 System.out.println("Shot was NaN");
+                return;
+            }
+
+            Vector ballLinearVelocity = newton.getFinalBallLinearVelocity();
+            if (ballLinearVelocity == null) {
+                System.out.println("Ball Velocity Null");
                 return;
             }
             
@@ -69,15 +108,16 @@ public class DroneStrike extends Command{
             hoodMotor.setHoodPosition(theta);
             publisher.set(new Pose3d(robotPose.getX(), robotPose.getY(), 0, new Rotation3d(0, 0, phi)));
 
-            double shotSpeed = Constants.ballInitialVelocityFromShooter;
-            
-            // Spawn fuel ball in FuelSim with velocity from shot angles
+            drivetrain.applyRequest(() -> drive.withVelocityX(Math.pow(controllerXAxis.get(), 3) * MaxSpeed) // Drive forward
+                                                                                                     // with negative Y
+                                                                                                     // (forward)
+                        .withVelocityY(Math.pow(controllerYAxis.get(), 3) * MaxSpeed) // Drive left with negative X (left)
+                        .withTargetDirection(new Rotation2d(phi)) // Drive counterclockwise with negative X (left)
+                        .withHeadingPID(100, 0, 0)
+                        .withMaxAbsRotationalRate(MaxAngularRate)
+            );
 
-            Vector ballLinearVelocity = newton.getFinalBallLinearVelocity();
-            if (ballLinearVelocity == null) {
-                System.out.println("Ball Velocity Null");
-                return;
-            }
+            // Spawn fuel ball in FuelSim with velocity from shot angles
             
             FuelSim.getInstance().spawnFuel(
                     new Translation3d(robotPose.getX(), robotPose.getY(), Constants.shooterHeight),

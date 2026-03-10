@@ -57,7 +57,7 @@ public class RobotContainer {
     public final Levitator levitator = new Levitator();
     public final Intake intake = new Intake();
     public final Feeder feeder = new Feeder();
-    // public final photon photon = new photon(drivetrain);
+    public final photon photon = new photon(drivetrain);
     // public final Shooter shooter = new Shooter(drivetrain,true,m_field);
 
     public RobotContainer() {
@@ -72,15 +72,15 @@ public class RobotContainer {
     //     controller1.leftBumper().whileTrue(shooter.pivotMotorOn(.25));
     //     controller1.rightBumper().whileTrue(shooter.pivotMotorOn(-.25));
      controller1.share().onTrue(Commands.sequence(
-            shooter.shooterOn(0.75).withTimeout(2),
-            // hood.setHoodPosition(0.5).withTimeout(1),
-            // hood.setHoodPosition(0).withTimeout(1),
-            intake.setIntakePosition(Constants.IntakeDeployPos, 0.1, 0.5).withTimeout(2),
-            intake.runRoller(.2).withTimeout(2),
-            intake.setIntakePosition(Constants.IntakeRetractPos, 0.025, 0.3).withTimeout(10),
+            hood.setHoodPosition(0.5).withTimeout(1),
+            hood.setHoodPosition(0).withTimeout(1),
+            shooter.shooterOn(0.75, 0.75).withTimeout(2),
+            feeder.feederOn(0.1).withTimeout(2),
             levitator.lift().withTimeout(2),
             levitator.retract().withTimeout(2),
-            feeder.feederOn(0.1).withTimeout(2)
+            intake.setIntakePosition(Constants.IntakeDeployPos, 0.1, 0.5).withTimeout(2),
+            intake.runRoller(.2).withTimeout(2),
+            intake.setIntakePosition(Constants.IntakeRetractPos, 0.025, 0.3).withTimeout(10)
         ));
 
         // Note that X is defined as forward according to WPILib convention,
@@ -95,16 +95,21 @@ public class RobotContainer {
                                                                                       // negative X (left)
                 ));
 
-        controller1.cross().whileTrue(intake.setIntakePosition(Constants.IntakeDeployPos, 0.1, 0.5));
+        // controller1.cross().whileTrue(intake.setIntakePosition(Constants.IntakeDeployPos, 0.1, 0.5));
         controller1.triangle().whileTrue(intake.setIntakePosition(Constants.IntakeRetractPos, 0.025, 0.3));
         // controller1.circle().whileTrue(intake.runPivotSetSpeed(0.1));
         // controller1.square().whileTrue(intake.runPivotSetSpeed(-0.1));
         controller1.circle().whileTrue(intake.runRoller(0.35));
-        controller1.R1().whileTrue(intake.runRoller(0.3));
-        controller1.R2().whileTrue(shooter.shooterOn(1));
-        controller1.L2().whileTrue(feeder.feederOn(1));
+        // controller1.R1().whileTrue(intake.runRoller(0.3));
+        // controller1.R2().whileTrue(shooter.shooterOn(1, 1));
+        // controller1.R1().whileTrue(shooter.shooterOn(1, 0));
+        // controller1.L1().whileTrue(shooter.shooterOn(.25, 0));
+        // controller1.cross().whileTrue(shooter.shooterOn(.5, 0));
+        // controller1.L2().whileTrue(feeder.feederOn(1));
 
-        controller1.L1().onTrue(new InstantCommand(() -> drivetrain.resetRotation(new Rotation2d(0))));
+        // controller1.L1().onTrue(new InstantCommand(() -> drivetrain.resetRotation(new Rotation2d(0))));
+
+        controller1.L1().whileTrue(new DroneStrike(drivetrain, Constants.blueHubPose, hood, Constants.ballInitialVelocityFromShooterHub, Constants.ballInitialSpinFromShooterHub, () -> controller1.getRawAxis(1), () -> controller1.getRawAxis(0)));
 
         controller1.povUp().whileTrue(levitator.runLevitator(1));
         controller1.povDown().whileTrue(levitator.runLevitator(-1));

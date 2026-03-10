@@ -2,9 +2,13 @@ package frc.robot.subsystems;
 
 import java.util.function.BooleanSupplier;
 
+import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.MotorAlignmentValue;
 
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -48,6 +52,25 @@ public class Shooter extends SubsystemBase{
         pivotConfig.kP = Constants.shooterPivotKP;
         pivotConfig.kI = 0;
         pivotConfig.kD = Constants.shooterPivotKD;
+
+        var talonFXConfigs = new TalonFXConfiguration();
+
+        var slot0Configs = talonFXConfigs.Slot0;
+        slot0Configs.kS = 0; // Add 0.25 V output to overcome static friction
+        slot0Configs.kV = 0; // A velocity target of 1 rps results in 0.12 V output
+        slot0Configs.kA = 0; // An acceleration of 1 rps/s requires 0.01 V output
+        slot0Configs.kP = Constants.shooterPivotKP; // A position error of 2.5 rotations results in 12 V output
+        slot0Configs.kI = Constants.shooterPivotKI; // no output for integrated error
+        slot0Configs.kD = Constants.shooterPivotKD; // A velocity error of 1 rps results in 0.1 V output
+
+        var magicMotionConfigs = talonFXConfigs.MotionMagic;
+        magicMotionConfigs.MotionMagicAcceleration = Double.POSITIVE_INFINITY;
+        magicMotionConfigs.MotionMagicJerk = Double.POSITIVE_INFINITY;
+        
+        frontShooter1.getConfigurator().apply(talonFXConfigs);
+        frontShooter2.setControl(new Follower(Constants.frontShooter1Id, MotorAlignmentValue.Aligned));
+        backShooter.getConfigurator().apply(talonFXConfigs);
+
         this.field = field;
         this.drivebase = drivetrain;
         if (isBlue) {
@@ -62,17 +85,25 @@ public class Shooter extends SubsystemBase{
         return hubPose;
     }
 
-    public Command shooterOn(double speed) {
+    public Command shooterOn(double frontShooterSpeed, double backShooterSpeed) {
         return startEnd(() -> {
-            frontShooter1.set(speed);
-            frontShooter2.set(speed);
-            backShooter.set(-speed);
+            frontShooter1.set(frontShooterSpeed);
+            frontShooter2.set(frontShooterSpeed);
+            backShooter.set(-backShooterSpeed);
         }, () -> {
             frontShooter1.set(0);
             frontShooter2.set(0);
             backShooter.set(0);
         });
     }
+
+    // public Command shooterOn(double speed) {
+    //     return startEnd(() -> {
+
+    //     }, () -> {
+
+    //     });
+    // }
 
     // public Command pivotMotorOn(double speed) {
     //     return startEnd(() -> {
@@ -147,5 +178,14 @@ public class Shooter extends SubsystemBase{
     @Override
     public void periodic(){
         tick += 1;
+        SmartDashboard.putNumber("Front Shooter 1", frontShooter1.getVelocity().getValueAsDouble());
+        SmartDashboard.putNumber("Front Shooter 1 Stator Current", frontShooter1.getStatorCurrent().getValueAsDouble());
+        SmartDashboard.putNumber("Front Shooter 1 Supply Current", frontShooter1.getSupplyCurrent().getValueAsDouble());
+        SmartDashboard.putNumber("Front Shooter 2", frontShooter2.getVelocity().getValueAsDouble());
+        SmartDashboard.putNumber("Front Shooter 2 Stator Current", frontShooter2.getStatorCurrent().getValueAsDouble());
+        SmartDashboard.putNumber("Front Shooter 2 Supply Current", frontShooter2.getSupplyCurrent().getValueAsDouble());
+        SmartDashboard.putNumber("Back Shooter", backShooter.getVelocity().getValueAsDouble());
+        SmartDashboard.putNumber("Back Shooter Stator Current", backShooter.getStatorCurrent().getValueAsDouble());
+        SmartDashboard.putNumber("Back Shooter Supply Current", backShooter.getSupplyCurrent().getValueAsDouble());
     }
 }
