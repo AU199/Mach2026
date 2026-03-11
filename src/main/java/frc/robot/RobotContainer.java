@@ -71,17 +71,17 @@ public class RobotContainer {
     //     controller1.b().whileTrue(feeder.feederOn(1));
     //     controller1.leftBumper().whileTrue(shooter.pivotMotorOn(.25));
     //     controller1.rightBumper().whileTrue(shooter.pivotMotorOn(-.25));
-     controller1.share().onTrue(Commands.sequence(
-            hood.setHoodPosition(0.5).withTimeout(1),
-            hood.setHoodPosition(0).withTimeout(1),
-            shooter.shooterOn(0.75, 0.75).withTimeout(2),
-            feeder.feederOn(0.1).withTimeout(2),
-            levitator.lift().withTimeout(2),
-            levitator.retract().withTimeout(2),
-            intake.setIntakePosition(Constants.IntakeDeployPos, 0.1, 0.5).withTimeout(2),
-            intake.runRoller(.2).withTimeout(2),
-            intake.setIntakePosition(Constants.IntakeRetractPos, 0.025, 0.3).withTimeout(10)
-        ));
+    //  controller1.share().onTrue(Commands.sequence(
+    //         hood.setHoodPosition(0.5).withTimeout(1),
+    //         hood.setHoodPosition(0).withTimeout(1),
+    //         shooter.shooterOn(0.75, 0.75).withTimeout(2),
+    //         feeder.feederOn(0.1).withTimeout(2),
+    //         levitator.lift().withTimeout(2),
+    //         levitator.retract().withTimeout(2),
+    //         intake.setIntakePosition(Constants.IntakeDeployPos, 0.1, 0.5).withTimeout(2),
+    //         intake.runRoller(.2).withTimeout(2),
+    //         intake.setIntakePosition(Constants.IntakeRetractPos, 0.025, 0.3).withTimeout(10)
+    //     ));
 
         // Note that X is defined as forward according to WPILib convention,
         // and Y is defined as to the left according to WPILib convention.
@@ -104,20 +104,22 @@ public class RobotContainer {
         // controller1.R2().whileTrue(shooter.shooterOn(1, 1));
         controller1.R1().whileTrue(shooter.shooterOn(1, 0));
         controller1.L1().whileTrue(shooter.shooterOn(.25, 0));
-        controller1.cross().whileTrue(shooter.shooterOn(.5, 0));
+        controller1.cross().whileTrue(shooter.shooterOn(.6, 0));
         controller1.L2().whileTrue(feeder.feederOn(1));
 
-        // controller1.L1().onTrue(new InstantCommand(() -> drivetrain.resetRotation(new Rotation2d(0))));
+        controller1.share().onTrue(new InstantCommand(() -> drivetrain.resetRotation(new Rotation2d(0))));
 
+        
         // controller1.L1().whileTrue(new DroneStrike(drivetrain, Constants.blueHubPose, hood, Constants.ballInitialVelocityFromShooterHub, Constants.ballInitialSpinFromShooterHub, () -> controller1.getRawAxis(1), () -> controller1.getRawAxis(0)));
+
 
         // controller1.povUp().whileTrue(levitator.runLevitator(1));
         // controller1.povDown().whileTrue(levitator.runLevitator(-1));
 
-        controller1.povUp().whileTrue(hood.setHoodPosition(-0.1));
-        controller1.povDown().whileTrue(hood.setHoodPosition(-0.15));
-        controller1.povRight().whileTrue(hood.setHoodPosition(-0.2));
-        controller1.povLeft().whileTrue(hood.setHoodPosition(0));
+        controller1.povUp().onTrue(hood.setHoodPosition(-0.11));
+        controller1.povDown().onTrue(hood.setHoodPosition(-0.15));
+        controller1.povRight().onTrue(hood.setHoodPosition(-0.2));
+        controller1.povLeft().onTrue(hood.setHoodPosition(0));
 
         drivetrain.registerTelemetry(logger::telemeterize);
     }

@@ -43,12 +43,12 @@ public final class Constants {
     public static final double shooterMotorKI = 0;
     public static final double shooterMotorKD = 0;
     
-    public static final double hoodPivotKP = 10;
-    public static final double hoodPivotKI = 0;
-    public static final double hoodPivotKD = 0;
+    public static final double hoodPivotKP = 20;
+    public static final double hoodPivotKI = 4;
+    public static final double hoodPivotKD = 1;
     public static final double hoodPivotKS = 0;
     public static final double hoodPivotKV = 0.0;
-    public static final double hoodPivotKG = 0.82;
+    public static final double hoodPivotKG = 1;
     public static final double hoodPivotKA = 0.0;
     public static final double hoodHardStopAngle = 1.725;
    
