@@ -96,29 +96,28 @@ public class RobotContainer {
                 ));
 
         // controller1.cross().whileTrue(intake.setIntakePosition(Constants.IntakeDeployPos, 0.1, 0.5));
-        controller1.triangle().whileTrue(intake.setIntakePosition(Constants.IntakeRetractPos, 0.025, 0.3));
+        // controller1.triangle().whileTrue(intake.setIntakePosition(Constants.IntakeRetractPos, 0.025, 0.3));
         // controller1.circle().whileTrue(intake.runPivotSetSpeed(0.1));
         // controller1.square().whileTrue(intake.runPivotSetSpeed(-0.1));
-        controller1.circle().whileTrue(intake.runRoller(0.35));
+        // controller1.circle().whileTrue(intake.runRoller(0.35));
         // controller1.R1().whileTrue(intake.runRoller(0.3));
         // controller1.R2().whileTrue(shooter.shooterOn(1, 1));
-        // controller1.R1().whileTrue(shooter.shooterOn(1, 0));
-        // controller1.L1().whileTrue(shooter.shooterOn(.25, 0));
-        // controller1.cross().whileTrue(shooter.shooterOn(.5, 0));
-        // controller1.L2().whileTrue(feeder.feederOn(1));
+        controller1.R1().whileTrue(shooter.shooterOn(1, 0));
+        controller1.L1().whileTrue(shooter.shooterOn(.25, 0));
+        controller1.cross().whileTrue(shooter.shooterOn(.5, 0));
+        controller1.L2().whileTrue(feeder.feederOn(1));
 
         // controller1.L1().onTrue(new InstantCommand(() -> drivetrain.resetRotation(new Rotation2d(0))));
 
-        controller1.L1().whileTrue(new DroneStrike(drivetrain, Constants.blueHubPose, hood, Constants.ballInitialVelocityFromShooterHub, Constants.ballInitialSpinFromShooterHub, () -> controller1.getRawAxis(1), () -> controller1.getRawAxis(0)));
+        // controller1.L1().whileTrue(new DroneStrike(drivetrain, Constants.blueHubPose, hood, Constants.ballInitialVelocityFromShooterHub, Constants.ballInitialSpinFromShooterHub, () -> controller1.getRawAxis(1), () -> controller1.getRawAxis(0)));
 
-        controller1.povUp().whileTrue(levitator.runLevitator(1));
-        controller1.povDown().whileTrue(levitator.runLevitator(-1));
+        // controller1.povUp().whileTrue(levitator.runLevitator(1));
+        // controller1.povDown().whileTrue(levitator.runLevitator(-1));
 
-        controller1.povUp().whileTrue(hood.setHoodPosition(-0.25));
-        controller1.povDown().whileTrue(hood.setHoodPosition(0.25));
-        controller1.povRight().whileTrue(hood.setHoodPosition(0));
-        controller1.povLeft().whileTrue(hood.setHoodPosition(Constants.hoodHardStopAngle));
-
+        controller1.povUp().whileTrue(hood.setHoodPosition(-0.1));
+        controller1.povDown().whileTrue(hood.setHoodPosition(-0.15));
+        controller1.povRight().whileTrue(hood.setHoodPosition(-0.2));
+        controller1.povLeft().whileTrue(hood.setHoodPosition(0));
 
         drivetrain.registerTelemetry(logger::telemeterize);
     }
