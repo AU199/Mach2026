@@ -39,16 +39,16 @@ public final class Constants {
     public static final double levitatorKP = 0;
     public static final double levitatorKI = 0;
     public static final double levitatorKD = 0;
-    public static final double shooterPivotKP = 0;
-    public static final double shooterPivotKI = 0;
-    public static final double shooterPivotKD = 0;
+    public static final double shooterMotorKP = 0;
+    public static final double shooterMotorKI = 0;
+    public static final double shooterMotorKD = 0;
     
-    public static final double hoodPivotKP = 1.5;
+    public static final double hoodPivotKP = 10;
     public static final double hoodPivotKI = 0;
     public static final double hoodPivotKD = 0;
     public static final double hoodPivotKS = 0;
     public static final double hoodPivotKV = 0.0;
-    public static final double hoodPivotKG = -0.69;
+    public static final double hoodPivotKG = 0.82;
     public static final double hoodPivotKA = 0.0;
     public static final double hoodHardStopAngle = 1.725;
    
@@ -90,7 +90,7 @@ public final class Constants {
      */
     public static final Transform3d kRobotToCam = new Transform3d(
         0.309, 0.064, 0.193,
-        new Rotation3d(Math.PI, 0.349, 0)
+        new Rotation3d(0, -Math.toRadians(27), 0)
     );
 
     // ── AprilTag layout ───────────────────────────────────────────────────────
