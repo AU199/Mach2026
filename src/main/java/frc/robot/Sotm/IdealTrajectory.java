@@ -16,11 +16,12 @@ public class IdealTrajectory {
     private final Pose2d hubPose;
 
     // Ball speed used for the analytic guess — same as Newton uses
-    private final double ballSpeed = Constants.ballInitialVelocityFromShooter;
+    private final double ballSpeed;
 
-    public IdealTrajectory(Pose2d robotPose, Pose2d hubPose, ChassisSpeeds robotVelocity) {
+    public IdealTrajectory(Pose2d robotPose, Pose2d hubPose, ChassisSpeeds robotVelocity, double ballInitialSpeedFromShooter) {
         this.robotPose = robotPose;
         this.hubPose = hubPose;
+        this.ballSpeed = ballInitialSpeedFromShooter;
         // robotVelocity is intentionally not used in the analytic vacuum solution;
         // Newton's method accounts for robot velocity in the full physics simulation.
     }
@@ -55,6 +56,7 @@ public class IdealTrajectory {
         double thetaLow  = Math.atan((v2 - sqrtDisc) / denom);
         double theta = thetaHigh;
 
+        // Uncomment this when not in simulation to make sure the hood doesn't hurt itself on the top bar
         // if (theta > Math.toRadians(75)) {
         //     return new ShotAngles(Double.NaN, Double.NaN);
         // }

@@ -32,6 +32,7 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -53,7 +54,7 @@ public class photon extends SubsystemBase {
     private AprilTagFieldLayout kTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
     public photon(CommandSwerveDrivetrain swerveDriveBase) {
         this.swerveDriveBase = swerveDriveBase;
-        this.camera = new PhotonCamera("MainCamera");
+        this.camera = new PhotonCamera("Baller");
         photonEstimator = new PhotonPoseEstimator(kTagLayout, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
                 Constants.kRobotToCam);
 
@@ -76,32 +77,28 @@ public class photon extends SubsystemBase {
         }
     }
 
-    public void getResults() {
-        var VisionEstimates = camera.getAllUnreadResults();
-        Optional<EstimatedRobotPose> estimatedPoseInitial = Optional.empty();
-        for (var VisionEstimate : VisionEstimates) {
-            estimatedPoseInitial = photonEstimator.estimateCoprocMultiTagPose(VisionEstimate);
-            if (estimatedPoseInitial.isEmpty()) {
-                estimatedPoseInitial = photonEstimator.estimateLowestAmbiguityPose(VisionEstimate);
+    /** Processes a single pipeline result and feeds the pose estimate to the drivetrain. */
+    private void processResult(PhotonPipelineResult result) {
+        Optional<EstimatedRobotPose> visionEstimate = photonEstimator.estimateCoprocMultiTagPose(result);
 
-            }
-            Matrix<N3, N3> cameMatrix = camera.getCameraMatrix().orElse(null);
-            if (cameMatrix == null) {
-                System.out.println("NO CAM MATRIX");
-            }
-            Matrix<N8, N1> distOffsetMatrix = camera.getDistCoeffs().orElse(null);
-            if (distOffsetMatrix == null) {
-                System.out.println("NO DIST OFFSET");
-            }
-            Optional<EstimatedRobotPose> estimatedPoseBetter = photonEstimator.estimateConstrainedSolvepnpPose(
-                    VisionEstimate, cameMatrix, distOffsetMatrix, estimatedPoseInitial.get().estimatedPose, false, 1.0);
-            estimatedPoseBetter.ifPresentOrElse(
-                est -> {
-                    swerveDriveBase.addVisionMeasurement(est.estimatedPose.toPose2d(), est.timestampSeconds);
-                    cameraPose.accept(est.estimatedPose);
-                }, System.out::println);
+        if (visionEstimate.isEmpty()) {
+            visionEstimate = photonEstimator.estimateLowestAmbiguityPose(result);
         }
 
+        visionEstimate.ifPresent(est -> {
+            swerveDriveBase.addVisionMeasurement(
+                    est.estimatedPose.toPose2d(),
+                    est.timestampSeconds);
+            cameraPose.accept(est.estimatedPose);
+            
+        });
+    }
+
+    /** Used on real hardware — reads the latest unread results from the camera. */
+    private void getResults() {
+        for (PhotonPipelineResult result : camera.getAllUnreadResults()) {
+            processResult(result);
+        }
     }
 
     public void getResultsSim() {
@@ -138,13 +135,19 @@ public class photon extends SubsystemBase {
         return visionSystemSim.getDebugField();
     }
 
-    public void simulationPeriodic(Pose2d robotpose){
-        visionSystemSim.update(robotpose);
+    @Override
+    public void simulationPeriodic() {
+        Pose2d robotpose = swerveDriveBase.getState().Pose;
         getResultsSim();
     }
     @Override 
     public void periodic(){
-        getResultsSim();
+        if (Robot.isSimulation()) {
+            getResultsSim();
+        } else {
+            getResults();
+        }
+        
     }
 
 }

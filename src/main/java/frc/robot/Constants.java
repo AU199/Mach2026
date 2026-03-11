@@ -35,19 +35,20 @@ public final class Constants {
     public static final double intakePivotKP = 0.2;
     public static final double intakePivotKI = 0;
     public static final double intakePivotKD = 0;
+    public static final double intakeHardStopAngle = 0;
     public static final double levitatorKP = 0;
     public static final double levitatorKI = 0;
     public static final double levitatorKD = 0;
-    public static final double shooterPivotKP = 0;
-    public static final double shooterPivotKI = 0;
-    public static final double shooterPivotKD = 0;
+    public static final double shooterMotorKP = 0;
+    public static final double shooterMotorKI = 0;
+    public static final double shooterMotorKD = 0;
     
-    public static final double hoodPivotKP = 1.5;
+    public static final double hoodPivotKP = 10;
     public static final double hoodPivotKI = 0;
     public static final double hoodPivotKD = 0;
     public static final double hoodPivotKS = 0;
     public static final double hoodPivotKV = 0.0;
-    public static final double hoodPivotKG = -0.69;
+    public static final double hoodPivotKG = 0.82;
     public static final double hoodPivotKA = 0.0;
     public static final double hoodHardStopAngle = 1.725;
    
@@ -70,8 +71,12 @@ public final class Constants {
     public static final double shooterPositionY = 0.0; // lateral
 
     /** Ball exit speed from shooter, m/s. Tune from shooter characterization. */
-    public static final double ballInitialVelocityFromShooter = 9.5;
-    public static final double ballInitialSpinFromShooter = 100;
+    public static final double ballInitialVelocityFromShooterHub = 9.5;
+    public static final double ballInitialVelocityFromShooterNeutralZone = 9.5;
+    public static final double ballInitialVelocityFromShooterEnemyZone = 9.5;
+    public static final double ballInitialSpinFromShooterHub = 100;
+    public static final double ballInitialSpinFromShooterNeutralZone = 100;
+    public static final double ballInitialSpinFromShooterEnemyZone = 100;
 
     // ── Intake positions (encoder units — tune before deploy) ────────────────
     public static final double IntakeDeployPos  = 25;
@@ -84,8 +89,8 @@ public final class Constants {
      * Measure actual mount position on robot.
      */
     public static final Transform3d kRobotToCam = new Transform3d(
-        0.5, 0.0, 0.5,
-        new Rotation3d(0, 0, 0)
+        0.309, 0.064, 0.193,
+        new Rotation3d(0, -Math.toRadians(27), 0)
     );
 
     // ── AprilTag layout ───────────────────────────────────────────────────────

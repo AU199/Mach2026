@@ -63,8 +63,8 @@ public class RK4 {
         Vector omegaCrossV = Vector.cross(ballInitialAngularVelocity, v);
         double scalar = MAGNUS_COEFF / BALL_MASS_KG;
 
-        // return VecBuilder.fill(0, 0, 0); // Temporary for now
-        return omegaCrossV.times(scalar);
+        return VecBuilder.fill(0, 0, 0); // Temporary for now
+        // return omegaCrossV.times(scalar);
     }
 
 
