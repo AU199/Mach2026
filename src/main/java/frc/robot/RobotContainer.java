@@ -6,12 +6,23 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
 import org.photonvision.proto.Photon;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.config.PIDConstants;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import com.ctre.phoenix6.swerve.SwerveRequest.ApplyFieldSpeeds;
+import com.ctre.phoenix6.swerve.SwerveRequest.RobotCentric;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -22,6 +33,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
+import frc.robot.Commands.BusterAuto;
 import frc.robot.Sotm.DroneStrike;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
@@ -99,12 +111,12 @@ public class RobotContainer {
         // controller1.triangle().whileTrue(intake.setIntakePosition(Constants.IntakeRetractPos, 0.025, 0.3));
         // controller1.circle().whileTrue(intake.runPivotSetSpeed(0.1));
         // controller1.square().whileTrue(intake.runPivotSetSpeed(-0.1));
-        // controller1.circle().whileTrue(intake.runRoller(0.35));
-        // controller1.R1().whileTrue(intake.runRoller(0.3));
+        controller1.circle().whileTrue(intake.runRoller(0.4));
+        controller1.square().whileTrue(intake.runRoller(0.35));
         // controller1.R2().whileTrue(shooter.shooterOn(1, 1));
-        controller1.R1().whileTrue(shooter.shooterOn(1, 0));
-        controller1.L1().whileTrue(shooter.shooterOn(.25, 0));
-        controller1.cross().whileTrue(shooter.shooterOn(.6, 0));
+        controller1.R1().whileTrue(shooter.shooterOn(1));
+        controller1.L1().whileTrue(shooter.shooterOn(.5));
+        controller1.cross().whileTrue(shooter.shooterOn(.6));
         controller1.L2().whileTrue(feeder.feederOn(1));
 
         controller1.share().onTrue(new InstantCommand(() -> drivetrain.resetRotation(new Rotation2d(0))));

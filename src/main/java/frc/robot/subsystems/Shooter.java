@@ -32,9 +32,7 @@ import frc.robot.Sotm.Newton;
 
 public class Shooter extends SubsystemBase{
     TalonFX frontShooter1 = new TalonFX(Constants.frontShooter1Id, "DriveBase");
-    TalonFX frontShooter2 = new TalonFX(Constants.frontShooter2Id, "DriveBase");
-    TalonFX backShooter = new TalonFX(Constants.backShooterId, "DriveBase");
-    
+    TalonFX frontShooter2 = new TalonFX(Constants.frontShooter2Id, "DriveBase");    
 
     PositionVoltage pivotAngleRequest = new PositionVoltage(0).withSlot(0);
     boolean isBlue;
@@ -64,7 +62,6 @@ public class Shooter extends SubsystemBase{
         
         frontShooter1.getConfigurator().apply(talonFXConfigs);
         frontShooter2.setControl(new Follower(Constants.frontShooter1Id, MotorAlignmentValue.Aligned));
-        backShooter.getConfigurator().apply(talonFXConfigs);
 
         this.field = field;
         this.drivebase = drivetrain;
@@ -80,15 +77,13 @@ public class Shooter extends SubsystemBase{
         return hubPose;
     }
 
-    public Command shooterOn(double frontShooterSpeed, double backShooterSpeed) {
+    public Command shooterOn(double frontShooterSpeed) {
         return startEnd(() -> {
             frontShooter1.set(frontShooterSpeed);
             frontShooter2.set(frontShooterSpeed);
-            backShooter.set(-backShooterSpeed);
         }, () -> {
             frontShooter1.set(0);
             frontShooter2.set(0);
-            backShooter.set(0);
         });
     }
 
@@ -179,8 +174,5 @@ public class Shooter extends SubsystemBase{
         SmartDashboard.putNumber("Front Shooter 2", frontShooter2.getVelocity().getValueAsDouble());
         SmartDashboard.putNumber("Front Shooter 2 Stator Current", frontShooter2.getStatorCurrent().getValueAsDouble());
         SmartDashboard.putNumber("Front Shooter 2 Supply Current", frontShooter2.getSupplyCurrent().getValueAsDouble());
-        SmartDashboard.putNumber("Back Shooter", backShooter.getVelocity().getValueAsDouble());
-        SmartDashboard.putNumber("Back Shooter Stator Current", backShooter.getStatorCurrent().getValueAsDouble());
-        SmartDashboard.putNumber("Back Shooter Supply Current", backShooter.getSupplyCurrent().getValueAsDouble());
     }
 }
