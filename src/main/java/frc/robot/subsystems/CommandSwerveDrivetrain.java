@@ -2,7 +2,9 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.SignalLogger;
@@ -10,17 +12,32 @@ import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.config.PIDConstants;
+import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.pathplanner.lib.path.GoalEndState;
+import com.pathplanner.lib.path.IdealStartingState;
+import com.pathplanner.lib.path.PathConstraints;
+import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.path.Waypoint;
 
 import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
@@ -49,6 +66,20 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization = new SwerveRequest.SysIdSwerveTranslation();
     private final SwerveRequest.SysIdSwerveSteerGains m_steerCharacterization = new SwerveRequest.SysIdSwerveSteerGains();
     private final SwerveRequest.SysIdSwerveRotation m_rotationCharacterization = new SwerveRequest.SysIdSwerveRotation();
+    private final SwerveRequest.ApplyRobotSpeeds autoRequest = new SwerveRequest.ApplyRobotSpeeds();
+
+    private final ProfiledPIDController pidController = new ProfiledPIDController(50, 0, 0, new TrapezoidProfile.Constraints(3, 3));
+
+    private static RobotConfig config;
+    static{
+        try{
+        config = RobotConfig.fromGUISettings();
+        }
+        catch (Exception e) {
+        // Handle exception as needed
+        e.printStackTrace();
+        }
+    }
 
     /* SysId routine for characterizing translation. This is used to find PID gains for the drive motors. */
     private final SysIdRoutine m_sysIdRoutineTranslation = new SysIdRoutine(
@@ -130,6 +161,63 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         if (Utils.isSimulation()) {
             startSimThread();
         }
+
+        AutoBuilder.configure(() -> this.getState().Pose, this::resetPose,
+        () -> this.getState().Speeds,
+        (speeds, feedForwards) -> this.setControl(autoRequest.withSpeeds(speeds)),
+        new PPHolonomicDriveController(new PIDConstants(0, 0, 0), new PIDConstants(0, 0, 0)),
+        config,
+        () -> {
+            var alliance = DriverStation.getAlliance();
+            if (alliance.isPresent()) {
+                return alliance.get() == DriverStation.Alliance.Red;
+            }
+            return false;
+        },
+        this);
+    }
+
+    private PathPlannerPath path;
+
+    private Command imPiddingIt() {
+        return this.applyRequest(() -> new SwerveRequest.FieldCentric().withVelocityX(pidController.calculate(this.getState().Pose.getX())));
+    }
+
+    public Command pidToPoint(Pose2d targetPose) {
+        pidController.setGoal(targetPose.getX());
+        return Commands.defer(() -> imPiddingIt(), Set.of(this));
+        
+    }
+
+    private Command getPathPlannerPath(Pose2d targetPose) {
+        Pose2d currentPose = this.getState().Pose;
+
+        ChassisSpeeds robotRobotRelativeVelocities = this.getState().Speeds;
+        ChassisSpeeds robotFieldRelativeVelocities = ChassisSpeeds.fromRobotRelativeSpeeds(robotRobotRelativeVelocities, this.getState().RawHeading);
+
+        currentPose = new Pose2d(currentPose.getX(), currentPose.getY(), new Rotation2d(robotFieldRelativeVelocities.vxMetersPerSecond, robotFieldRelativeVelocities.vyMetersPerSecond));
+        targetPose = new Pose2d(targetPose.getX(), targetPose.getY(), new Rotation2d(Math.atan2(targetPose.getX()-currentPose.getX(), targetPose.getY()-currentPose.getY())));
+
+
+        List<Waypoint> waypoints = PathPlannerPath.waypointsFromPoses(
+            currentPose,
+            targetPose
+        );
+
+        path = new PathPlannerPath(
+            waypoints,
+            new PathConstraints(3.0, 3.0, 2*Math.PI, 4*Math.PI),
+            null,
+            new GoalEndState(0.0, targetPose.getRotation())
+        );
+
+        path.preventFlipping = true;
+        System.out.println("Pooey");
+        return AutoBuilder.followPath(path);
+    }
+
+    public Command driveToPose(Pose2d targetPose) {
+        return Commands.defer(() -> getPathPlannerPath(targetPose), Set.of(this));
     }
 
     /**

@@ -39,53 +39,42 @@ public class Intake extends SubsystemBase {
     }
 
     public Command setIntakePosition(double targetPosition, double KP, double maxSpeed) {
+        return runEnd(
+            () -> {
+                double error = targetPosition - pivotMotor.getPosition().getValueAsDouble();
+                double output = Math.min(error * KP, maxSpeed);
+                pivotMotor.set(output);
+            },
+            () -> {
+                pivotMotor.set(0);
+            }
+        ).until(() -> {boolean result = Math.abs(pivotMotor.getPosition().getValueAsDouble() - targetPosition) < 0.08; return result;});
+
         // return startEnd(() -> {
-        //     pivotMotor.setControl(deployRequest.withPosition(25));
+        //     // in init function
+        //     var talonFXConfigs = new TalonFXConfiguration();
+
+        //     // set slot 0 gains
+        //     var slot0Configs = talonFXConfigs.Slot0;
+        //     slot0Configs.kS = 0; // Add 0.25 V output to overcome static friction
+        //     slot0Configs.kV = 0; // A velocity target of 1 rps results in 0.12 V output
+        //     slot0Configs.kA = 0; // An acceleration of 1 rps/s requires 0.01 V output
+        //     slot0Configs.withGravityType(GravityTypeValue.valueOf(GravityTypeValue.Arm_Cosine.value)); // Use cosine gravity compensation
+        //     slot0Configs.withGravityArmPositionOffset(Constants.intakeHardStopAngle/ (2.0*Math.PI)); // Set the position of the hard stop as the zero point for gravity compensation
+        //     slot0Configs.kP = Constants.intakePivotKP; // A position error of 2.5 rotations results in 12 V output
+        //     slot0Configs.kI = Constants.intakePivotKI; // no output for integrated error
+        //     slot0Configs.kD = Constants.intakePivotKD; // A velocity error of 1 rps results in 0.1 V output
+
+        //     // set Motion Magic settings
+        //     var motionMagicConfigs = talonFXConfigs.MotionMagic;
+        //     motionMagicConfigs.MotionMagicCruiseVelocity = 80; // Target cruise velocity of 80 rps
+        //     motionMagicConfigs.MotionMagicAcceleration = 160; // Target acceleration of 160 rps/s (0.5 seconds)
+        //     motionMagicConfigs.MotionMagicJerk = 1600; // Target jerk of 1600 rps/s/s (0.1 seconds)
+
+        //     pivotMotor.getConfigurator().apply(talonFXConfigs);
         // }, () -> {
         //     pivotMotor.set(0);
-           
-        // }).until(isIntakeDeployed);
-
-        // return runEnd(
-        //     () -> {
-        //         double error = targetPosition - pivotMotor.getPosition().getValueAsDouble();
-        //         double output = Math.min(error * KP, maxSpeed);
-        //         pivotMotor.set(output);
-        //     },
-        //     () -> {
-        //         pivotMotor.set(0);
-        //     }
-        // ).until(() -> {boolean result = Math.abs(pivotMotor.getPosition().getValueAsDouble() - targetPosition) < 0.08; return result;});
-
-        // return start(() -> {
-        //     pivotMotor.setControl(request);
         // });
-
-        return startEnd(() -> {
-            // in init function
-            var talonFXConfigs = new TalonFXConfiguration();
-
-            // set slot 0 gains
-            var slot0Configs = talonFXConfigs.Slot0;
-            slot0Configs.kS = 0; // Add 0.25 V output to overcome static friction
-            slot0Configs.kV = 0; // A velocity target of 1 rps results in 0.12 V output
-            slot0Configs.kA = 0; // An acceleration of 1 rps/s requires 0.01 V output
-            slot0Configs.withGravityType(GravityTypeValue.valueOf(GravityTypeValue.Arm_Cosine.value)); // Use cosine gravity compensation
-            slot0Configs.withGravityArmPositionOffset(Constants.intakeHardStopAngle/ (2.0*Math.PI)); // Set the position of the hard stop as the zero point for gravity compensation
-            slot0Configs.kP = Constants.intakePivotKP; // A position error of 2.5 rotations results in 12 V output
-            slot0Configs.kI = Constants.intakePivotKI; // no output for integrated error
-            slot0Configs.kD = Constants.intakePivotKD; // A velocity error of 1 rps results in 0.1 V output
-
-            // set Motion Magic settings
-            var motionMagicConfigs = talonFXConfigs.MotionMagic;
-            motionMagicConfigs.MotionMagicCruiseVelocity = 80; // Target cruise velocity of 80 rps
-            motionMagicConfigs.MotionMagicAcceleration = 160; // Target acceleration of 160 rps/s (0.5 seconds)
-            motionMagicConfigs.MotionMagicJerk = 1600; // Target jerk of 1600 rps/s/s (0.1 seconds)
-
-            pivotMotor.getConfigurator().apply(talonFXConfigs);
-        }, () -> {
-            pivotMotor.set(0);
-        });
     }
 
     public Command runRoller(double speed) {

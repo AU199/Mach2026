@@ -107,16 +107,15 @@ public class RobotContainer {
                                                                                       // negative X (left)
                 ));
 
-        // controller1.cross().whileTrue(intake.setIntakePosition(Constants.IntakeDeployPos, 0.1, 0.5));
-        // controller1.triangle().whileTrue(intake.setIntakePosition(Constants.IntakeRetractPos, 0.025, 0.3));
+        controller1.cross().whileTrue(intake.setIntakePosition(Constants.IntakeDeployPos, 0.1, 0.5));
+        controller1.triangle().whileTrue(intake.setIntakePosition(Constants.IntakeRetractPos, 0.025, 0.3));
         // controller1.circle().whileTrue(intake.runPivotSetSpeed(0.1));
         // controller1.square().whileTrue(intake.runPivotSetSpeed(-0.1));
         controller1.circle().whileTrue(intake.runRoller(0.4));
         controller1.square().whileTrue(intake.runRoller(0.35));
-        // controller1.R2().whileTrue(shooter.shooterOn(1, 1));
         controller1.R1().whileTrue(shooter.shooterOn(1));
-        controller1.L1().whileTrue(shooter.shooterOn(.5));
-        controller1.cross().whileTrue(shooter.shooterOn(.6));
+        controller1.L1().whileTrue(shooter.shooterOn(50));
+        // controller1.cross().whileTrue(shooter.shooterOn(50));
         controller1.L2().whileTrue(feeder.feederOn(1));
 
         controller1.share().onTrue(new InstantCommand(() -> drivetrain.resetRotation(new Rotation2d(0))));
@@ -128,9 +127,11 @@ public class RobotContainer {
         // controller1.povUp().whileTrue(levitator.runLevitator(1));
         // controller1.povDown().whileTrue(levitator.runLevitator(-1));
 
-        controller1.povUp().onTrue(hood.setHoodPosition(-0.11));
-        controller1.povDown().onTrue(hood.setHoodPosition(-0.15));
-        controller1.povRight().onTrue(hood.setHoodPosition(-0.2));
+        // controller1.square().whileTrue(drivetrain.pidToPoint(new Pose2d(0, 0, new Rotation2d(0))));
+
+        controller1.povUp().onTrue(hood.setHoodPosition(0.11));
+        controller1.povDown().onTrue(hood.setHoodPosition(0.15));
+        controller1.povRight().onTrue(hood.setHoodPosition(0.2));
         controller1.povLeft().onTrue(hood.setHoodPosition(0));
 
         drivetrain.registerTelemetry(logger::telemeterize);
