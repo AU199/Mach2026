@@ -98,6 +98,7 @@ public class PhaseTimer{
         // Passing in alliance over here should be fine since it has been check whether or not it was empty before this.
         hubActive = IsItOurTurn(alliance, gameData, matchTime);
         SmartDashboard.putBoolean("Hub Active?", hubActive);
+        updateTimings(matchTime, hubActive);
         
 
 
