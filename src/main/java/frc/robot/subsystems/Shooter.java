@@ -78,23 +78,23 @@ public class Shooter extends SubsystemBase{
         return hubPose;
     }
 
-    // public Command shooterOn(double speed) {
-    //     return startEnd(() -> {
-    //         frontShooter1.set(frontShooterSpeed);
-    //         frontShooter2.set(frontShooterSpeed);
-    //     }, () -> {
-    //         frontShooter1.set(0);
-    //         frontShooter2.set(0);
-    //     });
-    // }
-
     public Command shooterOn(double speed) {
         return startEnd(() -> {
-            frontShooter1.setControl(new MotionMagicVelocityVoltage(speed));
+            frontShooter1.set(speed);
+            frontShooter2.set(speed);
         }, () -> {
             frontShooter1.set(0);
+            frontShooter2.set(0);
         });
     }
+
+    // public Command shooterOn(double speed) {
+    //     return startEnd(() -> {
+    //         frontShooter1.setControl(new MotionMagicVelocityVoltage(speed));
+    //     }, () -> {
+    //         frontShooter1.set(0);
+    //     });
+    // }
 
     // public Command pivotMotorOn(double speed) {
     //     return startEnd(() -> {
