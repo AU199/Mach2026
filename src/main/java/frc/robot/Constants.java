@@ -2,10 +2,14 @@ package frc.robot;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.Filesystem;
 
 /**
@@ -88,6 +92,9 @@ public final class Constants {
      * x = forward, y = left, z = up (meters). Rotation is camera pitch/roll/yaw.
      * Measure actual mount position on robot.
      */
+    public static final Matrix<N3 , N1> kSingleTagStdDevs = VecBuilder.fill(4,4,8);
+    public static final Matrix<N3 , N1> kMultiTagStdDevs = VecBuilder.fill(0.5, 0.5, 1);
+
     public static final Transform3d kRobotToCam = new Transform3d(
         0.309, 0.064, 0.193,
         new Rotation3d(0, -Math.toRadians(27), 0)
