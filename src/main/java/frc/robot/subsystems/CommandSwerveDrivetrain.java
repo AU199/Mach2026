@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.*;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.SignalLogger;
@@ -68,7 +69,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private final SwerveRequest.SysIdSwerveRotation m_rotationCharacterization = new SwerveRequest.SysIdSwerveRotation();
     private final SwerveRequest.ApplyRobotSpeeds autoRequest = new SwerveRequest.ApplyRobotSpeeds();
 
-    private final ProfiledPIDController pidController = new ProfiledPIDController(50, 0, 0, new TrapezoidProfile.Constraints(3, 3));
+    private final ProfiledPIDController pidControllerX = new ProfiledPIDController(50, 0, 5, new TrapezoidProfile.Constraints(3, 3));
+    private final ProfiledPIDController pidControllerY = new ProfiledPIDController(50, 0, 5, new TrapezoidProfile.Constraints(3, 3));
+    private final ProfiledPIDController pidControllerR = new ProfiledPIDController(50, 0, 5, new TrapezoidProfile.Constraints(3, 3));
 
     private static RobotConfig config;
     static{
@@ -179,14 +182,30 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     private PathPlannerPath path;
 
+    private BooleanSupplier pidReachedSetpoint = () -> {
+        boolean reachedSetpoint = (pidControllerX.atSetpoint() && pidControllerY.atSetpoint() && pidControllerR.atSetpoint());
+        return reachedSetpoint;
+    };
+
     private Command imPiddingIt() {
-        return this.applyRequest(() -> new SwerveRequest.FieldCentric().withVelocityX(pidController.calculate(this.getState().Pose.getX())));
+        return this.applyRequest(() -> new SwerveRequest.FieldCentric()
+            .withVelocityX(-pidControllerX.calculate(this.getState().Pose.getX()))
+            .withVelocityY(-pidControllerY.calculate(this.getState().Pose.getY()))
+            .withRotationalRate(pidControllerR.calculate(this.getState().RawHeading.getRadians()))
+        ).until(pidReachedSetpoint);
     }
 
     public Command pidToPoint(Pose2d targetPose) {
-        pidController.setGoal(targetPose.getX());
+        pidControllerR.enableContinuousInput(-Math.PI, Math.PI);
+
+        pidControllerX.setTolerance(0.05);
+        pidControllerY.setTolerance(0.05);
+        pidControllerR.setTolerance(0.0174532925);
+
+        pidControllerX.setGoal(targetPose.getX());
+        pidControllerY.setGoal(targetPose.getY());
+        pidControllerR.setGoal(targetPose.getRotation().getDegrees());
         return Commands.defer(() -> imPiddingIt(), Set.of(this));
-        
     }
 
     private Command getPathPlannerPath(Pose2d targetPose) {
