@@ -97,7 +97,7 @@ public final class Constants {
 
     public static final Transform3d kRobotToCam = new Transform3d(
         0.309, 0.064, 0.193,
-        new Rotation3d(0, -Math.toRadians(27), 0)
+        new Rotation3d(0, -Math.toRadians(27), Math.PI)
     );
 
     // ── AprilTag layout ───────────────────────────────────────────────────────

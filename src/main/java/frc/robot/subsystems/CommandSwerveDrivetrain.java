@@ -69,9 +69,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private final SwerveRequest.SysIdSwerveRotation m_rotationCharacterization = new SwerveRequest.SysIdSwerveRotation();
     private final SwerveRequest.ApplyRobotSpeeds autoRequest = new SwerveRequest.ApplyRobotSpeeds();
 
-    private final ProfiledPIDController pidControllerX = new ProfiledPIDController(50, 0, 5, new TrapezoidProfile.Constraints(3, 3));
-    private final ProfiledPIDController pidControllerY = new ProfiledPIDController(50, 0, 5, new TrapezoidProfile.Constraints(3, 3));
-    private final ProfiledPIDController pidControllerR = new ProfiledPIDController(50, 0, 5, new TrapezoidProfile.Constraints(3, 3));
+    private final ProfiledPIDController pidControllerX = new ProfiledPIDController(50, 0, 5, new TrapezoidProfile.Constraints(3, 1));
+    private final ProfiledPIDController pidControllerY = new ProfiledPIDController(50, 0, 5, new TrapezoidProfile.Constraints(3, 1));
+    private final ProfiledPIDController pidControllerR = new ProfiledPIDController(50, 0, 5, new TrapezoidProfile.Constraints(3, 1));
 
     private static RobotConfig config;
     static{

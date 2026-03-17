@@ -45,7 +45,7 @@ import frc.robot.subsystems.Hood;
 import frc.robot.subsystems.photon;
 
 public class RobotContainer {
-    private double MaxSpeed = 1 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top
+    private double MaxSpeed = 0.5 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top
                                                                                         // speed
     private double MaxAngularRate = 1 * RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per
                                                                                             // second max angular
@@ -83,13 +83,14 @@ public class RobotContainer {
     //     controller1.b().whileTrue(feeder.feederOn(1));
     //     controller1.leftBumper().whileTrue(shooter.pivotMotorOn(.25));
     //     controller1.rightBumper().whileTrue(shooter.pivotMotorOn(-.25));
-     controller1.share().onTrue(Commands.sequence(
-            intake.setIntakePosition(Constants.IntakeDeployPos, 0.1, 0.5).withTimeout(2),
+        controller1.share().onTrue(Commands.sequence(
+            // intake.setIntakePosition(Constants.IntakeDeployPos, 0.1, 0.5).withTimeout(2),
             intake.runRoller(.5).withTimeout(2),
-            intake.setIntakePosition(Constants.IntakeRetractPos, 0.025, 0.3).withTimeout(5),
+            // intake.setIntakePosition(Constants.IntakeRetractPos, 0.025, 0.3).withTimeout(5),
             hood.setHoodPosition(0.2).withTimeout(1),
             shooter.shooterOn(1).withTimeout(2),
             hood.setHoodPosition(0).withTimeout(1),
+            feeder.feederOn(1).withTimeout(2),
             levitator.lift().withTimeout(2),
             levitator.retract().withTimeout(2)
         ));
@@ -98,10 +99,10 @@ public class RobotContainer {
         // and Y is defined as to the left according to WPILib convention.
         drivetrain.setDefaultCommand(
                 // Drivetrain will execute this command periodically
-                drivetrain.applyRequest(() -> drive.withVelocityX(Math.pow(controller1.getRawAxis(1), 3) * MaxSpeed) // Drive forward
+                drivetrain.applyRequest(() -> drive.withVelocityX(-Math.pow(controller1.getRawAxis(1), 3) * MaxSpeed) // Drive forward
                                                                                                      // with negative Y
                                                                                                      // (forward)
-                        .withVelocityY(Math.pow(controller1.getRawAxis(0), 3) * MaxSpeed) // Drive left with negative X (left)
+                        .withVelocityY(-Math.pow(controller1.getRawAxis(0), 3) * MaxSpeed) // Drive left with negative X (left)
                         .withRotationalRate(-controller1.getRawAxis(2) * MaxAngularRate) // Drive counterclockwise with
                                                                                       // negative X (left)
                 ));
@@ -112,21 +113,21 @@ public class RobotContainer {
         // controller1.square().whileTrue(intake.runPivotSetSpeed(-0.1));
         controller1.R1().whileTrue(intake.runRoller(0.5));
         // controller1.square().whileTrue(intake.runRoller(0.35));
-        controller1.R2().whileTrue(shooter.shooterOn(0.6));
+        controller1.R2().whileTrue(shooter.shooterOn(7));
         controller1.L1().whileTrue(shooter.shooterOn(50));
         // controller1.cross().whileTrue(shooter.shooterOn(50));
         controller1.L2().whileTrue(feeder.feederOn(1));
 
-        controller1.share().onTrue(new InstantCommand(() -> drivetrain.resetRotation(new Rotation2d(0))));
+        controller1.options().onTrue(new InstantCommand(() -> drivetrain.resetRotation(new Rotation2d(0))));
 
-        
+    
         // controller1.L1().whileTrue(new DroneStrike(drivetrain, Constants.blueHubPose, hood, Constants.ballInitialVelocityFromShooterHub, Constants.ballInitialSpinFromShooterHub, () -> controller1.getRawAxis(1), () -> controller1.getRawAxis(0)));
 
 
         // controller1.povUp().whileTrue(levitator.runLevitator(1));
         // controller1.povDown().whileTrue(levitator.runLevitator(-1));
 
-        // controller1.square().whileTrue(drivetrain.pidToPoint(new Pose2d(0, 0, new Rotation2d(0))));
+        controller1.square().whileTrue(drivetrain.pidToPoint(new Pose2d(2.8, 4, new Rotation2d(0))));
 
         controller1.povUp().onTrue(hood.setHoodPosition(0.11));
         controller1.povDown().onTrue(hood.setHoodPosition(0.10));

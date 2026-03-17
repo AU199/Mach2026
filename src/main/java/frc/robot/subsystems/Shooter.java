@@ -53,13 +53,14 @@ public class Shooter extends SubsystemBase{
         slot0Configs.kS = 0; // Add 0.25 V output to overcome static friction
         slot0Configs.kV = 0; // A velocity target of 1 rps results in 0.12 V output
         slot0Configs.kA = 0; // An acceleration of 1 rps/s requires 0.01 V output
-        slot0Configs.kP = 1; // A position error of 2.5 rotations results in 12 V output
+        slot0Configs.kP = 0.5; // A position error of 2.5 rotations results in 12 V output
         slot0Configs.kI = Constants.shooterMotorKI; // no output for integrated error
         slot0Configs.kD = Constants.shooterMotorKD; // A velocity error of 1 rps results in 0.1 V output
 
         var magicMotionConfigs = talonFXConfigs.MotionMagic;
-        magicMotionConfigs.MotionMagicAcceleration = 20;
-        magicMotionConfigs.MotionMagicJerk = 10;
+        magicMotionConfigs.MotionMagicCruiseVelocity = Double.POSITIVE_INFINITY;
+        magicMotionConfigs.MotionMagicAcceleration = Double.POSITIVE_INFINITY;
+        magicMotionConfigs.MotionMagicJerk = Double.POSITIVE_INFINITY;
         
         frontShooter1.getConfigurator().apply(talonFXConfigs);
         frontShooter2.setControl(new Follower(Constants.frontShooter1Id, MotorAlignmentValue.Aligned));
@@ -78,23 +79,23 @@ public class Shooter extends SubsystemBase{
         return hubPose;
     }
 
-    public Command shooterOn(double speed) {
-        return startEnd(() -> {
-            frontShooter1.set(speed);
-            frontShooter2.set(speed);
-        }, () -> {
-            frontShooter1.set(0);
-            frontShooter2.set(0);
-        });
-    }
-
     // public Command shooterOn(double speed) {
     //     return startEnd(() -> {
-    //         frontShooter1.setControl(new MotionMagicVelocityVoltage(speed));
+    //         frontShooter1.setVoltage(speed);
+    //         frontShooter2.setVoltage(speed);
     //     }, () -> {
     //         frontShooter1.set(0);
+    //         frontShooter2.set(0);
     //     });
     // }
+
+    public Command shooterOn(double speed) {
+        return startEnd(() -> {
+            frontShooter1.setControl(new MotionMagicVelocityVoltage(speed));
+        }, () -> {
+            frontShooter1.set(0);
+        });
+    }
 
     // public Command pivotMotorOn(double speed) {
     //     return startEnd(() -> {

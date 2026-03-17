@@ -55,7 +55,7 @@ public class photon extends SubsystemBase {
     private AprilTagFieldLayout kTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
     public photon(CommandSwerveDrivetrain swerveDriveBase) {
         this.swerveDriveBase = swerveDriveBase;
-        this.camera = new PhotonCamera("Baller");
+        this.camera = new PhotonCamera("MainCamera");
         photonEstimator = new PhotonPoseEstimator(kTagLayout, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
                 Constants.kRobotToCam);
 
