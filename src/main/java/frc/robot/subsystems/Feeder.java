@@ -18,7 +18,7 @@ public class Feeder extends SubsystemBase{
             // feederMotor.set(-0.5);
             kickerMotor.set(-speed);
         }, () -> {
-            feederMotor.set(0);
+            // feederMotor.set(0);
             kickerMotor.set(0);
         });
     }
