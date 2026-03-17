@@ -41,6 +41,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 
@@ -62,16 +63,18 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private static final Rotation2d kRedAlliancePerspectiveRotation = Rotation2d.k180deg;
     /* Keep track if we've ever applied the operator perspective before or not */
     private boolean m_hasAppliedOperatorPerspective = false;
-
+    private double kpx = 50, kix = 0, kdx = 5;
+    private double kpy = 50, kiy = 0, kdy = 5;  
+    private double kpr = 50, kir = 0, kdr = 5;
     /* Swerve requests to apply during SysId characterization */
     private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization = new SwerveRequest.SysIdSwerveTranslation();
     private final SwerveRequest.SysIdSwerveSteerGains m_steerCharacterization = new SwerveRequest.SysIdSwerveSteerGains();
     private final SwerveRequest.SysIdSwerveRotation m_rotationCharacterization = new SwerveRequest.SysIdSwerveRotation();
     private final SwerveRequest.ApplyRobotSpeeds autoRequest = new SwerveRequest.ApplyRobotSpeeds();
 
-    private final ProfiledPIDController pidControllerX = new ProfiledPIDController(50, 0, 5, new TrapezoidProfile.Constraints(3, 1));
-    private final ProfiledPIDController pidControllerY = new ProfiledPIDController(50, 0, 5, new TrapezoidProfile.Constraints(3, 1));
-    private final ProfiledPIDController pidControllerR = new ProfiledPIDController(50, 0, 5, new TrapezoidProfile.Constraints(3, 1));
+    private final ProfiledPIDController pidControllerX = new ProfiledPIDController(kpx, kix, kdx, new TrapezoidProfile.Constraints(3, 1));
+    private final ProfiledPIDController pidControllerY = new ProfiledPIDController(kpy, kiy, kdy, new TrapezoidProfile.Constraints(3, 1));
+    private final ProfiledPIDController pidControllerR = new ProfiledPIDController(kpr, kir, kdr, new TrapezoidProfile.Constraints(3, 1));
 
     private static RobotConfig config;
     static{
@@ -178,6 +181,15 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             return false;
         },
         this);
+        SmartDashboard.putNumber("drive/kpx", kpx);
+        SmartDashboard.putNumber("drive/kix", kix);
+        SmartDashboard.putNumber("drive/kdx", kdx);
+        SmartDashboard.putNumber("drive/kpy", kpy);
+        SmartDashboard.putNumber("drive/kiy", kiy);
+        SmartDashboard.putNumber("drive/kdy", kdy);
+        SmartDashboard.putNumber("drive/kpr", kpr);
+        SmartDashboard.putNumber("drive/kir", kir);
+        SmartDashboard.putNumber("drive/kdr", kdr);
     }
 
     private PathPlannerPath path;
@@ -346,6 +358,20 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 m_hasAppliedOperatorPerspective = true;
             });
         }
+        SmartDashboard.getNumber("drive/kpx", kpx);
+        SmartDashboard.getNumber("drive/kix", kix);
+        SmartDashboard.getNumber("drive/kdx", kdx);
+        SmartDashboard.getNumber("drive/kpy", kpy);
+        SmartDashboard.getNumber("drive/kiy", kiy);
+        SmartDashboard.getNumber("drive/kdy", kdy);
+        SmartDashboard.getNumber("drive/kpr", kpr);
+        SmartDashboard.getNumber("drive/kir", kir);
+        SmartDashboard.getNumber("drive/kdr", kdr);
+
+        pidControllerX.setPID(kpx, kix, kdx);
+        pidControllerY.setPID(kpy, kiy, kdy);
+        pidControllerR.setPID(kpr, kir, kdr);
+
     }
 
     private void startSimThread() {

@@ -4,6 +4,7 @@ import java.util.function.BooleanSupplier;
 
 import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
+import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -23,14 +24,10 @@ public class Hood extends SubsystemBase{
     private final double sensorToMechanismRatio = 11; // (48/12) * (44/16)
 
     private double kp;
-    private double kg;
-    
+    private TalonFXConfiguration talonFXConfigs = new TalonFXConfiguration();
+    private Slot0Configs slot0Configs = talonFXConfigs.Slot0;
     public Hood() {
-        // in init function
-        var talonFXConfigs = new TalonFXConfiguration();
-
         // set slot 0 gains
-        var slot0Configs = talonFXConfigs.Slot0;
         FeedbackConfigs feedbackConfigs = talonFXConfigs.Feedback;
         MotorOutputConfigs motorOutputConfigs = talonFXConfigs.MotorOutput;
         
@@ -55,6 +52,11 @@ public class Hood extends SubsystemBase{
         motionMagicConfigs.MotionMagicJerk = 1600; // Target jerk of 1600 rps/s/s (0.1 seconds)
 
         hoodMotor.getConfigurator().apply(talonFXConfigs);
+        
+        SmartDashboard.putNumber("hood/kp", Constants.hoodPivotKP);
+        SmartDashboard.putNumber("hood/ki", Constants.hoodPivotKI);
+        SmartDashboard.putNumber("hood/kd", Constants.hoodPivotKD);
+        SmartDashboard.putNumber("hood/kg", Constants.hoodPivotKG);
     }
 
     public BooleanSupplier hoodReachedPosition(double targetPosition) {
@@ -90,7 +92,7 @@ public class Hood extends SubsystemBase{
             
             },
             () -> {
-                hoodMotor.setVoltage(kg);
+                hoodMotor.setVoltage(Constants.hoodPivotKG);
             }
         );
 
@@ -98,8 +100,13 @@ public class Hood extends SubsystemBase{
     }
     @Override
     public void periodic() {
-        SmartDashboard.putNumber("kG", kg);
-        SmartDashboard.putNumber("kP", kp);
+
+        SmartDashboard.getNumber("hood/kp", Constants.hoodPivotKP);
+        SmartDashboard.getNumber("hood/ki", Constants.hoodPivotKI); 
+        SmartDashboard.getNumber("hood/kd", Constants.hoodPivotKD);
+        SmartDashboard.getNumber("hood/kg", Constants.hoodPivotKG);
+        hoodMotor.getConfigurator().apply(talonFXConfigs);
+
         SmartDashboard.putNumber("Hood Angle", hoodMotor.getPosition().getValueAsDouble());
         double currentPosition = hoodMotor.getPosition().getValueAsDouble() / sensorToMechanismRatio;
         SmartDashboard.putNumber("Current Position", currentPosition);

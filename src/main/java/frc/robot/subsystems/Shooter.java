@@ -45,11 +45,11 @@ public class Shooter extends SubsystemBase{
     
     Pose2d hubPose;
     double currentYaw = 0;
+    private TalonFXConfiguration talonFXConfigs = new TalonFXConfiguration();
+    private Slot0Configs slot0Configs = talonFXConfigs.Slot0;
 
     public Shooter(CommandSwerveDrivetrain drivetrain, boolean isBlue, Field2d field) {
-        var talonFXConfigs = new TalonFXConfiguration();
 
-        var slot0Configs = talonFXConfigs.Slot0;
         slot0Configs.kS = 0; // Add 0.25 V output to overcome static friction
         slot0Configs.kV = 0; // A velocity target of 1 rps results in 0.12 V output
         slot0Configs.kA = 0; // An acceleration of 1 rps/s requires 0.01 V output
@@ -64,6 +64,9 @@ public class Shooter extends SubsystemBase{
         
         frontShooter1.getConfigurator().apply(talonFXConfigs);
         frontShooter2.setControl(new Follower(Constants.frontShooter1Id, MotorAlignmentValue.Aligned));
+        SmartDashboard.putNumber("shooter/kp", Constants.shooterMotorKP);
+        SmartDashboard.putNumber("shooter/ki", Constants.shooterMotorKI);
+        SmartDashboard.putNumber("shooter/kd", Constants.shooterMotorKD);
 
         this.field = field;
         this.drivebase = drivetrain;
@@ -176,5 +179,14 @@ public class Shooter extends SubsystemBase{
         SmartDashboard.putNumber("Front Shooter 2", frontShooter2.getVelocity().getValueAsDouble());
         SmartDashboard.putNumber("Front Shooter 2 Stator Current", frontShooter2.getStatorCurrent().getValueAsDouble());
         SmartDashboard.putNumber("Front Shooter 2 Supply Current", frontShooter2.getSupplyCurrent().getValueAsDouble());
+        SmartDashboard.getNumber("shooter/kp", Constants.shooterMotorKP);
+        SmartDashboard.getNumber("shooter/ki", Constants.shooterMotorKI);
+        SmartDashboard.getNumber("shooter/kd", Constants.shooterMotorKD);
+        slot0Configs.kP = Constants.shooterMotorKP;
+        slot0Configs.kI = Constants.shooterMotorKI;
+        slot0Configs.kD = Constants.shooterMotorKD;
+        frontShooter1.getConfigurator().apply(talonFXConfigs);
+
+        
     }
 }
