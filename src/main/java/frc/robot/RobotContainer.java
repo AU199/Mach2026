@@ -18,12 +18,13 @@ import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveRequest.ApplyFieldSpeeds;
 import com.ctre.phoenix6.swerve.SwerveRequest.RobotCentric;
-
+import frc.robot.Commands.BusterAuto;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -33,6 +34,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
+import frc.robot.Commands.BusterAuto;
 // import frc.robot.Commands.BusterAuto;
 import frc.robot.Sotm.DroneStrike;
 import frc.robot.generated.TunerConstants;
@@ -71,11 +73,18 @@ public class RobotContainer {
     public final Feeder feeder = new Feeder();
     public final photon photon = new photon(drivetrain);
     // public final Shooter shooter = new Shooter(drivetrain,true,m_field);
+    private SendableChooser<String> chooserAuto = new SendableChooser<String>();
 
     public RobotContainer() {
+        chooserAuto.addOption("nothing", "nothing");
+        chooserAuto.addOption("Straight 1m", "straight");
+        
+
+
         FuelSim.getInstance();
         FuelSim.getInstance().start();
         configureBindings();
+        SmartDashboard.putData(chooserAuto);
     }
 
     private void configureBindings() {
@@ -113,8 +122,8 @@ public class RobotContainer {
         // controller1.square().whileTrue(intake.runPivotSetSpeed(-0.1));
         controller1.R1().whileTrue(intake.runRoller(0.5));
         // controller1.square().whileTrue(intake.runRoller(0.35));
-        controller1.R2().whileTrue(shooter.shooterOn(7));
-        controller1.L1().whileTrue(shooter.shooterOn(55));
+        controller1.R2().whileTrue(shooter.shooterOn(90));
+        controller1.L1().whileTrue(shooter.shooterOn(60));
         // controller1.cross().whileTrue(shooter.shooterOn(50));
         controller1.L2().whileTrue(feeder.feederOn(1));
 
@@ -145,17 +154,6 @@ public class RobotContainer {
 
     public Command getAutonomousCommand() {
         // Simple drive forward auton
-        final var idle = new SwerveRequest.Idle();
-        return Commands.sequence(
-                // Reset our field centric heading to match the robot
-                // facing away from our alliance station wall (0 deg).
-                drivetrain.runOnce(() -> drivetrain.seedFieldCentric(Rotation2d.kZero)),
-                // Then slowly drive forward (away from us) for 5 seconds.
-                drivetrain.applyRequest(() -> drive.withVelocityX(0.5)
-                        .withVelocityY(0)
-                        .withRotationalRate(0))
-                        .withTimeout(5.0),
-                // Finally idle for the rest of auton
-                drivetrain.applyRequest(() -> idle));
+        return new BusterAuto(this,this.chooserAuto,drivetrain);
     }
 }

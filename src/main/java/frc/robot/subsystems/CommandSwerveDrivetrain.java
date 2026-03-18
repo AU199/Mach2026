@@ -202,6 +202,13 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     private BooleanSupplier pidReachedSetpoint = () -> {
         boolean reachedSetpoint = (pidControllerX.atSetpoint() && pidControllerY.atSetpoint() && pidControllerR.atSetpoint());
+        SmartDashboard.putBoolean("xAtSetpoint", pidControllerX.atSetpoint());
+        SmartDashboard.putBoolean("yAtSetpoint", pidControllerY.atSetpoint());
+        SmartDashboard.putBoolean("rAtSetpoint", pidControllerR.atSetpoint());
+        SmartDashboard.putNumber("xSetpoint", pidControllerX.getSetpoint().position);
+        SmartDashboard.putNumber("ySetpoint", pidControllerY.getSetpoint().position);
+        SmartDashboard.putNumber("rSetpoint", pidControllerR.getSetpoint().position);
+
         return reachedSetpoint;
     };
 
@@ -220,12 +227,14 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     
 
     public Command pidToPoint(Pose2d targetPose) {
+
+
         pidControllerR.enableContinuousInput(-Math.PI, Math.PI);
 
         pidControllerX.setTolerance(0.05);
         pidControllerY.setTolerance(0.05);
         pidControllerR.setTolerance(0.0174532925);
-
+        // pidControllerX.
         pidControllerX.setGoal(targetPose.getX());
         pidControllerY.setGoal(targetPose.getY());
         pidControllerR.setGoal(targetPose.getRotation().getRadians());
