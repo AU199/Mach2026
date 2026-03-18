@@ -28,7 +28,7 @@ public final class Constants {
     }
 
     // Drive Constants
-    public static final double MaxDrivingSpeed = 0.5 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
+    public static final double MaxDrivingSpeed = 1 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
     public static final double MaxAngularDrivingSpeed = 1 * RotationsPerSecond.of(0.75).in(RadiansPerSecond);
 
     
@@ -52,18 +52,18 @@ public final class Constants {
     public static final double levitatorKP = 0;
     public static final double levitatorKI = 0;
     public static final double levitatorKD = 0;
-    public static double shooterMotorKP = 2;
+    public static double shooterMotorKP = 0.6;
     public static double shooterMotorKI = 0;
     public static double shooterMotorKD = 0;
     
-    public static double hoodPivotKP = 20;
+    public static double hoodPivotKP = 22;
     public static double hoodPivotKI = 4;
     public static double hoodPivotKD = 1;
-    public static final double hoodPivotKS = 0;
+    public static final double hoodPivotKS = 0.25;
     public static final double hoodPivotKV = 0.0;
-    public static double hoodPivotKG = 1;
+    public static double hoodPivotKG = 0.62;
     public static final double hoodPivotKA = 0.0;
-    public static final double hoodHardStopAngle = 1.725;
+    public static final double hoodHardStopAngle = 0.15918;
    
     public static final double hoodMaxVelocity = 5;
     public static final double hoodMaxAcceleration = 5;
@@ -105,7 +105,7 @@ public final class Constants {
     public static final Matrix<N3 , N1> kMultiTagStdDevs = VecBuilder.fill(0.5, 0.5, 1);
 
     public static final Transform3d kRobotToCam = new Transform3d(
-        0.309, 0.064, 0.193,
+        -0.309, -0.064, 0.193,
         new Rotation3d(0, -Math.toRadians(27), Math.PI)
     );
 

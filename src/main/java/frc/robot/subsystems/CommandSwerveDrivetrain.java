@@ -27,11 +27,14 @@ import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
@@ -63,18 +66,21 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private static final Rotation2d kRedAlliancePerspectiveRotation = Rotation2d.k180deg;
     /* Keep track if we've ever applied the operator perspective before or not */
     private boolean m_hasAppliedOperatorPerspective = false;
-    private double kpx = 50, kix = 0, kdx = 5;
-    private double kpy = 50, kiy = 0, kdy = 5;  
-    private double kpr = 50, kir = 0, kdr = 5;
+    private double kpx = 20, kix = 0, kdx = 0;
+    private double kpy = 20, kiy = 0, kdy = 0;  
+    private double kpr = 20, kir = 0, kdr = 0;
     /* Swerve requests to apply during SysId characterization */
     private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization = new SwerveRequest.SysIdSwerveTranslation();
     private final SwerveRequest.SysIdSwerveSteerGains m_steerCharacterization = new SwerveRequest.SysIdSwerveSteerGains();
     private final SwerveRequest.SysIdSwerveRotation m_rotationCharacterization = new SwerveRequest.SysIdSwerveRotation();
     private final SwerveRequest.ApplyRobotSpeeds autoRequest = new SwerveRequest.ApplyRobotSpeeds();
 
-    private final ProfiledPIDController pidControllerX = new ProfiledPIDController(kpx, kix, kdx, new TrapezoidProfile.Constraints(3, 1));
-    private final ProfiledPIDController pidControllerY = new ProfiledPIDController(kpy, kiy, kdy, new TrapezoidProfile.Constraints(3, 1));
-    private final ProfiledPIDController pidControllerR = new ProfiledPIDController(kpr, kir, kdr, new TrapezoidProfile.Constraints(3, 1));
+    private final ProfiledPIDController pidControllerX = new ProfiledPIDController(kpx, kix, kdx, new TrapezoidProfile.Constraints(1, 1));
+    private final ProfiledPIDController pidControllerY = new ProfiledPIDController(kpy, kiy, kdy, new TrapezoidProfile.Constraints(1, 1));
+    private final ProfiledPIDController pidControllerR = new ProfiledPIDController(kpr, kir, kdr, new TrapezoidProfile.Constraints(1, 1));
+
+    StructPublisher<Pose2d> targetPosedPublisher = NetworkTableInstance.getDefault()
+            .getStructTopic("Pid Target Pose", Pose2d.struct).publish();
 
     private static RobotConfig config;
     static{
@@ -206,8 +212,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     private Command imPiddingIt() {
         return this.applyRequest(() -> new SwerveRequest.FieldCentric()
-            .withVelocityX(-pidControllerX.calculate(this.getState().Pose.getX()))
-            .withVelocityY(-pidControllerY.calculate(this.getState().Pose.getY()))
+            .withVelocityX(pidControllerX.calculate(this.getState().Pose.getX()))
+            .withVelocityY(pidControllerY.calculate(this.getState().Pose.getY()))
             .withRotationalRate(pidControllerR.calculate(this.getState().RawHeading.getRadians()))
         ).until(pidReachedSetpoint);
     }
@@ -223,6 +229,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         pidControllerX.setGoal(targetPose.getX());
         pidControllerY.setGoal(targetPose.getY());
         pidControllerR.setGoal(targetPose.getRotation().getRadians());
+
+        targetPosedPublisher.accept(targetPose);
         return Commands.defer(() -> imPiddingIt(), Set.of(this));
     }
 
@@ -363,6 +371,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     @Override
     public void periodic() {
+
+        
         /*
          * Periodically try to apply the operator perspective.
          * If we haven't applied the operator perspective before, then we should apply it regardless of DS state.
@@ -390,9 +400,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         SmartDashboard.getNumber("drive/kir", kir);
         SmartDashboard.getNumber("drive/kdr", kdr);
 
-        pidControllerX.setPID(kpx, kix, kdx);
-        pidControllerY.setPID(kpy, kiy, kdy);
-        pidControllerR.setPID(kpr, kir, kdr);
+        // pidControllerX.setPID(kpx, kix, kdx);
+        // pidControllerY.setPID(kpy, kiy, kdy);
+        // pidControllerR.setPID(kpr, kir, kdr);
 
     }
 

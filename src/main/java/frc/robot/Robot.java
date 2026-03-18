@@ -18,7 +18,7 @@ public class Robot extends TimedRobot {
     private final RobotContainer m_robotContainer;
 
     public boolean isRed = false;
-    public static double phiPassing;
+    public static double phiPassing = Double.POSITIVE_INFINITY;
 
     /* log and replay timestamp and joystick data */
     private final HootAutoReplay m_timeAndJoystickReplay = new HootAutoReplay()
@@ -53,7 +53,8 @@ public class Robot extends TimedRobot {
         }
 
         isRed = (DriverStation.getAlliance().equals(Alliance.Red));
-        phiPassing = isRed? Math.PI : 0;
+        
+        phiPassing = isRed?  0: Math.PI;
     }
 
     @Override
@@ -69,7 +70,9 @@ public class Robot extends TimedRobot {
         }
 
         isRed = (DriverStation.getAlliance().equals(Alliance.Red));
-        phiPassing = isRed? Math.PI : 0;
+        if(phiPassing > Math.PI){
+            phiPassing = isRed ? 0 : Math.PI;
+        }
     }
 
     @Override

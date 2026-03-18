@@ -40,7 +40,7 @@ public class Hood extends SubsystemBase{
         slot0Configs.kV = 0; // A velocity target of 1 rps results in 0.12 V output
         slot0Configs.kA = 0; // An acceleration of 1 rps/s requires 0.01 V output
         slot0Configs.withGravityType(GravityTypeValue.valueOf(GravityTypeValue.Arm_Cosine.value)); // Use cosine gravity compensation
-        slot0Configs.withGravityArmPositionOffset(Constants.hoodHardStopAngle / sensorToMechanismRatio); // Set the position of the hard stop as the zero point for gravity compensation
+        slot0Configs.withGravityArmPositionOffset(Constants.hoodHardStopAngle); // Set the position of the hard stop as the zero point for gravity compensation
         slot0Configs.kP = Constants.hoodPivotKP; // A position error of 2.5 rotations results in 12 V output
         slot0Configs.kI = Constants.hoodPivotKI; // no output for integrated error
         slot0Configs.kD = Constants.hoodPivotKD; // A velocity error of 1 rps results in 0.1 V output
