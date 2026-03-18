@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import java.util.function.BooleanSupplier;
+import java.util.function.DoubleSupplier;
 
 import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
@@ -26,6 +27,7 @@ public class Hood extends SubsystemBase{
     private double kp;
     private TalonFXConfiguration talonFXConfigs = new TalonFXConfiguration();
     private Slot0Configs slot0Configs = talonFXConfigs.Slot0;
+    private double hoodAngleDash = 0.11;
     public Hood() {
         // set slot 0 gains
         FeedbackConfigs feedbackConfigs = talonFXConfigs.Feedback;
@@ -57,6 +59,7 @@ public class Hood extends SubsystemBase{
         SmartDashboard.putNumber("hood/ki", Constants.hoodPivotKI);
         SmartDashboard.putNumber("hood/kd", Constants.hoodPivotKD);
         SmartDashboard.putNumber("hood/kg", Constants.hoodPivotKG);
+        SmartDashboard.putNumber("hood/hoodAngle", hoodAngleDash);
     }
 
     public BooleanSupplier hoodReachedPosition(double targetPosition) {
@@ -105,11 +108,15 @@ public class Hood extends SubsystemBase{
         SmartDashboard.getNumber("hood/ki", Constants.hoodPivotKI); 
         SmartDashboard.getNumber("hood/kd", Constants.hoodPivotKD);
         SmartDashboard.getNumber("hood/kg", Constants.hoodPivotKG);
-        hoodMotor.getConfigurator().apply(talonFXConfigs);
+        SmartDashboard.getNumber("hood/hoodAngle", hoodAngleDash);
+        // hoodMotor.getConfigurator().apply(talonFXConfigs);
 
         SmartDashboard.putNumber("Hood Angle", hoodMotor.getPosition().getValueAsDouble());
         double currentPosition = hoodMotor.getPosition().getValueAsDouble() / sensorToMechanismRatio;
         SmartDashboard.putNumber("Current Position", currentPosition);
 
+    }
+    public DoubleSupplier getHoodAngleDash(){
+        return () -> {return hoodAngleDash;};
     }
 }

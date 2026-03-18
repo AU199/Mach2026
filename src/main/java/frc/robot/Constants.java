@@ -1,5 +1,9 @@
 package frc.robot;
 
+import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
+
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.Matrix;
@@ -11,6 +15,7 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.Filesystem;
+import frc.robot.generated.TunerConstants;
 
 /**
  * Robot-wide constants.
@@ -21,6 +26,10 @@ public final class Constants {
     public static class OperatorConstants {
         public static final int kDriverControllerPort = 0;
     }
+
+    // Drive Constants
+    public static final double MaxDrivingSpeed = 0.5 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
+    public static final double MaxAngularDrivingSpeed = 1 * RotationsPerSecond.of(0.75).in(RadiansPerSecond);
 
     
     /** Half-diagonal of robot, used for angular velocity estimation (meters) */
@@ -43,7 +52,7 @@ public final class Constants {
     public static final double levitatorKP = 0;
     public static final double levitatorKI = 0;
     public static final double levitatorKD = 0;
-    public static double shooterMotorKP = 0;
+    public static double shooterMotorKP = 2;
     public static double shooterMotorKI = 0;
     public static double shooterMotorKD = 0;
     

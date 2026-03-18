@@ -45,9 +45,9 @@ import frc.robot.subsystems.Hood;
 import frc.robot.subsystems.photon;
 
 public class RobotContainer {
-    private double MaxSpeed = 0.5 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top
+    private double MaxSpeed = Constants.MaxDrivingSpeed; // kSpeedAt12Volts desired top
                                                                                         // speed
-    private double MaxAngularRate = 1 * RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per
+    private double MaxAngularRate = Constants.MaxAngularDrivingSpeed; // 3/4 of a rotation per
                                                                                             // second max angular
                                                                                             // velocity
 
@@ -114,25 +114,31 @@ public class RobotContainer {
         controller1.R1().whileTrue(intake.runRoller(0.5));
         // controller1.square().whileTrue(intake.runRoller(0.35));
         controller1.R2().whileTrue(shooter.shooterOn(7));
-        controller1.L1().whileTrue(shooter.shooterOn(50));
+        controller1.L1().whileTrue(shooter.shooterOn(80));
         // controller1.cross().whileTrue(shooter.shooterOn(50));
         controller1.L2().whileTrue(feeder.feederOn(1));
 
         controller1.options().onTrue(new InstantCommand(() -> drivetrain.resetRotation(new Rotation2d(0))));
 
+        controller1.circle().onTrue(new InstantCommand(() -> shooter.applyConfigs()));
+
     
         // controller1.L1().whileTrue(new DroneStrike(drivetrain, Constants.blueHubPose, hood, Constants.ballInitialVelocityFromShooterHub, Constants.ballInitialSpinFromShooterHub, () -> controller1.getRawAxis(1), () -> controller1.getRawAxis(0)));
+
+        // Feeding balls into alliance zone
 
 
         // controller1.povUp().whileTrue(levitator.runLevitator(1));
         // controller1.povDown().whileTrue(levitator.runLevitator(-1));
-
+        controller1.share().whileTrue(drivetrain.pidToRotation(Robot.phiPassing, () -> controller1.getRawAxis(0),() -> controller1.getRawAxis(1)));
         controller1.square().whileTrue(drivetrain.pidToPoint(new Pose2d(2.8, 4, new Rotation2d(0))));
 
-        controller1.povUp().onTrue(hood.setHoodPosition(0.11));
-        controller1.povDown().onTrue(hood.setHoodPosition(0.10));
-        controller1.povRight().onTrue(hood.setHoodPosition(0.12));
-        controller1.povLeft().onTrue(hood.setHoodPosition(0.13));
+        controller1.povUp().onTrue(hood.setHoodPosition(hood.getHoodAngleDash().getAsDouble()));
+        controller1.povDown().onTrue(hood.setHoodPosition(0.12));
+        controller1.povRight().onTrue(hood.setHoodPosition(0.13));
+        controller1.povLeft().onTrue(hood.setHoodPosition(0.14));
+
+
 
         drivetrain.registerTelemetry(logger::telemeterize);
     }

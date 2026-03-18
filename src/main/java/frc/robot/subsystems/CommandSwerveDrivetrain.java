@@ -42,7 +42,7 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-
+import frc.robot.Constants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 
 /**
@@ -199,6 +199,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         return reachedSetpoint;
     };
 
+    private BooleanSupplier pidReachedSetpointAngle = () -> {
+        boolean reachedSetpoint = (pidControllerR.atSetpoint());
+        return reachedSetpoint;
+    };
+
     private Command imPiddingIt() {
         return this.applyRequest(() -> new SwerveRequest.FieldCentric()
             .withVelocityX(-pidControllerX.calculate(this.getState().Pose.getX()))
@@ -206,6 +211,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             .withRotationalRate(pidControllerR.calculate(this.getState().RawHeading.getRadians()))
         ).until(pidReachedSetpoint);
     }
+    
 
     public Command pidToPoint(Pose2d targetPose) {
         pidControllerR.enableContinuousInput(-Math.PI, Math.PI);
@@ -216,8 +222,24 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
         pidControllerX.setGoal(targetPose.getX());
         pidControllerY.setGoal(targetPose.getY());
-        pidControllerR.setGoal(targetPose.getRotation().getDegrees());
+        pidControllerR.setGoal(targetPose.getRotation().getRadians());
         return Commands.defer(() -> imPiddingIt(), Set.of(this));
+    }
+
+    private Command imPiddingItRotation(Supplier<Double> controller1Y, Supplier<Double> controller1X ) {
+        return this.applyRequest(() -> new SwerveRequest.FieldCentric()
+            .withVelocityX(-Math.pow(controller1X.get(),3)*Constants.MaxDrivingSpeed)
+            .withVelocityY(-Math.pow(controller1Y.get(),3)*Constants.MaxDrivingSpeed)
+            .withRotationalRate(pidControllerR.calculate(this.getState().RawHeading.getRadians()))
+        ).until(pidReachedSetpointAngle);
+    }
+
+    public Command pidToRotation(double newRotation, Supplier<Double> controller1Y, Supplier<Double> controller1X){
+        pidControllerR.enableContinuousInput(-Math.PI, Math.PI);
+        
+        pidControllerR.setGoal(newRotation);
+        
+        return Commands.defer(()-> imPiddingItRotation(controller1Y, controller1X), Set.of(this));
     }
 
     private Command getPathPlannerPath(Pose2d targetPose) {
