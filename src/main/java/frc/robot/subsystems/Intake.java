@@ -22,10 +22,10 @@ public class Intake extends SubsystemBase {
     private PositionVoltage deployRequest = new PositionVoltage(Constants.IntakeDeployPos).withSlot(0);
     private PositionVoltage retractRequest = new PositionVoltage(Constants.IntakeRetractPos).withSlot(0);
 
-    // BooleanSupplier isIntakeDeployed = () -> {
-    //     boolean result = Math.abs(pivotMotor.getPosition().getValueAsDouble() - Constants.IntakeDeployPos) < 0.08;
-    //   return result;
-    // };
+    BooleanSupplier isIntakeMoved = () -> {
+        boolean result = Math.abs(pivotMotor.getPosition().getValueAsDouble() - 0) > 0.08;
+      return result;
+    };
     // BooleanSupplier isIntakeRetracted = () -> {
     //     boolean result = Math.abs(pivotMotor.getPosition().getValueAsDouble() - Constants.IntakeRetractPos) < 0.08;
     //   return result;
@@ -78,11 +78,18 @@ public class Intake extends SubsystemBase {
     }
 
     public Command runRoller(double speed) {
-        return startEnd(() -> {
-            rollerMotor.set(speed);
-        }, () -> {
-            rollerMotor.set(0);
-        });
+        if(isIntakeMoved.getAsBoolean()){
+            return startEnd(() -> {
+                rollerMotor.set(speed);
+            }, () -> {
+                rollerMotor.set(0);
+            });
+        }else{
+            //This is a fuction that doesn't do anything
+            return startEnd(() -> {}, 
+            () -> {});
+        }
+
     }
 
     public Command runPivotSetSpeed(double speed) {
@@ -99,5 +106,9 @@ public class Intake extends SubsystemBase {
                 pivotMotor.setPosition(0);
             }
         );
+    }
+
+    public BooleanSupplier getIntakeMovementSupplier(){
+        return isIntakeMoved;
     }
 }

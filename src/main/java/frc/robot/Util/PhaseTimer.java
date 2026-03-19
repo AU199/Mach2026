@@ -41,9 +41,9 @@ public class PhaseTimer{
     }
 
     public void updateTimings(double currentMatchTime, boolean ourTurn){
-        double differenceInTime = currentMatchTime - nextTime;
+        int differenceInTime = (int) (currentMatchTime - nextTime);
         if((differenceInTime < 0 )&& (nextTime>30)){
-            nextTime -= 20;
+            nextTime -= 25;
         }else if(differenceInTime < 0){
             nextTime -= 30;
         }

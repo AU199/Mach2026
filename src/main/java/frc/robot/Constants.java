@@ -101,8 +101,8 @@ public final class Constants {
      * x = forward, y = left, z = up (meters). Rotation is camera pitch/roll/yaw.
      * Measure actual mount position on robot.
      */
-    public static final Matrix<N3 , N1> kSingleTagStdDevs = VecBuilder.fill(4,4,8);
-    public static final Matrix<N3 , N1> kMultiTagStdDevs = VecBuilder.fill(0.5, 0.5, 1);
+    public static final Matrix<N3 , N1> kSingleTagStdDevs = VecBuilder.fill(4,4, Double.POSITIVE_INFINITY);
+    public static final Matrix<N3 , N1> kMultiTagStdDevs = VecBuilder.fill(0.5, 0.5, Double.POSITIVE_INFINITY);
 
     public static final Transform3d kRobotToCam = new Transform3d(
         -0.309, -0.064, 0.193,

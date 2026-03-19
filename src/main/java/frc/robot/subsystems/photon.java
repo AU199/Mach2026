@@ -85,7 +85,7 @@ public class photon extends SubsystemBase {
         if (visionEstimate.isEmpty()) {
             visionEstimate = photonEstimator.estimateLowestAmbiguityPose(result);
         }
-
+        updateEstimationStdDevs(visionEstimate, result.getTargets());
         visionEstimate.ifPresent(est -> {
             swerveDriveBase.addVisionMeasurement(
                     est.estimatedPose.toPose2d(),
@@ -184,6 +184,8 @@ public class photon extends SubsystemBase {
     public void simulationPeriodic() {
         Pose2d robotpose = swerveDriveBase.getState().Pose;
         getResultsSim();
+        visionSystemSim.update(robotpose);
+        visionSystemSim.getDebugField();
     }
     @Override 
     public void periodic(){

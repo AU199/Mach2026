@@ -75,9 +75,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private final SwerveRequest.SysIdSwerveRotation m_rotationCharacterization = new SwerveRequest.SysIdSwerveRotation();
     private final SwerveRequest.ApplyRobotSpeeds autoRequest = new SwerveRequest.ApplyRobotSpeeds();
 
-    private final ProfiledPIDController pidControllerX = new ProfiledPIDController(kpx, kix, kdx, new TrapezoidProfile.Constraints(1, 1));
-    private final ProfiledPIDController pidControllerY = new ProfiledPIDController(kpy, kiy, kdy, new TrapezoidProfile.Constraints(1, 1));
-    private final ProfiledPIDController pidControllerR = new ProfiledPIDController(kpr, kir, kdr, new TrapezoidProfile.Constraints(1, 1));
+    private final ProfiledPIDController pidControllerX = new ProfiledPIDController(kpx, kix, kdx, new TrapezoidProfile.Constraints(Constants.MaxDrivingSpeed, 10));
+    private final ProfiledPIDController pidControllerY = new ProfiledPIDController(kpy, kiy, kdy, new TrapezoidProfile.Constraints(Constants.MaxDrivingSpeed, 10));
+    private final ProfiledPIDController pidControllerR = new ProfiledPIDController(kpr, kir, kdr, new TrapezoidProfile.Constraints(Constants.MaxAngularDrivingSpeed, 10));
 
     StructPublisher<Pose2d> targetPosedPublisher = NetworkTableInstance.getDefault()
             .getStructTopic("Pid Target Pose", Pose2d.struct).publish();
@@ -200,8 +200,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     private PathPlannerPath path;
 
-    private BooleanSupplier pidReachedSetpoint = () -> {
-        boolean reachedSetpoint = (pidControllerX.atSetpoint() && pidControllerY.atSetpoint() && pidControllerR.atSetpoint());
+    private BooleanSupplier pidReachedGoal = () -> {
+        boolean reachedGoal = (pidControllerX.atGoal() && pidControllerY.atGoal() && pidControllerR.atGoal());
         SmartDashboard.putBoolean("xAtSetpoint", pidControllerX.atSetpoint());
         SmartDashboard.putBoolean("yAtSetpoint", pidControllerY.atSetpoint());
         SmartDashboard.putBoolean("rAtSetpoint", pidControllerR.atSetpoint());
@@ -209,7 +209,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         SmartDashboard.putNumber("ySetpoint", pidControllerY.getSetpoint().position);
         SmartDashboard.putNumber("rSetpoint", pidControllerR.getSetpoint().position);
 
-        return reachedSetpoint;
+        return reachedGoal;
     };
 
     private BooleanSupplier pidReachedSetpointAngle = () -> {
@@ -218,23 +218,33 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     };
 
     private Command imPiddingIt() {
-        return this.applyRequest(() -> new SwerveRequest.FieldCentric()
+        return new InstantCommand(() -> {
+            ChassisSpeeds fieldCentricRobotSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(this.getState().Speeds, this.getState().RawHeading);
+            double vxFieldCentric = fieldCentricRobotSpeeds.vxMetersPerSecond;
+            double vyFieldCentric = fieldCentricRobotSpeeds.vyMetersPerSecond;
+
+            SmartDashboard.putNumber("vx", vxFieldCentric);
+            SmartDashboard.putNumber("vy", vyFieldCentric);
+
+            pidControllerX.reset(this.getState().Pose.getX(), vxFieldCentric);
+            pidControllerY.reset(this.getState().Pose.getY(), vyFieldCentric);
+            pidControllerR.reset(this.getState().RawHeading.getRadians());
+        }).andThen(this.applyRequest(() -> new SwerveRequest.FieldCentric()
             .withVelocityX(pidControllerX.calculate(this.getState().Pose.getX()))
             .withVelocityY(pidControllerY.calculate(this.getState().Pose.getY()))
             .withRotationalRate(pidControllerR.calculate(this.getState().RawHeading.getRadians()))
-        ).until(pidReachedSetpoint);
+        ).until(pidReachedGoal));
     }
     
 
     public Command pidToPoint(Pose2d targetPose) {
-
-
         pidControllerR.enableContinuousInput(-Math.PI, Math.PI);
 
         pidControllerX.setTolerance(0.05);
         pidControllerY.setTolerance(0.05);
         pidControllerR.setTolerance(0.0174532925);
         // pidControllerX.
+        
         pidControllerX.setGoal(targetPose.getX());
         pidControllerY.setGoal(targetPose.getY());
         pidControllerR.setGoal(targetPose.getRotation().getRadians());

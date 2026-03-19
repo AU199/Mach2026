@@ -70,7 +70,7 @@ public class RobotContainer {
     public final Hood hood = new Hood();
     public final Levitator levitator = new Levitator();
     public final Intake intake = new Intake();
-    public final Feeder feeder = new Feeder();
+    public final Feeder feeder = new Feeder(intake);
     public final photon photon = new photon(drivetrain);
     // public final Shooter shooter = new Shooter(drivetrain,true,m_field);
     private SendableChooser<String> chooserAuto = new SendableChooser<String>();
@@ -117,13 +117,13 @@ public class RobotContainer {
                 ));
 
         controller1.cross().whileTrue(intake.setIntakePosition(Constants.IntakeDeployPos, 0.1, 0.5));
-        controller1.triangle().whileTrue(intake.setIntakePosition(Constants.IntakeRetractPos, 0.025, 0.3));
-        // controller1.circle().whileTrue(intake.runPivotSetSpeed(0.1));
-        // controller1.square().whileTrue(intake.runPivotSetSpeed(-0.1));
+        controller1.triangle().whileTrue(intake.setIntakePosition(Constants.IntakeRetractPos, 0.025, 0.3));;
         controller1.R1().whileTrue(intake.runRoller(0.5));
         // controller1.square().whileTrue(intake.runRoller(0.35));
         controller1.R2().whileTrue(shooter.shooterOn(90));
+        controller1.R2().whileTrue(hood.setHoodPosition(0.07));
         controller1.L1().whileTrue(shooter.shooterOn(60));
+        controller1.R2().whileTrue(hood.setHoodPosition(0.09));
         // controller1.cross().whileTrue(shooter.shooterOn(50));
         controller1.L2().whileTrue(feeder.feederOn(1));
 
@@ -135,6 +135,9 @@ public class RobotContainer {
         // controller1.L1().whileTrue(new DroneStrike(drivetrain, Constants.blueHubPose, hood, Constants.ballInitialVelocityFromShooterHub, Constants.ballInitialSpinFromShooterHub, () -> controller1.getRawAxis(1), () -> controller1.getRawAxis(0)));
 
         // Feeding balls into alliance zone
+
+        // Aim robot at blue hub
+        controller1.triangle().whileTrue(drivetrain.pidToRotation(Math.atan2(Constants.blueHubPose.getY() - drivetrain.getState().Pose.getY(), Constants.blueHubPose.getX() - drivetrain.getState().Pose.getX())-Robot.phiPassing, () -> controller1.getRawAxis(0),() -> controller1.getRawAxis(1)));
 
 
         // controller1.povUp().whileTrue(levitator.runLevitator(1));

@@ -10,17 +10,26 @@ import frc.robot.Constants;
 public class Feeder extends SubsystemBase{
     TalonFX feederMotor = new TalonFX(Constants.feederMotorId, "DriveBase");
     TalonFX kickerMotor = new TalonFX(Constants.kickerMotorId, "DriveBase");
- 
-    public Feeder() {}
+    private Intake intakeSubsystemIntake;
+    public Feeder(Intake intakeSubsystem) {
+        this.intakeSubsystemIntake = intakeSubsystem;
+    }
 
     public Command feederOn(double speed) {
-        return startEnd(() -> {
-            // feederMotor.set(-0.5);
-            kickerMotor.set(-speed);
-        }, () -> {
-            // feederMotor.set(0);
-            kickerMotor.set(0);
-        });
+        if(intakeSubsystemIntake.getIntakeMovementSupplier().getAsBoolean()){
+            return startEnd(() -> {
+                // feederMotor.set(-0.5);
+                kickerMotor.set(-speed);
+            }, () -> {
+                // feederMotor.set(0);
+                kickerMotor.set(0);
+            });
+        }
+        else{
+            return startEnd(() ->{
+                System.out.println("Intake hasn't been deployed");
+            }, () -> {});
+        }
     }
 
     @Override
