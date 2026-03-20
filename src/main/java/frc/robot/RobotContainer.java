@@ -45,6 +45,7 @@ import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.Feeder;
 import frc.robot.subsystems.Hood;
 import frc.robot.subsystems.photon;
+import com.pathplanner.lib.auto.NamedCommands;
 
 public class RobotContainer {
     private double MaxSpeed = Constants.MaxDrivingSpeed; // kSpeedAt12Volts desired top
@@ -78,7 +79,7 @@ public class RobotContainer {
     public RobotContainer() {
         chooserAuto.addOption("nothing", "nothing");
         chooserAuto.addOption("Straight 1m", "straight");
-        
+        chooserAuto.addOption("CollectBallsTop", "CollectBallsTop");
 
 
         FuelSim.getInstance();
@@ -120,12 +121,12 @@ public class RobotContainer {
         controller1.triangle().whileTrue(intake.setIntakePosition(Constants.IntakeRetractPos, 0.025, 0.3));;
         controller1.R1().whileTrue(intake.runRoller(0.5));
         // controller1.square().whileTrue(intake.runRoller(0.35));
-        controller1.R2().whileTrue(shooter.shooterOn(90));
-        controller1.R2().whileTrue(hood.setHoodPosition(0.07));
+        controller1.L2().whileTrue(shooter.shooterOn(90));
+        controller1.L2().whileTrue(hood.setHoodPosition(0.07));
         controller1.L1().whileTrue(shooter.shooterOn(60));
-        controller1.R2().whileTrue(hood.setHoodPosition(0.09));
+        controller1.L1().whileTrue(hood.setHoodPosition(0.09));
         // controller1.cross().whileTrue(shooter.shooterOn(50));
-        controller1.L2().whileTrue(feeder.feederOn(1));
+        controller1.R2().whileTrue(feeder.feederOn(1));
 
         controller1.options().onTrue(new InstantCommand(() -> drivetrain.resetRotation(new Rotation2d(0))));
 
@@ -137,19 +138,27 @@ public class RobotContainer {
         // Feeding balls into alliance zone
 
         // Aim robot at blue hub
-        controller1.triangle().whileTrue(drivetrain.pidToRotation(Math.atan2(Constants.blueHubPose.getY() - drivetrain.getState().Pose.getY(), Constants.blueHubPose.getX() - drivetrain.getState().Pose.getX())-Robot.phiPassing, () -> controller1.getRawAxis(0),() -> controller1.getRawAxis(1)));
+        // controller1.triangle().whileTrue(drivetrain.pidToRotation(Math.atan2(Constants.blueHubPose.getY() - drivetrain.getState().Pose.getY(), Constants.blueHubPose.getX() - drivetrain.getState().Pose.getX())-Robot.phiPassing, () -> controller1.getRawAxis(0),() -> controller1.getRawAxis(1)));
 
 
-        // controller1.povUp().whileTrue(levitator.runLevitator(1));
-        // controller1.povDown().whileTrue(levitator.runLevitator(-1));
+        controller1.povUp().whileTrue(levitator.runLevitator(1));
+        controller1.povDown().whileTrue(levitator.runLevitator(-1));
         controller1.circle().whileTrue(drivetrain.pidToRotation(Robot.phiPassing, () -> controller1.getRawAxis(0),() -> controller1.getRawAxis(1)));
-        controller1.square().whileTrue(drivetrain.pidToPoint(new Pose2d(2.8, 4, new Rotation2d(0))));
+        controller1.square().whileTrue(drivetrain.pidToPoint(new Pose2d(1.728, 6.826, new Rotation2d(Constants.blueHubPose.getX() - 1.728, Constants.blueHubPose.getY() - 6.826).plus(new Rotation2d(Math.PI)))));
 
-        controller1.povUp().onTrue(hood.setHoodPosition(hood.getHoodAngleDash().getAsDouble()));
-        controller1.povDown().onTrue(hood.setHoodPosition(0.11));
-        controller1.povRight().onTrue(hood.setHoodPosition(0.09));
-        controller1.povLeft().onTrue(hood.setHoodPosition(0.07));
+        // controller1.povUp().onTrue(hood.setHoodPosition(hood.getHoodAngleDash().getAsDouble()));
+        // controller1.povDown().onTrue(hood.setHoodPosition(0.11));
+        // controller1.povRight().onTrue(hood.setHoodPosition(0.09));
+        // controller1.povLeft().onTrue(hood.setHoodPosition(0.07));
 
+        NamedCommands.registerCommand("DeployIntake", intake.setIntakePosition(Constants.IntakeDeployPos, 0.1, 0.5).withTimeout(3));
+        NamedCommands.registerCommand("RetractIntake", intake.setIntakePosition(Constants.IntakeRetractPos, 0.025, 0.3));
+        NamedCommands.registerCommand("StartBallIntake", new InstantCommand(() -> intake.setRollerSpeed(0.45)));
+        NamedCommands.registerCommand("EndBallIntake", new InstantCommand(() -> intake.setRollerSpeed(0)));
+        NamedCommands.registerCommand("ShootBalls", hood.setHoodPosition(0.09).andThen(shooter.shooterOn(60).withTimeout(2).andThen(feeder.feederOn(1))));
+        NamedCommands.registerCommand("PIDToShoot", drivetrain.pidToPoint(new Pose2d(1.728, 6.826, new Rotation2d(Constants.blueHubPose.getX() - 1.728, Constants.blueHubPose.getY() - 6.826).plus(new Rotation2d(Math.PI)))).withTimeout(3));
+        NamedCommands.registerCommand("StopMoving", drivetrain.applyRequest(() -> new SwerveRequest.Idle()));
+        
 
 
         drivetrain.registerTelemetry(logger::telemeterize);

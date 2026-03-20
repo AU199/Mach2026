@@ -23,6 +23,7 @@ import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.path.Waypoint;
 
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
@@ -68,7 +69,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private boolean m_hasAppliedOperatorPerspective = false;
     private double kpx = 20, kix = 0, kdx = 0;
     private double kpy = 20, kiy = 0, kdy = 0;  
-    private double kpr = 20, kir = 0, kdr = 0;
+    private double kpr = 5, kir = 0, kdr = 0;
     /* Swerve requests to apply during SysId characterization */
     private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization = new SwerveRequest.SysIdSwerveTranslation();
     private final SwerveRequest.SysIdSwerveSteerGains m_steerCharacterization = new SwerveRequest.SysIdSwerveSteerGains();
@@ -77,7 +78,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     private final ProfiledPIDController pidControllerX = new ProfiledPIDController(kpx, kix, kdx, new TrapezoidProfile.Constraints(Constants.MaxDrivingSpeed, 10));
     private final ProfiledPIDController pidControllerY = new ProfiledPIDController(kpy, kiy, kdy, new TrapezoidProfile.Constraints(Constants.MaxDrivingSpeed, 10));
-    private final ProfiledPIDController pidControllerR = new ProfiledPIDController(kpr, kir, kdr, new TrapezoidProfile.Constraints(Constants.MaxAngularDrivingSpeed, 10));
+    private final ProfiledPIDController pidControllerR = new ProfiledPIDController(kpr, kir, kdr, new TrapezoidProfile.Constraints(Constants.MaxAngularDrivingSpeed, 5));
 
     StructPublisher<Pose2d> targetPosedPublisher = NetworkTableInstance.getDefault()
             .getStructTopic("Pid Target Pose", Pose2d.struct).publish();
@@ -238,6 +239,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     
 
     public Command pidToPoint(Pose2d targetPose) {
+        
+        // targetPose.rotateAround();
         pidControllerR.enableContinuousInput(-Math.PI, Math.PI);
 
         pidControllerX.setTolerance(0.05);

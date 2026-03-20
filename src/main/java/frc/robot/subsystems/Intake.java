@@ -11,6 +11,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -41,6 +42,7 @@ public class Intake extends SubsystemBase {
     public Command setIntakePosition(double targetPosition, double KP, double maxSpeed) {
         return runEnd(
             () -> {
+                SmartDashboard.putNumber("Intake target position", targetPosition);
                 double error = targetPosition - pivotMotor.getPosition().getValueAsDouble();
                 double output = Math.min(error * KP, maxSpeed);
                 pivotMotor.set(output);
@@ -78,18 +80,23 @@ public class Intake extends SubsystemBase {
     }
 
     public Command runRoller(double speed) {
-        if(isIntakeMoved.getAsBoolean()){
+        // if(isIntakeMoved.getAsBoolean()){
             return startEnd(() -> {
                 rollerMotor.set(speed);
+                SmartDashboard.putNumber("Intake roller speed", speed); 
             }, () -> {
                 rollerMotor.set(0);
             });
-        }else{
+        // } else {
             //This is a fuction that doesn't do anything
-            return startEnd(() -> {}, 
-            () -> {});
-        }
+        //     return startEnd(() -> {}, 
+        //     () -> {});
+        // }
+    }
 
+    public void setRollerSpeed(double speed) {
+        rollerMotor.set(speed);
+        SmartDashboard.putNumber("Intake roller speed", speed); 
     }
 
     public Command runPivotSetSpeed(double speed) {
