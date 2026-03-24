@@ -6,14 +6,23 @@ package frc.robot;
 
 import com.ctre.phoenix6.HootAutoReplay;
 
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.Util.PhaseTimer;
+import frc.robot.subsystems.photon;
 
 public class Robot extends TimedRobot {
     private Command m_autonomousCommand;
 
     private final RobotContainer m_robotContainer;
+
+    private final photon photonCamera;
+    private final PhaseTimer timer = new PhaseTimer();
+    public boolean isRed = false;
+    public static double phiPassing = Double.POSITIVE_INFINITY;
 
     /* log and replay timestamp and joystick data */
     private final HootAutoReplay m_timeAndJoystickReplay = new HootAutoReplay()
@@ -22,6 +31,7 @@ public class Robot extends TimedRobot {
 
     public Robot() {
         m_robotContainer = new RobotContainer();
+        photonCamera = new photon(m_robotContainer.drivetrain);
     }
 
     @Override
@@ -46,6 +56,10 @@ public class Robot extends TimedRobot {
         if (m_autonomousCommand != null) {
             CommandScheduler.getInstance().schedule(m_autonomousCommand);
         }
+
+        isRed = (DriverStation.getAlliance().equals(Alliance.Red));
+        
+        phiPassing = isRed?  0: Math.PI;
     }
 
     @Override
@@ -59,10 +73,17 @@ public class Robot extends TimedRobot {
         if (m_autonomousCommand != null) {
             CommandScheduler.getInstance().cancel(m_autonomousCommand);
         }
+
+        isRed = (DriverStation.getAlliance().equals(Alliance.Red));
+        if(phiPassing > Math.PI){
+            phiPassing = isRed ? 0 : Math.PI;
+        }
     }
 
     @Override
-    public void teleopPeriodic() {}
+    public void teleopPeriodic() {
+        timer.gameDataSender();
+    }
 
     @Override
     public void teleopExit() {}
@@ -79,5 +100,8 @@ public class Robot extends TimedRobot {
     public void testExit() {}
 
     @Override
-    public void simulationPeriodic() {}
+    public void simulationPeriodic() {
+        FuelSim.getInstance().updateSim();
+        photonCamera.simulationPeriodic();
+    }
 }

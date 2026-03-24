@@ -1,0 +1,73 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "path",
+          "data": {
+            "pathName": "OverBumpTop"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Sit over balls"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "DeployIntake"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "StartBallIntake"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "CollectBalls"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "EndBallIntake"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Prepare to shoot"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "PIDToShoot"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "StopMoving"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "ShootBalls"
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": null,
+  "choreoAuto": false
+}
