@@ -3,12 +3,8 @@ package frc.robot.Util;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-
-import java.lang.StackWalker.Option;
 import java.util.Optional;
-import java.util.Timer;
-import java.util.TimerTask;
+
 
 public class PhaseTimer{
     private boolean hubActive;

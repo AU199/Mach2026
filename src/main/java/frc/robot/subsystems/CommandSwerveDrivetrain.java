@@ -18,17 +18,13 @@ import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.path.GoalEndState;
-import com.pathplanner.lib.path.IdealStartingState;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.path.Waypoint;
 
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
@@ -109,7 +105,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             this
         )
     );
-
+/**
     /* SysId routine for characterizing steer. This is used to find PID gains for the steer motors. */
     private final SysIdRoutine m_sysIdRoutineSteer = new SysIdRoutine(
         new SysIdRoutine.Config(
@@ -131,7 +127,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      * This is used to find PID gains for the FieldCentricFacingAngle HeadingController.
      * See the documentation of SwerveRequest.SysIdSwerveRotation for info on importing the log to SysId.
      */
-    private final SysIdRoutine m_sysIdRoutineRotation = new SysIdRoutine(
+    
+     private final SysIdRoutine m_sysIdRoutineRotation = new SysIdRoutine(
         new SysIdRoutine.Config(
             /* This is in radians per second², but SysId only supports "volts per second" */
             Volts.of(Math.PI / 6).per(Second),
@@ -152,6 +149,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             this
         )
     );
+
 
     /* The SysId routine to test */
     private SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineTranslation;
@@ -201,6 +199,15 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     private PathPlannerPath path;
 
+
+    private BooleanSupplier pidReachedSetpointAngle = () -> {
+        boolean reachedSetpoint = (pidControllerR.atSetpoint());
+        return reachedSetpoint;
+    };
+
+
+// PID to the Point (START)
+
     private BooleanSupplier pidReachedGoal = () -> {
         boolean reachedGoal = (pidControllerX.atGoal() && pidControllerY.atGoal() && pidControllerR.atGoal());
         SmartDashboard.putBoolean("xAtSetpoint", pidControllerX.atSetpoint());
@@ -212,12 +219,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
         return reachedGoal;
     };
-
-    private BooleanSupplier pidReachedSetpointAngle = () -> {
-        boolean reachedSetpoint = (pidControllerR.atSetpoint());
-        return reachedSetpoint;
-    };
-
     private Command imPiddingIt() {
         return new InstantCommand(() -> {
             ChassisSpeeds fieldCentricRobotSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(this.getState().Speeds, this.getState().RawHeading);
@@ -255,6 +256,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         targetPosedPublisher.accept(targetPose);
         return Commands.defer(() -> imPiddingIt(), Set.of(this));
     }
+
+
+
+// PID To Point (END)
+
 
     private Command imPiddingItRotation(Supplier<Double> controller1Y, Supplier<Double> controller1X ) {
         return this.applyRequest(() -> new SwerveRequest.FieldCentric()
