@@ -13,7 +13,8 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import frc.robot.Commands.BusterAuto;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -124,7 +125,7 @@ public class RobotContainer {
         controller1.povUp().whileTrue(levitator.runLevitator(1));
         controller1.povDown().whileTrue(levitator.runLevitator(-1));
         controller1.circle().whileTrue(drivetrain.pidToRotation(Robot.phiPassing, () -> controller1.getRawAxis(0),() -> controller1.getRawAxis(1)));
-        controller1.square().whileTrue(drivetrain.pidToPoint(new Pose2d(1.728, 6.826, new Rotation2d(Constants.blueHubPose.getX() - 1.728, Constants.blueHubPose.getY() - 6.826).plus(new Rotation2d(Math.PI)))));
+        controller1.square().whileTrue(drivetrain.pidToPoint(new Pose2d(1.728, 6.826, new Rotation2d(Constants.blueHubPose.getX() - 1.728, Constants.blueHubPose.getY() - 6.826).plus(new Rotation2d(Math.PI))), () -> DriverStation.getAlliance().get().equals(Alliance.Red)));
 
         // controller1.povUp().onTrue(hood.setHoodPosition(hood.getHoodAngleDash().getAsDouble()));
         // controller1.povDown().onTrue(hood.setHoodPosition(0.11));
@@ -136,7 +137,7 @@ public class RobotContainer {
         NamedCommands.registerCommand("StartBallIntake", new InstantCommand(() -> intake.setRollerSpeed(0.45)));
         NamedCommands.registerCommand("EndBallIntake", new InstantCommand(() -> intake.setRollerSpeed(0)));
         NamedCommands.registerCommand("ShootBalls", hood.setHoodPosition(0.09).andThen(shooter.shooterOn(60).withTimeout(2).andThen(feeder.feederOn(1))));
-        NamedCommands.registerCommand("PIDToShoot", drivetrain.pidToPoint(new Pose2d(1.728, 6.826, new Rotation2d(Constants.blueHubPose.getX() - 1.728, Constants.blueHubPose.getY() - 6.826).plus(new Rotation2d(Math.PI)))).withTimeout(3));
+        NamedCommands.registerCommand("PIDToShoot", drivetrain.pidToPoint(new Pose2d(1.728, 6.826, new Rotation2d(Constants.blueHubPose.getX() - 1.728, Constants.blueHubPose.getY() - 6.826).plus(new Rotation2d(Math.PI))), () -> DriverStation.getAlliance().get().equals(Alliance.Red)).withTimeout(3));
         NamedCommands.registerCommand("StopMoving", drivetrain.applyRequest(() -> new SwerveRequest.Idle()));
         
 

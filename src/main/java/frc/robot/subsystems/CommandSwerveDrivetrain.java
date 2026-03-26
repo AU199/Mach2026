@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
+import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.SignalLogger;
@@ -43,6 +44,7 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants;
+import frc.robot.Robot;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 
 /**
@@ -75,6 +77,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private final ProfiledPIDController pidControllerX = new ProfiledPIDController(kpx, kix, kdx, new TrapezoidProfile.Constraints(Constants.MaxDrivingSpeed, 10));
     private final ProfiledPIDController pidControllerY = new ProfiledPIDController(kpy, kiy, kdy, new TrapezoidProfile.Constraints(Constants.MaxDrivingSpeed, 10));
     private final ProfiledPIDController pidControllerR = new ProfiledPIDController(kpr, kir, kdr, new TrapezoidProfile.Constraints(Constants.MaxAngularDrivingSpeed, 5));
+
+    private static int isRed;
 
     StructPublisher<Pose2d> targetPosedPublisher = NetworkTableInstance.getDefault()
             .getStructTopic("Pid Target Pose", Pose2d.struct).publish();
@@ -219,8 +223,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
         return reachedGoal;
     };
-    private Command imPiddingIt() {
+    private Command imPiddingIt(BooleanSupplier isRedBoolean) {
         return new InstantCommand(() -> {
+            isRed = isRedBoolean.getAsBoolean()? -1: 1;
+            System.out.println(isRed);
             ChassisSpeeds fieldCentricRobotSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(this.getState().Speeds, this.getState().RawHeading);
             double vxFieldCentric = fieldCentricRobotSpeeds.vxMetersPerSecond;
             double vyFieldCentric = fieldCentricRobotSpeeds.vyMetersPerSecond;
@@ -232,15 +238,14 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             pidControllerY.reset(this.getState().Pose.getY(), vyFieldCentric);
             pidControllerR.reset(this.getState().RawHeading.getRadians());
         }).andThen(this.applyRequest(() -> new SwerveRequest.FieldCentric()
-            .withVelocityX(pidControllerX.calculate(this.getState().Pose.getX()))
-            .withVelocityY(pidControllerY.calculate(this.getState().Pose.getY()))
+            .withVelocityX(pidControllerX.calculate(this.getState().Pose.getX()) * isRed)
+            .withVelocityY(pidControllerY.calculate(this.getState().Pose.getY()) * isRed)
             .withRotationalRate(pidControllerR.calculate(this.getState().RawHeading.getRadians()))
         ).until(pidReachedGoal));
     }
     
 
-    public Command pidToPoint(Pose2d targetPose) {
-        
+    public Command pidToPoint(Pose2d targetPose, BooleanSupplier isRedBoolean) {
         // targetPose.rotateAround();
         pidControllerR.enableContinuousInput(-Math.PI, Math.PI);
 
@@ -254,7 +259,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         pidControllerR.setGoal(targetPose.getRotation().getRadians());
 
         targetPosedPublisher.accept(targetPose);
-        return Commands.defer(() -> imPiddingIt(), Set.of(this));
+        return Commands.defer(() -> imPiddingIt(isRedBoolean), Set.of(this));
     }
 
 
