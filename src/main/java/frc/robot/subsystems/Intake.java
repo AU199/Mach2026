@@ -17,7 +17,7 @@ import frc.robot.Constants;
 public class Intake extends SubsystemBase {
     private TalonFX pivotMotor = new TalonFX(Constants.pivotMotorId, "DriveBase");
     private TalonFX rollerMotor = new TalonFX(Constants.rollerMotorId, "DriveBase");
-    private TalonFX rollerMotor2 = new TalonFX(Constants.rollerMotor2ID, "DriveBase");
+    private TalonFX rollerMotor2 = new TalonFX(Constants.rollerMotor2Id, "DriveBase");
     BooleanSupplier isIntakeMoved = () -> {
         boolean result = Math.abs(pivotMotor.getPosition().getValueAsDouble() - 0) > 0.08;
       return result;
