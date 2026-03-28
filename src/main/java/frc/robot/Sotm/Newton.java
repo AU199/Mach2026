@@ -116,10 +116,13 @@ public class Newton {
 
             // NaN means trajectory hit ground — give up and return NaN
             if (Double.isNaN(e0.getxError()) || Double.isNaN(e0.getyError())) {
-                // Step overshot into bad territory, halve the last step and retryj
-                theta -= deltaTheta / 2.0;
-                phi -= deltaPhi / 2.0;
-                continue;
+                // Step overshot into bad territory, halve the last step and retry
+                // theta -= deltaTheta / 2.0;
+                // phi -= deltaPhi / 2.0;
+                // continue;
+
+                // Previous comment is complete nonsense, just return NaN and call it a day
+                return new ShotAngles(Double.NaN, Double.NaN);
             }
 
             double ex = e0.getxError();
