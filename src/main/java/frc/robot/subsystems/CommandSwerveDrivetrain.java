@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
 
+import java.security.AllPermission;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -23,6 +24,7 @@ import com.pathplanner.lib.path.GoalEndState;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.path.Waypoint;
+import com.pathplanner.lib.util.FlippingUtil;
 
 import frc.robot.lib.BLine.FollowPath;
 import frc.robot.lib.BLine.Path;
@@ -90,6 +92,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private final PIDController pidControllerR = new PIDController(4, 0, 0);
     private final PIDController pidControllerCT = new PIDController(2, 0, 0);
     private static int isRed;
+    private double xError, yError;
 
     StructPublisher<Pose2d> targetPosedPublisher = NetworkTableInstance.getDefault()
             .getStructTopic("Pid Target Pose", Pose2d.struct).publish();
@@ -200,28 +203,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                     return false;
                 },
                 this);
-        SmartDashboard.putNumber("drive/kpx", kpx);
-        SmartDashboard.putNumber("drive/kix", kix);
-        SmartDashboard.putNumber("drive/kdx", kdx);
-        SmartDashboard.putNumber("drive/kpy", kpy);
-        SmartDashboard.putNumber("drive/kiy", kiy);
-        SmartDashboard.putNumber("drive/kdy", kdy);
-        SmartDashboard.putNumber("drive/kpr", kpr);
-        SmartDashboard.putNumber("drive/kir", kir);
-        SmartDashboard.putNumber("drive/kdr", kdr);
     }
-
-    private PathPlannerPath path;
-
-    private BooleanSupplier pidReachedSetpointAngle = () -> {
-        boolean reachedSetpoint = (pidControllerProfiledR.atSetpoint());
-        return reachedSetpoint;
-    };
 
     // PID to the Point (START)
 
     public Command BlineToPoint(Pose2d targetPose, BooleanSupplier isRedBoolean) {
-        targetPoseBlineHub = targetPose;
         pidControllerR.setTolerance(0.75);
         pidControllerT.setTolerance(0.75);
         pidControllerCT.setTolerance(0.75);
@@ -240,118 +226,34 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 () -> this.getState().Speeds,
                 (speeds) -> this.setControl(autoRequest.withSpeeds(speeds)),
                 pidControllerT, pidControllerR, pidControllerCT);
-        // Pose2d localPose = isRedBoolean.getAsBoolean() ?
-        // FlippingUtil.flipFieldPose(targetPose) : targetPose;
-        targetPosedPublisherBline.accept(targetPose);
+
         return Commands.defer(() -> {
-            Path path = new Path(
-                    new Path.Waypoint(this.getState().Pose),
-                    new Path.Waypoint(targetPose));
+            Pose2d localPose;
+            if (isRedBoolean.getAsBoolean()) {
+                localPose = FlippingUtil.flipFieldPose(targetPose);
+                SmartDashboard.putString("Bline Target Pose", "Flipped");
+            } else {
+                localPose = targetPose;
+            }
+            targetPosedPublisherBline.accept(localPose);
 
-            return pathBuilder.build(path);
+            targetPoseBlineHub = localPose;
+            xError = localPose.getX() - this.getState().Pose.getX();
+            yError = localPose.getY() - this.getState().Pose.getY();
+            if (Math.abs(yError) < 2.40 && Math.abs(xError) < 1.90) {
+                Path path = new Path(
+                        new Path.Waypoint(this.getState().Pose),
+                        new Path.Waypoint(localPose));
+
+                return pathBuilder.build(path);
+            } else {
+                return Commands.none();
+            }
         }, Set.of(this));
-    }
 
-    private BooleanSupplier pidReachedGoal = () -> {
-        boolean reachedGoal = (pidControllerProfiledX.atGoal() && pidControllerProfiledY.atGoal()
-                && pidControllerProfiledR.atGoal());
-        SmartDashboard.putBoolean("xAtSetpoint", pidControllerProfiledX.atSetpoint());
-        SmartDashboard.putBoolean("yAtSetpoint", pidControllerProfiledY.atSetpoint());
-        SmartDashboard.putBoolean("rAtSetpoint", pidControllerProfiledR.atSetpoint());
-        SmartDashboard.putNumber("xSetpoint", pidControllerProfiledX.getSetpoint().position);
-        SmartDashboard.putNumber("ySetpoint", pidControllerProfiledY.getSetpoint().position);
-        SmartDashboard.putNumber("rSetpoint", pidControllerProfiledR.getSetpoint().position);
-
-        return reachedGoal;
-    };
-
-    private Command imPiddingIt(BooleanSupplier isRedBoolean) {
-        return new InstantCommand(() -> {
-            isRed = isRedBoolean.getAsBoolean() ? -1 : 1;
-            System.out.println(isRed);
-            ChassisSpeeds fieldCentricRobotSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(this.getState().Speeds,
-                    this.getState().RawHeading);
-            double vxFieldCentric = fieldCentricRobotSpeeds.vxMetersPerSecond;
-            double vyFieldCentric = fieldCentricRobotSpeeds.vyMetersPerSecond;
-
-            SmartDashboard.putNumber("vx", vxFieldCentric);
-            SmartDashboard.putNumber("vy", vyFieldCentric);
-
-            pidControllerProfiledX.reset(this.getState().Pose.getX(), vxFieldCentric);
-            pidControllerProfiledY.reset(this.getState().Pose.getY(), vyFieldCentric);
-            pidControllerProfiledR.reset(this.getState().RawHeading.getRadians());
-        }).andThen(this.applyRequest(() -> new SwerveRequest.FieldCentric()
-                .withVelocityX(pidControllerProfiledX.calculate(this.getState().Pose.getX()) * isRed)
-                .withVelocityY(pidControllerProfiledY.calculate(this.getState().Pose.getY()) * isRed)
-                .withRotationalRate(pidControllerProfiledR.calculate(this.getState().RawHeading.getRadians())))
-                .until(pidReachedGoal));
-    }
-
-    public Command pidToPoint(Pose2d targetPose, BooleanSupplier isRedBoolean) {
-        // targetPose.rotateAround();
-        pidControllerProfiledR.enableContinuousInput(-Math.PI, Math.PI);
-
-        pidControllerProfiledX.setTolerance(0.05);
-        pidControllerProfiledY.setTolerance(0.05);
-        pidControllerProfiledR.setTolerance(0.0174532925);
-        // pidControllerX.
-
-        pidControllerProfiledX.setGoal(targetPose.getX());
-        pidControllerProfiledY.setGoal(targetPose.getY());
-        pidControllerProfiledR.setGoal(targetPose.getRotation().getRadians());
-
-        targetPosedPublisher.accept(targetPose);
-        return Commands.defer(() -> imPiddingIt(isRedBoolean), Set.of(this));
     }
 
     // PID To Point (END)
-
-    private Command imPiddingItRotation(Supplier<Double> controller1Y, Supplier<Double> controller1X) {
-        return this.applyRequest(() -> new SwerveRequest.FieldCentric()
-                .withVelocityX(-Math.pow(controller1X.get(), 3) * Constants.MaxDrivingSpeed)
-                .withVelocityY(-Math.pow(controller1Y.get(), 3) * Constants.MaxDrivingSpeed)
-                .withRotationalRate(pidControllerProfiledR.calculate(this.getState().RawHeading.getRadians())))
-                .until(pidReachedSetpointAngle);
-    }
-
-    public Command pidToRotation(double newRotation, Supplier<Double> controller1Y, Supplier<Double> controller1X) {
-        pidControllerProfiledR.enableContinuousInput(-Math.PI, Math.PI);
-
-        pidControllerProfiledR.setGoal(newRotation);
-
-        return Commands.defer(() -> imPiddingItRotation(controller1Y, controller1X), Set.of(this));
-    }
-
-    private Command getPathPlannerPath(Pose2d targetPose) {
-        Pose2d currentPose = this.getState().Pose;
-
-        ChassisSpeeds robotRobotRelativeVelocities = this.getState().Speeds;
-        ChassisSpeeds robotFieldRelativeVelocities = ChassisSpeeds.fromRobotRelativeSpeeds(robotRobotRelativeVelocities,
-                this.getState().RawHeading);
-
-        currentPose = new Pose2d(currentPose.getX(), currentPose.getY(), new Rotation2d(
-                robotFieldRelativeVelocities.vxMetersPerSecond, robotFieldRelativeVelocities.vyMetersPerSecond));
-        targetPose = new Pose2d(targetPose.getX(), targetPose.getY(), new Rotation2d(
-                Math.atan2(targetPose.getX() - currentPose.getX(), targetPose.getY() - currentPose.getY())));
-
-        List<Waypoint> waypoints = PathPlannerPath.waypointsFromPoses(
-                currentPose,
-                targetPose);
-
-        path = new PathPlannerPath(
-                waypoints,
-                new PathConstraints(3.0, 3.0, 2 * Math.PI, 4 * Math.PI),
-                null,
-                new GoalEndState(0.0, targetPose.getRotation()));
-
-        path.preventFlipping = true;
-        System.out.println("Pooey");
-        return AutoBuilder.followPath(path);
-    }
-
-    public Command driveToPose(Pose2d targetPose) {
-        return Commands.defer(() -> getPathPlannerPath(targetPose), Set.of(this));
-    }
 
     /**
      * Constructs a CTRE SwerveDrivetrain using the specified constants.
@@ -483,10 +385,15 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         SmartDashboard.getNumber("drive/kpr", kpr);
         SmartDashboard.getNumber("drive/kir", kir);
         SmartDashboard.getNumber("drive/kdr", kdr);
-        SmartDashboard.putNumber("ErrorX", targetPoseBlineHub.getX() - getRobotX().getAsDouble());
-        SmartDashboard.putNumber("ErrorY", targetPoseBlineHub.getY() - getRobotY().getAsDouble());
-        SmartDashboard.putNumber("ErrorR",
+        SmartDashboard.putNumber("xError", targetPoseBlineHub.getX() - this.getState().Pose.getX());
+        SmartDashboard.putNumber("yError", targetPoseBlineHub.getY() - this.getState().Pose.getY());
+        SmartDashboard.putNumber("rError",
                 targetPoseBlineHub.getRotation().getRadians() - getRobotRotation().getAsDouble());
+        SmartDashboard.putString("Alliance",
+                DriverStation.getAlliance().orElse(Alliance.Blue).equals(Alliance.Red) ? "Red" : "Blue");
+        SmartDashboard.putBoolean("Bline Available",
+                Math.abs(targetPoseBlineHub.getY() - this.getState().Pose.getY()) < 2.40
+                        && Math.abs(targetPoseBlineHub.getX() - this.getState().Pose.getX()) < 1.90);
     }
 
     private void startSimThread() {
