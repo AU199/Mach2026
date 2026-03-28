@@ -6,8 +6,6 @@ package frc.robot;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 
-import java.security.AllPermission;
-
 // import com.pathplanner.lib.auto.AutoBuilder;
 // import com.pathplanner.lib.config.PIDConstants;
 // import com.pathplanner.lib.controllers.PPHolonomicDriveController;
@@ -33,7 +31,6 @@ import frc.robot.subsystems.Feeder;
 import frc.robot.subsystems.Hood;
 import frc.robot.subsystems.photon;
 import com.pathplanner.lib.auto.NamedCommands;
-import frc.robot.lib.BLine.*;
 
 public class RobotContainer {
         private double MaxSpeed = Constants.MaxDrivingSpeed; // kSpeedAt12Volts desired top
@@ -60,8 +57,12 @@ public class RobotContainer {
         public final photon photon = new photon(drivetrain);
         // public final Shooter shooter = new Shooter(drivetrain,true,m_field);
         private SendableChooser<String> chooserAuto = new SendableChooser<String>();
-        private final Pose2d targetPoseHubLeft = new Pose2d(1.728, 6.826, new Rotation2d(Constants.blueHubPose.getX() - 1.728,
-                                Constants.blueHubPose.getY() - 6.826).plus(new Rotation2d(Math.PI)));
+        private final Pose2d targetPoseHubLeft = new Pose2d(1.728, 6.826,
+                        new Rotation2d(Constants.blueHubPose.getX() - 1.728,
+                                        Constants.blueHubPose.getY() - 6.826).plus(new Rotation2d(Math.PI)));
+        private final Pose2d targetPoseHubRight = new Pose2d(1.728, 1.174,
+                        new Rotation2d(Constants.blueHubPose.getX() - 1.728,
+                                        Constants.blueHubPose.getY() - 6.826).plus(new Rotation2d((3 * Math.PI) / 2)));
 
         public RobotContainer() {
                 chooserAuto.addOption("nothing", "nothing");
@@ -128,13 +129,13 @@ public class RobotContainer {
 
                 controller1.options().onTrue(new InstantCommand(() -> drivetrain.resetRotation(new Rotation2d(0))));
 
-
                 controller1.povUp().whileTrue(levitator.runLevitator(1));
                 controller1.povDown().whileTrue(levitator.runLevitator(-1));
 
-                controller1.circle().onTrue(
-                                drivetrain.BlineToPoint(targetPoseHubLeft,
-                                                () -> DriverStation.getAlliance().orElse(Alliance.Blue).equals(Alliance.Red)));
+                controller1.circle().toggleOnTrue(
+                                drivetrain.BlineToPoint(targetPoseHubLeft, targetPoseHubRight,
+                                                () -> DriverStation.getAlliance().orElse(Alliance.Blue)
+                                                                .equals(Alliance.Red)));
                 // controller1.circle().onTrue(new InstantCommand(() ->
                 // shooter.applyConfigs()));
 

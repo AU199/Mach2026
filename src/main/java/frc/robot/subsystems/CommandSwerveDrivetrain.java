@@ -1,13 +1,9 @@
 package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
-
-import java.security.AllPermission;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
-import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.SignalLogger;
@@ -15,27 +11,19 @@ import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
-import com.ctre.phoenix6.swerve.jni.SwerveJNI.DriveState;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
-import com.pathplanner.lib.path.GoalEndState;
-import com.pathplanner.lib.path.PathConstraints;
-import com.pathplanner.lib.path.PathPlannerPath;
-import com.pathplanner.lib.path.Waypoint;
 import com.pathplanner.lib.util.FlippingUtil;
 
 import frc.robot.lib.BLine.FollowPath;
 import frc.robot.lib.BLine.Path;
 import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -44,7 +32,6 @@ import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -71,9 +58,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private static final Rotation2d kRedAlliancePerspectiveRotation = Rotation2d.k180deg;
     /* Keep track if we've ever applied the operator perspective before or not */
     private boolean m_hasAppliedOperatorPerspective = false;
-    private double kpx = 5, kix = 0, kdx = 0;
-    private double kpy = 1.5, kiy = 0, kdy = 0;
-    private double kpr = 5, kir = 0, kdr = 0;
     private Pose2d targetPoseBlineHub = new Pose2d();
     /* Swerve requests to apply during SysId characterization */
     private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization = new SwerveRequest.SysIdSwerveTranslation();
@@ -81,17 +65,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private final SwerveRequest.SysIdSwerveRotation m_rotationCharacterization = new SwerveRequest.SysIdSwerveRotation();
     private final SwerveRequest.ApplyRobotSpeeds autoRequest = new SwerveRequest.ApplyRobotSpeeds();
 
-    private final ProfiledPIDController pidControllerProfiledX = new ProfiledPIDController(kpx, kix, kdx,
-            new TrapezoidProfile.Constraints(Constants.MaxDrivingSpeed, 10));
-    private final ProfiledPIDController pidControllerProfiledY = new ProfiledPIDController(kpy, kiy, kdy,
-            new TrapezoidProfile.Constraints(Constants.MaxDrivingSpeed, 10));
-    private final ProfiledPIDController pidControllerProfiledR = new ProfiledPIDController(kpr, kir, kdr,
-            new TrapezoidProfile.Constraints(Constants.MaxAngularDrivingSpeed, 5));
-
     private final PIDController pidControllerT = new PIDController(2.3, 0, 0.2);
     private final PIDController pidControllerR = new PIDController(4, 0, 0);
     private final PIDController pidControllerCT = new PIDController(2, 0, 0);
-    private static int isRed;
     private double xError, yError;
 
     StructPublisher<Pose2d> targetPosedPublisher = NetworkTableInstance.getDefault()
@@ -207,7 +183,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     // PID to the Point (START)
 
-    public Command BlineToPoint(Pose2d targetPose, BooleanSupplier isRedBoolean) {
+    public Command BlineToPoint(Pose2d targetPoseLeft, Pose2d targetPoseRight,BooleanSupplier isRedBoolean) {
         pidControllerR.setTolerance(0.75);
         pidControllerT.setTolerance(0.75);
         pidControllerCT.setTolerance(0.75);
@@ -228,12 +204,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 pidControllerT, pidControllerR, pidControllerCT);
 
         return Commands.defer(() -> {
-            Pose2d localPose;
+            Pose2d localPose = (targetPoseLeft != targetPoseRight) ? (isRobotLeftHub().getAsBoolean() ? targetPoseLeft : targetPoseRight) : targetPoseLeft;
             if (isRedBoolean.getAsBoolean()) {
-                localPose = FlippingUtil.flipFieldPose(targetPose);
+                localPose = FlippingUtil.flipFieldPose(localPose);
                 SmartDashboard.putString("Bline Target Pose", "Flipped");
-            } else {
-                localPose = targetPose;
             }
             targetPosedPublisherBline.accept(localPose);
 
@@ -376,21 +350,13 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 m_hasAppliedOperatorPerspective = true;
             });
         }
-        SmartDashboard.getNumber("drive/kpx", kpx);
-        SmartDashboard.getNumber("drive/kix", kix);
-        SmartDashboard.getNumber("drive/kdx", kdx);
-        SmartDashboard.getNumber("drive/kpy", kpy);
-        SmartDashboard.getNumber("drive/kiy", kiy);
-        SmartDashboard.getNumber("drive/kdy", kdy);
-        SmartDashboard.getNumber("drive/kpr", kpr);
-        SmartDashboard.getNumber("drive/kir", kir);
-        SmartDashboard.getNumber("drive/kdr", kdr);
+        SmartDashboard.putNumber("Robot x", this.getState().Pose.getX());
+        SmartDashboard.putNumber("Robot y", this.getState().Pose.getY());
         SmartDashboard.putNumber("xError", targetPoseBlineHub.getX() - this.getState().Pose.getX());
         SmartDashboard.putNumber("yError", targetPoseBlineHub.getY() - this.getState().Pose.getY());
         SmartDashboard.putNumber("rError",
                 targetPoseBlineHub.getRotation().getRadians() - getRobotRotation().getAsDouble());
-        SmartDashboard.putString("Alliance",
-                DriverStation.getAlliance().orElse(Alliance.Blue).equals(Alliance.Red) ? "Red" : "Blue");
+        SmartDashboard.putBoolean("Robot Side", isRobotLeftHub().getAsBoolean());
         SmartDashboard.putBoolean("Bline Available",
                 Math.abs(targetPoseBlineHub.getY() - this.getState().Pose.getY()) < 2.40
                         && Math.abs(targetPoseBlineHub.getX() - this.getState().Pose.getX()) < 1.90);
@@ -475,6 +441,13 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     public DoubleSupplier getRobotRotation() {
         return () -> this.getState().Pose.getRotation().getRadians();
+    }
+
+    public BooleanSupplier isRobotLeftHub() {
+        return () -> (this.getState().Pose.getX() < Constants.blueHubPose.getX()
+                && this.getState().Pose.getY() > Constants.blueHubPose.getY())
+                || (this.getState().Pose.getX() > Constants.redHubPose.getX()
+                        && this.getState().Pose.getY() < Constants.redHubPose.getY());
     }
 
 }
