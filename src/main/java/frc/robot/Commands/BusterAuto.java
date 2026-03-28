@@ -43,7 +43,7 @@ public class BusterAuto extends SequentialCommandGroup {
                 } else {
                     angle = Math.PI;
                 }
-                addCommands(new PathPlannerAuto("CollectBallsTop"));
+                addCommands(new GetAuto().blueTopCollectBalls(drivebase));
                 break;
 //             case "right":
 //                 // PathPlannerPath path = PathPlannerPath.fromPathFile("1 coral");
