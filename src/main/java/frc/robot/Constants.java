@@ -42,6 +42,7 @@ public final class Constants {
     public static final int backShooterId   = 19;
     public static final int pivotMotorId    = 20;
     public static final int rollerMotorId   = 21;
+    public static final int rollerMotor2Id  = 22;
     
     public static final double intakePivotKP = 0.2;
     public static final double intakePivotKI = 0;
