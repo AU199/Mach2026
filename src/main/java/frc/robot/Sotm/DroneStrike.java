@@ -103,12 +103,9 @@ public class DroneStrike extends Command {
         } else {
             System.out.println("Shot was NaN");
 
-            // Ends but with a phi of zero
+            // Ends but with no rotation
             drivetrain.applyRequest(() -> drive.withVelocityX(-Math.pow(controllerXAxis.get(), 3) * MaxSpeed)
-                .withVelocityY(-Math.pow(controllerYAxis.get(), 3) * MaxSpeed)
-                .withTargetDirection(new Rotation2d(0))
-                .withHeadingPID(20, 0, 0)
-                .withMaxAbsRotationalRate(MaxAngularRate)).execute();
+                .withVelocityY(-Math.pow(controllerYAxis.get(), 3) * MaxSpeed)).execute();
             return;
         }
 
@@ -116,12 +113,9 @@ public class DroneStrike extends Command {
         if (ballLinearVelocity == null) {
             System.out.println("Ball Velocity Null");
 
-            // Ends but with a phi of zero
+            // Ends but with no rotation
             drivetrain.applyRequest(() -> drive.withVelocityX(-Math.pow(controllerXAxis.get(), 3) * MaxSpeed)
-                .withVelocityY(-Math.pow(controllerYAxis.get(), 3) * MaxSpeed)
-                .withTargetDirection(new Rotation2d(0))
-                .withHeadingPID(20, 0, 0)
-                .withMaxAbsRotationalRate(MaxAngularRate)).execute();
+                .withVelocityY(-Math.pow(controllerYAxis.get(), 3) * MaxSpeed)).execute();
             return;
         }
 
