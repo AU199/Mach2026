@@ -24,12 +24,16 @@ import frc.robot.Constants;
 import frc.robot.FuelSim;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.subsystems.Feeder;
 import frc.robot.subsystems.Hood;
+import frc.robot.subsystems.Shooter;
 
 public class DroneStrike extends Command {
     private CommandSwerveDrivetrain drivetrain;
     private Pose2d targetPose;
     private Hood hoodMotor;
+    private Shooter shooter;
+    private Feeder feeder;
 
     private Supplier<Double> controllerXAxis;
     private Supplier<Double> controllerYAxis;
@@ -55,18 +59,21 @@ public class DroneStrike extends Command {
     StructPublisher<Pose3d> publisher = NetworkTableInstance.getDefault().getStructTopic("RobotPose", Pose3d.struct)
             .publish();
 
-    public DroneStrike(CommandSwerveDrivetrain drivetrain, Pose2d targetPose, Hood hoodMotor,
+    public DroneStrike(CommandSwerveDrivetrain drivetrain, Pose2d targetPose,
+            Hood hoodMotor, Shooter shooter, Feeder feeder,
             double ballInitialSpeedFromShooter, double ballInitialSpinFromShooter,
             Supplier<Double> controllerXAxis, Supplier<Double> controllerYAxis) {
         this.drivetrain = drivetrain;
         this.targetPose = targetPose;
         this.hoodMotor = hoodMotor;
+        this.shooter = shooter;
+        this.feeder = feeder;
         this.ballInitialSpeedFromShooter = ballInitialSpeedFromShooter;
         this.ballInitialSpinFromShooter = ballInitialSpinFromShooter;
 
         this.controllerXAxis = controllerXAxis;
         this.controllerYAxis = controllerYAxis;
-        addRequirements(drivetrain, hoodMotor);
+        addRequirements(drivetrain, hoodMotor, shooter, feeder);
     }
 
     @Override
@@ -104,6 +111,7 @@ public class DroneStrike extends Command {
             System.out.println("Shot was NaN");
 
             // Ends but with no rotation
+            feeder.feederOn(0);
             drivetrain.applyRequest(() -> drive.withVelocityX(-Math.pow(controllerXAxis.get(), 3) * MaxSpeed)
                 .withVelocityY(-Math.pow(controllerYAxis.get(), 3) * MaxSpeed)).execute();
             return;
@@ -114,6 +122,7 @@ public class DroneStrike extends Command {
             System.out.println("Ball Velocity Null");
 
             // Ends but with no rotation
+            feeder.feederOn(0);
             drivetrain.applyRequest(() -> drive.withVelocityX(-Math.pow(controllerXAxis.get(), 3) * MaxSpeed)
                 .withVelocityY(-Math.pow(controllerYAxis.get(), 3) * MaxSpeed)).execute();
             return;
@@ -129,6 +138,8 @@ public class DroneStrike extends Command {
 
         SmartDashboard.putNumber("ControllerXAxis", controllerXAxis.get());
         SmartDashboard.putNumber("ControllerYAxis", controllerYAxis.get());
+
+        shooter.shooterOn(MaxSpeed).execute();
 
         drivetrain.applyRequest(() -> drive.withVelocityX(-Math.pow(controllerXAxis.get(), 3) * MaxSpeed) // Drive
                                                                                                           // forward
