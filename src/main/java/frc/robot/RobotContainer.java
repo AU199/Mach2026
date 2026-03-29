@@ -11,6 +11,7 @@ import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 // import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import frc.robot.Commands.BusterAuto;
+import frc.robot.Sotm.DroneStrike;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -52,7 +53,7 @@ public class RobotContainer {
         public final Levitator levitator = new Levitator();
         public final Intake intake = new Intake();
         public final Feeder feeder = new Feeder(intake);
-        public final photon photon = new photon(drivetrain);
+        // public final photon photon = new photon(drivetrain);
         // public final Shooter shooter = new Shooter(drivetrain,true,m_field);
         private SendableChooser<String> chooserAuto = new SendableChooser<String>();
         private final Pose2d targetPoseHubLeft = new Pose2d(1.728, 6.826,
@@ -120,10 +121,10 @@ public class RobotContainer {
                 ;
                 controller1.R1().whileTrue(intake.runRoller(0.5));
                 // controller1.square().whileTrue(intake.runRoller(0.35));
-                controller1.L2().whileTrue(shooter.shooterOn(90));
-                controller1.L2().whileTrue(hood.setHoodPosition(0.07));
-                controller1.L1().whileTrue(shooter.shooterOn(60));
-                controller1.L1().whileTrue(hood.setHoodPosition(0.09));
+                // controller1.L2().whileTrue(shooter.shooterOn(90));
+                // controller1.L2().whileTrue(hood.setHoodPosition(0.07));
+                // controller1.L1().whileTrue(shooter.shooterOn(60));
+                // controller1.L1().whileTrue(hood.setHoodPosition(0.09));
                 // controller1.cross().whileTrue(shooter.shooterOn(50));
                 controller1.R2().whileTrue(feeder.feederOn(1));
 
@@ -141,10 +142,12 @@ public class RobotContainer {
                 // controller1.circle().onTrue(new InstantCommand(() ->
                 // shooter.applyConfigs()));
 
-                // controller1.L1().whileTrue(new DroneStrike(drivetrain, Constants.blueHubPose,
-                // hood, Constants.ballInitialVelocityFromShooterHub,
-                // Constants.ballInitialSpinFromShooterHub, () -> controller1.getRawAxis(1), ()
-                // -> controller1.getRawAxis(0)));
+                controller1.L1().whileTrue(new DroneStrike(drivetrain, Constants.blueHubPose,
+                hood, shooter, feeder, Constants.ballInitialVelocityFromShooterHub,
+                Constants.ballInitialSpinFromShooterHub, () -> controller1.getRawAxis(1), ()
+                -> controller1.getRawAxis(0)));
+
+                controller1.L2().whileTrue(new InstantCommand(() -> FuelSim.getInstance().clearFuel()));
 
                 // Feeding balls into alliance zone
 

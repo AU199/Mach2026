@@ -39,9 +39,10 @@ public final class Constants {
     public static final int feederMotorId   = 16;
     public static final int frontShooter1Id = 17;
     public static final int frontShooter2Id = 18;
-    public static final int backShooterId   = 19;
+    public static final int frontShooter3Id   = 19;
     public static final int pivotMotorId    = 20;
     public static final int rollerMotorId   = 21;
+    public static final int rollerMotor2Id  = 22;
     
     public static final double intakePivotKP = 0.2;
     public static final double intakePivotKI = 0;
@@ -50,7 +51,7 @@ public final class Constants {
     public static final double levitatorKP = 0;
     public static final double levitatorKI = 0;
     public static final double levitatorKD = 0;
-    public static double shooterMotorKP = 0.6;
+    public static double shooterMotorKP = 0;
     public static double shooterMotorKI = 0;
     public static double shooterMotorKD = 0;
     
@@ -106,6 +107,8 @@ public final class Constants {
         -0.309, -0.064, 0.193,
         new Rotation3d(0, -Math.toRadians(27), Math.PI)
     );
+
+    public static double closestFiducialIgnoreThreshold = 0;
 
     // ── AprilTag layout ───────────────────────────────────────────────────────
     public static AprilTagFieldLayout kTagLayout;

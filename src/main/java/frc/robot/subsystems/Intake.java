@@ -4,7 +4,10 @@ import java.util.function.BooleanSupplier;
 
 
 import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.MotorAlignmentValue;
+
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -14,6 +17,7 @@ import frc.robot.Constants;
 public class Intake extends SubsystemBase {
     private TalonFX pivotMotor = new TalonFX(Constants.pivotMotorId, "DriveBase");
     private TalonFX rollerMotor = new TalonFX(Constants.rollerMotorId, "DriveBase");
+    private TalonFX rollerMotor2 = new TalonFX(Constants.rollerMotor2Id, "DriveBase");
     BooleanSupplier isIntakeMoved = () -> {
         boolean result = Math.abs(pivotMotor.getPosition().getValueAsDouble() - 0) > 0.08;
       return result;
@@ -28,6 +32,8 @@ public class Intake extends SubsystemBase {
         pivotConfig.kP = Constants.intakePivotKP;
         pivotConfig.kI = 0;
         pivotConfig.kD = Constants.intakePivotKD;
+
+        rollerMotor2.setControl(new Follower(Constants.rollerMotorId, MotorAlignmentValue.Opposed));
     }
 
     public Command setIntakePosition(double targetPosition, double KP, double maxSpeed) {
