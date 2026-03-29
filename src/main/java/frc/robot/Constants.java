@@ -51,7 +51,7 @@ public final class Constants {
     public static final double levitatorKP = 0;
     public static final double levitatorKI = 0;
     public static final double levitatorKD = 0;
-    public static double shooterMotorKP = 0.6;
+    public static double shooterMotorKP = 0;
     public static double shooterMotorKI = 0;
     public static double shooterMotorKD = 0;
     
