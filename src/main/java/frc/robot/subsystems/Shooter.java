@@ -26,7 +26,8 @@ import frc.robot.FuelSim;
 
 public class Shooter extends SubsystemBase{
     TalonFX frontShooter1 = new TalonFX(Constants.frontShooter1Id, "DriveBase");
-    TalonFX frontShooter2 = new TalonFX(Constants.frontShooter2Id, "DriveBase");    
+    TalonFX frontShooter2 = new TalonFX(Constants.frontShooter2Id, "DriveBase");  
+    TalonFX frontShooter3 = new TalonFX(Constants.frontShooter3Id, "DriveBase"); 
 
     PositionVoltage pivotAngleRequest = new PositionVoltage(0).withSlot(0);
     boolean isBlue;
@@ -56,6 +57,8 @@ public class Shooter extends SubsystemBase{
         
         frontShooter1.getConfigurator().apply(talonFXConfigs);
         frontShooter2.getConfigurator().apply(talonFXConfigs);
+        frontShooter3.getConfigurator().apply(talonFXConfigs);
+        
       //  frontShooter2.setControl(new Follower(Constants.frontShooter1Id, MotorAlignmentValue.Aligned));
         SmartDashboard.putNumber("shooter/kp", Constants.shooterMotorKP);
         SmartDashboard.putNumber("shooter/ki", Constants.shooterMotorKI);
@@ -89,11 +92,11 @@ public class Shooter extends SubsystemBase{
         return startEnd(() -> {
             frontShooter1.setControl(new MotionMagicVelocityVoltage(speed));
             frontShooter2.setControl(new MotionMagicVelocityVoltage(speed));
-
+            frontShooter3.setControl(new MotionMagicVelocityVoltage(speed));
         }, () -> {
             frontShooter1.set(0);
             frontShooter2.set(0);
-
+            frontShooter3.set(0);
         });
     }
 
