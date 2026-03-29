@@ -13,8 +13,6 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import frc.robot.Commands.BusterAuto;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -63,6 +61,8 @@ public class RobotContainer {
         private final Pose2d targetPoseHubRight = new Pose2d(1.728, 1.174,
                         new Rotation2d(Constants.blueHubPose.getX() - 1.728,
                                         Constants.blueHubPose.getY() - 6.826).plus(new Rotation2d((3 * Math.PI) / 2)));
+        private final Pose2d targetPoseTrenchLeft = new Pose2d(6, 7.4, new Rotation2d(0));
+        private final Pose2d targetPoseTrenchRight = new Pose2d(6, 0.6, new Rotation2d(0));
 
         public RobotContainer() {
                 chooserAuto.addOption("nothing", "nothing");
@@ -133,9 +133,11 @@ public class RobotContainer {
                 controller1.povDown().whileTrue(levitator.runLevitator(-1));
 
                 controller1.circle().toggleOnTrue(
-                                drivetrain.BlineToPoint(targetPoseHubLeft, targetPoseHubRight,
-                                                () -> DriverStation.getAlliance().orElse(Alliance.Blue)
-                                                                .equals(Alliance.Red)));
+                                drivetrain.BlineToPoint(targetPoseHubLeft, targetPoseHubRight, 1.90, 2.40, 1));
+                controller1.square().toggleOnTrue(
+                                drivetrain.BlineToPoint(targetPoseTrenchLeft, targetPoseTrenchRight, 6, 2, 0));
+
+
                 // controller1.circle().onTrue(new InstantCommand(() ->
                 // shooter.applyConfigs()));
 

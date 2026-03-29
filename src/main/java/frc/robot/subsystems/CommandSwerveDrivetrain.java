@@ -58,11 +58,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private static final Rotation2d kRedAlliancePerspectiveRotation = Rotation2d.k180deg;
     /* Keep track if we've ever applied the operator perspective before or not */
     private boolean m_hasAppliedOperatorPerspective = false;
-    private Pose2d targetPoseBlineHub = new Pose2d();
+    private Pose2d targetPoseBline = new Pose2d();
     /* Swerve requests to apply during SysId characterization */
     private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization = new SwerveRequest.SysIdSwerveTranslation();
-    private final SwerveRequest.SysIdSwerveSteerGains m_steerCharacterization = new SwerveRequest.SysIdSwerveSteerGains();
-    private final SwerveRequest.SysIdSwerveRotation m_rotationCharacterization = new SwerveRequest.SysIdSwerveRotation();
     private final SwerveRequest.ApplyRobotSpeeds autoRequest = new SwerveRequest.ApplyRobotSpeeds();
 
     private final PIDController pidControllerT = new PIDController(2.3, 0, 0.2);
@@ -98,48 +96,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                     state -> SignalLogger.writeString("SysIdTranslation_State", state.toString())),
             new SysIdRoutine.Mechanism(
                     output -> setControl(m_translationCharacterization.withVolts(output)),
-                    null,
-                    this));
-    /**
-     * /* SysId routine for characterizing steer. This is used to find PID gains for
-     * the steer motors.
-     */
-    private final SysIdRoutine m_sysIdRoutineSteer = new SysIdRoutine(
-            new SysIdRoutine.Config(
-                    null, // Use default ramp rate (1 V/s)
-                    Volts.of(7), // Use dynamic voltage of 7 V
-                    null, // Use default timeout (10 s)
-                    // Log state with SignalLogger class
-                    state -> SignalLogger.writeString("SysIdSteer_State", state.toString())),
-            new SysIdRoutine.Mechanism(
-                    volts -> setControl(m_steerCharacterization.withVolts(volts)),
-                    null,
-                    this));
-
-    /*
-     * SysId routine for characterizing rotation.
-     * This is used to find PID gains for the FieldCentricFacingAngle
-     * HeadingController.
-     * See the documentation of SwerveRequest.SysIdSwerveRotation for info on
-     * importing the log to SysId.
-     */
-
-    private final SysIdRoutine m_sysIdRoutineRotation = new SysIdRoutine(
-            new SysIdRoutine.Config(
-                    /* This is in radians per second², but SysId only supports "volts per second" */
-                    Volts.of(Math.PI / 6).per(Second),
-                    /* This is in radians per second, but SysId only supports "volts" */
-                    Volts.of(Math.PI),
-                    null, // Use default timeout (10 s)
-                    // Log state with SignalLogger class
-                    state -> SignalLogger.writeString("SysIdRotation_State", state.toString())),
-            new SysIdRoutine.Mechanism(
-                    output -> {
-                        /* output is actually radians per second, but SysId only supports "volts" */
-                        setControl(m_rotationCharacterization.withRotationalRate(output.in(Volts)));
-                        /* also log the requested output for SysId */
-                        SignalLogger.writeDouble("Rotational_Rate", output.in(Volts));
-                    },
                     null,
                     this));
 
@@ -183,7 +139,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     // PID to the Point (START)
 
-    public Command BlineToPoint(Pose2d targetPoseLeft, Pose2d targetPoseRight,BooleanSupplier isRedBoolean) {
+    public Command BlineToPoint(Pose2d targetPoseLeft, Pose2d targetPoseRight, double xTol, double yTol,
+            int pathIndex) {
         pidControllerR.setTolerance(0.75);
         pidControllerT.setTolerance(0.75);
         pidControllerCT.setTolerance(0.75);
@@ -194,7 +151,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 360.0, // max angular acceleration deg/s²
                 0.05, // end translation tolerance meters
                 2.0, // end rotation tolerance degrees
-                0.3 // intermediate handoff radius meters
+                0.1 // intermediate handoff radius meters
         ));
         FollowPath.Builder pathBuilder = new FollowPath.Builder(
                 this,
@@ -204,21 +161,32 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 pidControllerT, pidControllerR, pidControllerCT);
 
         return Commands.defer(() -> {
-            Pose2d localPose = (targetPoseLeft != targetPoseRight) ? (isRobotLeftHub().getAsBoolean() ? targetPoseLeft : targetPoseRight) : targetPoseLeft;
-            if (isRedBoolean.getAsBoolean()) {
+            Pose2d localPose = isRobotLeftHub().getAsBoolean() ? targetPoseLeft : targetPoseRight;
+            Pose2d trenchWaypoint = new Pose2d(localPose.getX() - 3, localPose.getY(), new Rotation2d(0));
+            if (isAllianceRed().getAsBoolean()) {
                 localPose = FlippingUtil.flipFieldPose(localPose);
-                SmartDashboard.putString("Bline Target Pose", "Flipped");
+                trenchWaypoint = FlippingUtil.flipFieldPose(trenchWaypoint);
             }
-            targetPosedPublisherBline.accept(localPose);
+            targetPosedPublisherBline.accept(trenchWaypoint);
 
-            targetPoseBlineHub = localPose;
+            targetPoseBline = localPose;
             xError = localPose.getX() - this.getState().Pose.getX();
             yError = localPose.getY() - this.getState().Pose.getY();
-            if (Math.abs(yError) < 2.40 && Math.abs(xError) < 1.90) {
-                Path path = new Path(
+            if (Math.abs(yError) < yTol && Math.abs(xError) < xTol) {
+                Path path;
+                Path pathHub = new Path(
                         new Path.Waypoint(this.getState().Pose),
                         new Path.Waypoint(localPose));
-
+                Path pathTrench = new Path(
+                        new Path.Waypoint(this.getState().Pose),
+                        new Path.TranslationTarget(trenchWaypoint.getTranslation()),
+                        new Path.Waypoint(localPose)
+                );
+                if (pathIndex == 1) {
+                    path = pathTrench;
+                } else {
+                    path = pathHub;
+                }
                 return pathBuilder.build(path);
             } else {
                 return Commands.none();
@@ -352,14 +320,14 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         }
         SmartDashboard.putNumber("Robot x", this.getState().Pose.getX());
         SmartDashboard.putNumber("Robot y", this.getState().Pose.getY());
-        SmartDashboard.putNumber("xError", targetPoseBlineHub.getX() - this.getState().Pose.getX());
-        SmartDashboard.putNumber("yError", targetPoseBlineHub.getY() - this.getState().Pose.getY());
+        SmartDashboard.putNumber("xError", targetPoseBline.getX() - this.getState().Pose.getX());
+        SmartDashboard.putNumber("yError", targetPoseBline.getY() - this.getState().Pose.getY());
         SmartDashboard.putNumber("rError",
-                targetPoseBlineHub.getRotation().getRadians() - getRobotRotation().getAsDouble());
+                targetPoseBline.getRotation().getRadians() - getRobotRotation().getAsDouble());
         SmartDashboard.putBoolean("Robot Side", isRobotLeftHub().getAsBoolean());
         SmartDashboard.putBoolean("Bline Available",
-                Math.abs(targetPoseBlineHub.getY() - this.getState().Pose.getY()) < 2.40
-                        && Math.abs(targetPoseBlineHub.getX() - this.getState().Pose.getX()) < 1.90);
+                Math.abs(targetPoseBline.getY() - this.getState().Pose.getY()) < 2.40
+                        && Math.abs(targetPoseBline.getX() - this.getState().Pose.getX()) < 1.90);
     }
 
     private void startSimThread() {
@@ -448,6 +416,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 && this.getState().Pose.getY() > Constants.blueHubPose.getY())
                 || (this.getState().Pose.getX() > Constants.redHubPose.getX()
                         && this.getState().Pose.getY() < Constants.redHubPose.getY());
+    }
+
+    public BooleanSupplier isAllianceRed() {
+        return () -> DriverStation.getAlliance().orElse(Alliance.Blue)
+                .equals(Alliance.Red);
     }
 
 }
