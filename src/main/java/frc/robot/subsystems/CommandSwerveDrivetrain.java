@@ -146,7 +146,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         pidControllerCT.setTolerance(0.75);
         Path.setDefaultGlobalConstraints(new Path.DefaultGlobalConstraints(
                 5.0, // max velocity m/s
-                6.0, // max acceleration m/s²
+                10, // max acceleration m/s²
                 360.0, // max angular velocity deg/s
                 360.0, // max angular acceleration deg/s²
                 0.05, // end translation tolerance meters
@@ -167,7 +167,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 localPose = FlippingUtil.flipFieldPose(localPose);
                 trenchWaypoint = FlippingUtil.flipFieldPose(trenchWaypoint);
             }
-            targetPosedPublisherBline.accept(trenchWaypoint);
+            targetPosedPublisherBline.accept(localPose);
 
             targetPoseBline = localPose;
             xError = localPose.getX() - this.getState().Pose.getX();

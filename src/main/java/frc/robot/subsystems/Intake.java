@@ -79,7 +79,7 @@ public class Intake extends SubsystemBase {
     public Command runRoller(double speed) {
         // if(isIntakeMoved.getAsBoolean()){
             return startEnd(() -> {
-                rollerMotor.set(speed);
+                rollerMotor.set(-speed);
                 SmartDashboard.putNumber("Intake roller speed", speed); 
             }, () -> {
                 rollerMotor.set(0);
@@ -92,7 +92,7 @@ public class Intake extends SubsystemBase {
     }
 
     public void setRollerSpeed(double speed) {
-        rollerMotor.set(speed);
+        rollerMotor.set(-speed);
         SmartDashboard.putNumber("Intake roller speed", speed); 
     }
 

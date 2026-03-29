@@ -6,7 +6,8 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
-
+import com.ctre.phoenix6.signals.MotorAlignmentValue;
+import com.ctre.phoenix6.controls.Follower;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -47,19 +48,20 @@ public class Shooter extends SubsystemBase{
         slot0Configs.kS = 0; // Add 0.25 V output to overcome static friction
         slot0Configs.kV = 7.0 / 57.0; // A velocity target of 1 rps results in 0.12 V output
         slot0Configs.kA = 0; // An acceleration of 1 rps/s requires 0.01 V output
-        slot0Configs.kP = Constants.shooterMotorKP; // A position error of 2.5 rotations results in 12 V output
-        slot0Configs.kI = Constants.shooterMotorKI; // no output for integrated error
-        slot0Configs.kD = Constants.shooterMotorKD; // A velocity error of 1 rps results in 0.1 V output
+        slot0Configs.kP = 0.3; // Constants.shooterMotorKP; // A position error of 2.5 rotations results in 12 V output
+        slot0Configs.kI = 0; // no output for integrated error
+        slot0Configs.kD = 0; // A velocity error of 1 rps results in 0.1 V output
 
         var magicMotionConfigs = talonFXConfigs.MotionMagic;
-        magicMotionConfigs.MotionMagicAcceleration = 9999;
-        magicMotionConfigs.MotionMagicJerk = 9999;
+        magicMotionConfigs.MotionMagicAcceleration = 20;
+        magicMotionConfigs.MotionMagicJerk = 10;
         
         frontShooter1.getConfigurator().apply(talonFXConfigs);
         frontShooter2.getConfigurator().apply(talonFXConfigs);
         frontShooter3.getConfigurator().apply(talonFXConfigs);
         
-      //  frontShooter2.setControl(new Follower(Constants.frontShooter1Id, MotorAlignmentValue.Aligned));
+        frontShooter2.setControl(new Follower(Constants.frontShooter1Id, MotorAlignmentValue.Aligned));
+        frontShooter3.setControl(new Follower(Constants.frontShooter1Id, MotorAlignmentValue.Aligned));
         SmartDashboard.putNumber("shooter/kp", Constants.shooterMotorKP);
         SmartDashboard.putNumber("shooter/ki", Constants.shooterMotorKI);
         SmartDashboard.putNumber("shooter/kd", Constants.shooterMotorKD);
@@ -82,21 +84,24 @@ public class Shooter extends SubsystemBase{
     //     return startEnd(() -> {
     //         frontShooter1.setVoltage(speed);
     //         frontShooter2.setVoltage(speed);
+    //         frontShooter3.setVoltage(speed);
+
     //     }, () -> {
     //         frontShooter1.set(0);
     //         frontShooter2.set(0);
+    //         frontShooter3.set(0);
     //     });
     // }
 
     public Command shooterOn(double speed) {
         return startEnd(() -> {
             frontShooter1.setControl(new MotionMagicVelocityVoltage(speed));
-            frontShooter2.setControl(new MotionMagicVelocityVoltage(speed));
-            frontShooter3.setControl(new MotionMagicVelocityVoltage(speed));
+            // frontShooter2.setControl(new MotionMagicVelocityVoltage(speed));
+            // frontShooter3.setControl(new MotionMagicVelocityVoltage(speed));
         }, () -> {
             frontShooter1.set(0);
-            frontShooter2.set(0);
-            frontShooter3.set(0);
+            // frontShooter2.set(0);
+            // frontShooter3.set(0);
         });
     }
 
@@ -187,6 +192,7 @@ public class Shooter extends SubsystemBase{
         SmartDashboard.putNumber("Front Shooter 2", frontShooter2.getVelocity().getValueAsDouble());
         SmartDashboard.putNumber("Front Shooter 2 Stator Current", frontShooter2.getStatorCurrent().getValueAsDouble());
         SmartDashboard.putNumber("Front Shooter 2 Supply Current", frontShooter2.getSupplyCurrent().getValueAsDouble());
+        SmartDashboard.putNumber("Front Shooter 3", frontShooter3.getVelocity().getValueAsDouble());
         SmartDashboard.getNumber("shooter/kp", Constants.shooterMotorKP);
         SmartDashboard.getNumber("shooter/ki", Constants.shooterMotorKI);
         SmartDashboard.getNumber("shooter/kd", Constants.shooterMotorKD);

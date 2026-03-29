@@ -11,6 +11,10 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.subsystems.Feeder;
+import frc.robot.subsystems.Hood;
+import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.Shooter;
 
 public class BusterAuto extends SequentialCommandGroup {
     private RobotContainer robotContainer;
@@ -19,7 +23,7 @@ public class BusterAuto extends SequentialCommandGroup {
     private CommandSwerveDrivetrain drivebase;
 
     public BusterAuto(RobotContainer robotContainer, SendableChooser<String> chooserAuto,
-            CommandSwerveDrivetrain drivebase) {
+            CommandSwerveDrivetrain drivebase, Intake intake, Shooter shooter, Hood hood,Feeder feeder) {
         this.robotContainer = robotContainer;
         this.chooserAuto = chooserAuto;
         this.drivebase = drivebase;
@@ -43,7 +47,7 @@ public class BusterAuto extends SequentialCommandGroup {
                 } else {
                     angle = Math.PI;
                 }
-                addCommands(new GetAuto().blueTopCollectBalls(drivebase));
+                addCommands(new GetAuto().blueTopCollectBalls(drivebase, intake, shooter, hood, feeder));
                 break;
 //             case "right":
 //                 // PathPlannerPath path = PathPlannerPath.fromPathFile("1 coral");

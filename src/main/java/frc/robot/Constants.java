@@ -108,7 +108,7 @@ public final class Constants {
         new Rotation3d(0, -Math.toRadians(27), Math.PI)
     );
 
-    public static double closestFiducialIgnoreThreshold = 0;
+    public static double closestFiducialIgnoreThreshold = 10;
 
     // ── AprilTag layout ───────────────────────────────────────────────────────
     public static AprilTagFieldLayout kTagLayout;

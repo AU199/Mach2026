@@ -25,6 +25,7 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Levitator;
+import frc.robot.subsystems.Limelight;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.Feeder;
 import frc.robot.subsystems.Hood;
@@ -53,15 +54,18 @@ public class RobotContainer {
         public final Levitator levitator = new Levitator();
         public final Intake intake = new Intake();
         public final Feeder feeder = new Feeder(intake);
+        public final Limelight limelight = new Limelight(drivetrain);
         // public final photon photon = new photon(drivetrain);
         // public final Shooter shooter = new Shooter(drivetrain,true,m_field);
         private SendableChooser<String> chooserAuto = new SendableChooser<String>();
-        private final Pose2d targetPoseHubLeft = new Pose2d(1.728, 6.826,
-                        new Rotation2d(Constants.blueHubPose.getX() - 1.728,
-                                        Constants.blueHubPose.getY() - 6.826).plus(new Rotation2d(Math.PI)));
-        private final Pose2d targetPoseHubRight = new Pose2d(1.728, 1.174,
-                        new Rotation2d(Constants.blueHubPose.getX() - 1.728,
-                                        Constants.blueHubPose.getY() - 6.826).plus(new Rotation2d((3 * Math.PI) / 2)));
+        private final double x = 2.362, y = 5.205;
+        private final Pose2d targetPoseHubLeft = new Pose2d(x, y,
+                        new Rotation2d(Constants.blueHubPose.getX() - x,
+                                        Constants.blueHubPose.getY() - y).plus(new Rotation2d(Math.PI)));
+        private final Pose2d targetPoseHubRight = new Pose2d(x, y,
+                        new Rotation2d(Constants.blueHubPose.getX() - x,
+                                        Constants.blueHubPose.getY() - (8 - y))
+                                        .plus(new Rotation2d((3 * Math.PI) / 2)));
         private final Pose2d targetPoseTrenchLeft = new Pose2d(6, 7.4, new Rotation2d(0));
         private final Pose2d targetPoseTrenchRight = new Pose2d(6, 0.6, new Rotation2d(0));
 
@@ -118,13 +122,10 @@ public class RobotContainer {
 
                 controller1.cross().whileTrue(intake.setIntakePosition(Constants.IntakeDeployPos, 0.1, 0.5));
                 controller1.triangle().whileTrue(intake.setIntakePosition(Constants.IntakeRetractPos, 0.025, 0.3));
-                ;
-                controller1.R1().whileTrue(intake.runRoller(0.5));
+                controller1.R1().whileTrue(intake.runRoller(1));
                 // controller1.square().whileTrue(intake.runRoller(0.35));
-                // controller1.L2().whileTrue(shooter.shooterOn(90));
-                // controller1.L2().whileTrue(hood.setHoodPosition(0.07));
-                // controller1.L1().whileTrue(shooter.shooterOn(60));
-                // controller1.L1().whileTrue(hood.setHoodPosition(0.09));
+                controller1.L2().whileTrue(shooter.shooterOn(50).alongWith(hood.setHoodPosition(0.10)));
+                controller1.L1().whileTrue(shooter.shooterOn(50).alongWith(hood.setHoodPosition(0.11)));
                 // controller1.cross().whileTrue(shooter.shooterOn(50));
                 controller1.R2().whileTrue(feeder.feederOn(1));
 
@@ -134,20 +135,20 @@ public class RobotContainer {
                 controller1.povDown().whileTrue(levitator.runLevitator(-1));
 
                 controller1.circle().toggleOnTrue(
-                                drivetrain.BlineToPoint(targetPoseHubLeft, targetPoseHubRight, 1.90, 2.40, 1));
+                                drivetrain.BlineToPoint(targetPoseHubLeft, targetPoseHubRight, 1.90, 2.40, 0).alongWith(shooter.shooterOn(50).alongWith(hood.setHoodPosition(0.10))));
                 controller1.square().toggleOnTrue(
-                                drivetrain.BlineToPoint(targetPoseTrenchLeft, targetPoseTrenchRight, 6, 2, 0));
-
+                                drivetrain.BlineToPoint(targetPoseTrenchLeft, targetPoseTrenchRight, 6, 2, 1));
 
                 // controller1.circle().onTrue(new InstantCommand(() ->
                 // shooter.applyConfigs()));
 
-                controller1.L1().whileTrue(new DroneStrike(drivetrain, Constants.blueHubPose,
-                hood, shooter, feeder, Constants.ballInitialVelocityFromShooterHub,
-                Constants.ballInitialSpinFromShooterHub, () -> controller1.getRawAxis(1), ()
-                -> controller1.getRawAxis(0)));
+                // controller1.L1().whileTrue(new DroneStrike(drivetrain, Constants.blueHubPose,
+                // hood, shooter, feeder, Constants.ballInitialVelocityFromShooterHub,
+                // Constants.ballInitialSpinFromShooterHub, () -> controller1.getRawAxis(1), ()
+                // -> controller1.getRawAxis(0)));
 
-                controller1.L2().whileTrue(new InstantCommand(() -> FuelSim.getInstance().clearFuel()));
+                // controller1.L2().whileTrue(new InstantCommand(() ->
+                // FuelSim.getInstance().clearFuel()));
 
                 // Feeding balls into alliance zone
 
@@ -193,6 +194,6 @@ public class RobotContainer {
 
         public Command getAutonomousCommand() {
                 // Simple drive forward auton
-                return new BusterAuto(this, this.chooserAuto, drivetrain);
+                return new BusterAuto(this, this.chooserAuto, drivetrain, intake, shooter, hood, feeder);
         }
 }
