@@ -13,8 +13,14 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.Constants.IntakeStates;
 
 public class Intake extends SubsystemBase {
+
+    
+
+
+    public IntakeStates currentState = IntakeStates.RETRACTED;
     private TalonFX pivotMotor = new TalonFX(Constants.pivotMotorId, "DriveBase");
     private TalonFX rollerMotor = new TalonFX(Constants.rollerMotorId, "DriveBase");
     private TalonFX rollerMotor2 = new TalonFX(Constants.rollerMotor2Id, "DriveBase");
@@ -36,44 +42,12 @@ public class Intake extends SubsystemBase {
         rollerMotor2.setControl(new Follower(Constants.rollerMotorId, MotorAlignmentValue.Opposed));
     }
 
-    public Command setIntakePosition(double targetPosition, double KP, double maxSpeed) {
-        return runEnd(
-            () -> {
-                SmartDashboard.putNumber("Intake target position", targetPosition);
-                double error = targetPosition - pivotMotor.getPosition().getValueAsDouble();
-                double output = Math.min(error * KP, maxSpeed);
-                pivotMotor.set(output);
-            },
-            () -> {
-                pivotMotor.set(0);
-            }
-        ).until(() -> {boolean result = Math.abs(pivotMotor.getPosition().getValueAsDouble() - targetPosition) < 0.08; return result;});
-
-        // return startEnd(() -> {
-        //     // in init function
-        //     var talonFXConfigs = new TalonFXConfiguration();
-
-        //     // set slot 0 gains
-        //     var slot0Configs = talonFXConfigs.Slot0;
-        //     slot0Configs.kS = 0; // Add 0.25 V output to overcome static friction
-        //     slot0Configs.kV = 0; // A velocity target of 1 rps results in 0.12 V output
-        //     slot0Configs.kA = 0; // An acceleration of 1 rps/s requires 0.01 V output
-        //     slot0Configs.withGravityType(GravityTypeValue.valueOf(GravityTypeValue.Arm_Cosine.value)); // Use cosine gravity compensation
-        //     slot0Configs.withGravityArmPositionOffset(Constants.intakeHardStopAngle/ (2.0*Math.PI)); // Set the position of the hard stop as the zero point for gravity compensation
-        //     slot0Configs.kP = Constants.intakePivotKP; // A position error of 2.5 rotations results in 12 V output
-        //     slot0Configs.kI = Constants.intakePivotKI; // no output for integrated error
-        //     slot0Configs.kD = Constants.intakePivotKD; // A velocity error of 1 rps results in 0.1 V output
-
-        //     // set Motion Magic settings
-        //     var motionMagicConfigs = talonFXConfigs.MotionMagic;
-        //     motionMagicConfigs.MotionMagicCruiseVelocity = 80; // Target cruise velocity of 80 rps
-        //     motionMagicConfigs.MotionMagicAcceleration = 160; // Target acceleration of 160 rps/s (0.5 seconds)
-        //     motionMagicConfigs.MotionMagicJerk = 1600; // Target jerk of 1600 rps/s/s (0.1 seconds)
-
-        //     pivotMotor.getConfigurator().apply(talonFXConfigs);
-        // }, () -> {
-        //     pivotMotor.set(0);
-        // });
+    public void setIntakePosition(double targetPosition, double KP, double maxSpeed) {
+        
+        SmartDashboard.putNumber("Intake target position", targetPosition);
+        double error = targetPosition - pivotMotor.getPosition().getValueAsDouble();
+        double output = Math.min(error * KP, maxSpeed);
+        pivotMotor.set(output);
     }
 
     public Command runRoller(double speed) {
@@ -114,5 +88,15 @@ public class Intake extends SubsystemBase {
 
     public BooleanSupplier getIntakeMovementSupplier(){
         return isIntakeMoved;
+    }
+
+    public void stop() {
+        pivotMotor.set(0);
+        rollerMotor.set(0);
+    }
+
+    public void agitate() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'agitate'");
     }
 }

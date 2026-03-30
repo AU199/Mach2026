@@ -135,7 +135,8 @@ public class RobotContainer {
                 controller1.povDown().whileTrue(levitator.runLevitator(-1));
 
                 controller1.circle().toggleOnTrue(
-                                drivetrain.BlineToPoint(targetPoseHubLeft, targetPoseHubRight, 1.90, 2.40, 0).alongWith(shooter.shooterOn(50).alongWith(hood.setHoodPosition(0.10))));
+                                drivetrain.BlineToPoint(targetPoseHubLeft, targetPoseHubRight, 1.90, 2.40, 0).alongWith(
+                                                shooter.shooterOn(50).alongWith(hood.setHoodPosition(0.10))));
                 controller1.square().toggleOnTrue(
                                 drivetrain.BlineToPoint(targetPoseTrenchLeft, targetPoseTrenchRight, 6, 2, 1));
 
@@ -195,5 +196,19 @@ public class RobotContainer {
         public Command getAutonomousCommand() {
                 // Simple drive forward auton
                 return new BusterAuto(this, this.chooserAuto, drivetrain, intake, shooter, hood, feeder);
+        }
+
+
+        public Hood getHood(){
+                return hood;
+        }
+        public Intake getIntake(){
+                return intake;
+        }
+        public Shooter getShooter(){
+                return shooter;
+        }
+        public Feeder getFeeder(){
+                return feeder;
         }
 }

@@ -26,6 +26,16 @@ import frc.robot.FuelSim;
 
 
 public class Shooter extends SubsystemBase{
+
+    public enum States{
+        IDLE,
+        SPINNING_UP,
+        ATSPEED
+    }
+
+
+
+
     TalonFX frontShooter1 = new TalonFX(Constants.frontShooter1Id, "DriveBase");
     TalonFX frontShooter2 = new TalonFX(Constants.frontShooter2Id, "DriveBase");  
     TalonFX frontShooter3 = new TalonFX(Constants.frontShooter3Id, "DriveBase"); 

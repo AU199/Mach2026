@@ -18,7 +18,7 @@ public class Robot extends TimedRobot {
     private Command m_autonomousCommand;
 
     private final RobotContainer m_robotContainer;
-
+    private final Master masterController;
     private final photon photonCamera;
     private final PhaseTimer timer = new PhaseTimer();
     public boolean isRed = false;
@@ -32,6 +32,8 @@ public class Robot extends TimedRobot {
     public Robot() {
         m_robotContainer = new RobotContainer();
         photonCamera = new photon(m_robotContainer.drivetrain);
+        masterController = new Master(m_robotContainer);
+
     }
 
     @Override

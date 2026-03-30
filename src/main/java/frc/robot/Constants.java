@@ -120,4 +120,13 @@ public final class Constants {
             kTagLayout = null;
         }
     }
+
+    // ──Enums For All Classes──────────────────────────────────────────────────────────
+    public enum IntakeStates{
+        DEPLOYED,
+        RETRACTED,
+        AGITATIGING,
+        INTAKING,
+        IDLE
+    }
 }

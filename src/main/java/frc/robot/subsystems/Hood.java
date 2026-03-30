@@ -19,6 +19,17 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
 public class Hood extends SubsystemBase{
+    
+    public enum States{
+        SHOOTING,
+        FEEDING,
+        RESTING,
+        IDLE
+    }
+    
+
+    
+    
     private TalonFX hoodMotor = new TalonFX(Constants.hoodMotorId, "DriveBase");
     
     
