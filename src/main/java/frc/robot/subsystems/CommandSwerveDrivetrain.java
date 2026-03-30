@@ -6,6 +6,8 @@ import java.util.Set;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
+import org.opencv.features2d.FlannBasedMatcher;
+
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
@@ -66,14 +68,29 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private final PIDController pidControllerT = new PIDController(2.3, 0, 0.2);
     private final PIDController pidControllerR = new PIDController(4, 0, 0);
     private final PIDController pidControllerCT = new PIDController(2, 0, 0);
+    private ROBOT_STATES state = ROBOT_STATES.BLUE_TOP;
+
     private double xError, yError;
 
     StructPublisher<Pose2d> targetPosedPublisher = NetworkTableInstance.getDefault()
             .getStructTopic("Pid Target Pose", Pose2d.struct).publish();
-    StructPublisher<Pose2d> targetPosedPublisherBline = NetworkTableInstance.getDefault()
-            .getStructTopic("Pid Target Pose (BLine)", Pose2d.struct).publish();
-
+    StructPublisher<Pose2d> targetPosedPublisherBlineHub = NetworkTableInstance.getDefault()
+            .getStructTopic("Pid Target Pose (BLine HUB)", Pose2d.struct).publish();
+    StructPublisher<Pose2d> targetPosedPublisherBlineTrench = NetworkTableInstance.getDefault()
+            .getStructTopic("Pid Target Pose (BLine Trench)", Pose2d.struct).publish();
     private static RobotConfig config;
+
+    public enum ROBOT_STATES {
+        BLUE_TOP,
+        BLUE_BOTTOM,
+        NEUTRAL_BLUE_TOP,
+        NEUTRAL_BLUE_BOTTOM,
+        NEUTRAL_RED_TOP,
+        NEUTRAL_RED_BOTTOM,
+        RED_TOP,
+        RED_BOTTOM
+    }
+
     static {
         try {
             config = RobotConfig.fromGUISettings();
@@ -121,7 +138,18 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         if (Utils.isSimulation()) {
             startSimThread();
         }
-
+        pidControllerR.setTolerance(0.75);
+        pidControllerT.setTolerance(0.75);
+        pidControllerCT.setTolerance(0.75);
+        Path.setDefaultGlobalConstraints(new Path.DefaultGlobalConstraints(
+                5.0, // max velocity m/s
+                20.0, // max acceleration m/s²
+                360.0, // max angular velocity deg/s
+                360.0, // max angular acceleration deg/s²
+                0.05, // end translation tolerance meters
+                2.0, // end rotation tolerance degrees
+                0.1 // intermediate handoff radius meters
+        ));
         AutoBuilder.configure(() -> this.getState().Pose, this::resetPose,
                 () -> this.getState().Speeds,
                 (speeds, feedForwards) -> this.setControl(autoRequest.withSpeeds(speeds)),
@@ -139,20 +167,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     // PID to the Point (START)
 
-    public Command BlineToPoint(Pose2d targetPoseLeft, Pose2d targetPoseRight, double xTol, double yTol,
+    public Command BlineToHub(Pose2d targetPoseLeft, Pose2d targetPoseRight, double xTol, double yTol,
             int pathIndex) {
-        pidControllerR.setTolerance(0.75);
-        pidControllerT.setTolerance(0.75);
-        pidControllerCT.setTolerance(0.75);
-        Path.setDefaultGlobalConstraints(new Path.DefaultGlobalConstraints(
-                5.0, // max velocity m/s
-                10, // max acceleration m/s²
-                360.0, // max angular velocity deg/s
-                360.0, // max angular acceleration deg/s²
-                0.05, // end translation tolerance meters
-                2.0, // end rotation tolerance degrees
-                0.1 // intermediate handoff radius meters
-        ));
         FollowPath.Builder pathBuilder = new FollowPath.Builder(
                 this,
                 () -> this.getState().Pose,
@@ -162,37 +178,94 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
         return Commands.defer(() -> {
             Pose2d localPose = isRobotLeftHub().getAsBoolean() ? targetPoseLeft : targetPoseRight;
-            Pose2d trenchWaypoint = new Pose2d(localPose.getX() - 3, localPose.getY(), new Rotation2d(0));
-            if (isAllianceRed().getAsBoolean()) {
-                localPose = FlippingUtil.flipFieldPose(localPose);
-                trenchWaypoint = FlippingUtil.flipFieldPose(trenchWaypoint);
-            }
-            targetPosedPublisherBline.accept(localPose);
-
+            localPose = isAllianceRed().getAsBoolean() ? localPose = FlippingUtil.flipFieldPose(localPose) : localPose;
+            targetPosedPublisherBlineHub.accept(localPose);
             targetPoseBline = localPose;
-            xError = localPose.getX() - this.getState().Pose.getX();
-            yError = localPose.getY() - this.getState().Pose.getY();
+
+            double[] errors = getBlineErrors(localPose);
+            xError = errors[0];
+            yError = errors[1];
             if (Math.abs(yError) < yTol && Math.abs(xError) < xTol) {
-                Path path;
-                Path pathHub = new Path(
+                Path path = new Path(
                         new Path.Waypoint(this.getState().Pose),
                         new Path.Waypoint(localPose));
-                Path pathTrench = new Path(
-                        new Path.Waypoint(this.getState().Pose),
-                        new Path.TranslationTarget(trenchWaypoint.getTranslation()),
-                        new Path.Waypoint(localPose)
-                );
-                if (pathIndex == 1) {
-                    path = pathTrench;
-                } else {
-                    path = pathHub;
-                }
+
                 return pathBuilder.build(path);
             } else {
                 return Commands.none();
             }
         }, Set.of(this));
 
+    }
+
+    private Command BlineToAllianceTrench(Pose2d targetPose, Boolean isAllianceRed, Boolean goingOut) {
+
+        FollowPath.Builder pathBuilder = new FollowPath.Builder(
+                this,
+                () -> this.getState().Pose,
+                () -> this.getState().Speeds,
+                (speeds) -> this.setControl(autoRequest.withSpeeds(speeds)),
+                pidControllerT, pidControllerR, pidControllerCT);
+
+        return Commands.defer(() -> {
+
+            Pose2d trenchWaypoint = new Pose2d(targetPose.getX() - 3, targetPose.getY(), new Rotation2d(0));
+            Pose2d localPose = targetPose;
+            trenchWaypoint = isAllianceRed ? FlippingUtil.flipFieldPose(trenchWaypoint) : trenchWaypoint;
+            targetPoseBline = localPose;
+            if (!goingOut) {
+                localPose = new Pose2d(localPose.getX() - 3, localPose.getY(),
+                        localPose.getRotation().plus(new Rotation2d(Math.PI)));
+            }
+            localPose = isAllianceRed ? FlippingUtil.flipFieldPose(localPose) : localPose;
+            targetPosedPublisherBlineTrench.accept(localPose);
+
+            double[] errors = getBlineErrors(localPose);
+            xError = errors[0];
+            yError = errors[1];
+
+            Path path = new Path(
+                    new Path.Waypoint(this.getState().Pose),
+                    new Path.TranslationTarget(trenchWaypoint.getTranslation()),
+                    new Path.Waypoint(localPose));
+
+            return pathBuilder.build(path);
+
+        }, Set.of(this));
+
+    }
+
+    public Command BlineToTrench() {
+
+        return Commands.defer(() -> {
+            switch (state) {
+                case BLUE_TOP:
+                    return BlineToAllianceTrench(Constants.targetPoseTrenchLeft, false, true);
+                case BLUE_BOTTOM:
+                    return BlineToAllianceTrench(Constants.targetPoseTrenchRight, false, true);
+                case NEUTRAL_BLUE_TOP:
+                    return BlineToAllianceTrench(Constants.targetPoseTrenchLeft, false, false);
+                case NEUTRAL_BLUE_BOTTOM:
+                    return BlineToAllianceTrench(Constants.targetPoseTrenchRight, false, false);
+                case NEUTRAL_RED_TOP:
+                    return BlineToAllianceTrench(Constants.targetPoseTrenchLeft, true, false);
+                case NEUTRAL_RED_BOTTOM:
+                    return BlineToAllianceTrench(Constants.targetPoseTrenchRight, true, false);
+                case RED_TOP:
+                    return BlineToAllianceTrench(Constants.targetPoseTrenchLeft, true, true);
+                case RED_BOTTOM:
+                    return BlineToAllianceTrench(Constants.targetPoseTrenchRight, true, true);
+                default:
+                    return Commands.none();
+            }
+
+        }, Set.of(this));
+    }
+
+    public double[] getBlineErrors(Pose2d targetPose) {
+        double _xError = targetPose.getX() - this.getState().Pose.getX();
+        double _yError = targetPose.getY() - this.getState().Pose.getY();
+        return new double[] { _xError, _yError };
     }
 
     // PID To Point (END)
@@ -318,10 +391,36 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 m_hasAppliedOperatorPerspective = true;
             });
         }
-        SmartDashboard.putNumber("Robot x", this.getState().Pose.getX());
-        SmartDashboard.putNumber("Robot y", this.getState().Pose.getY());
-        SmartDashboard.putNumber("xError", targetPoseBline.getX() - this.getState().Pose.getX());
-        SmartDashboard.putNumber("yError", targetPoseBline.getY() - this.getState().Pose.getY());
+        double robotX = this.getState().Pose.getX();
+        double robotY = this.getState().Pose.getY();
+
+        double fieldQuarterX = Constants.FIELD_LENGTH / 4;
+        double fieldHalfX = Constants.FIELD_LENGTH / 2;
+        double fieldThreeQuarterX = 3 * Constants.FIELD_LENGTH / 4;
+        double fieldCenterY = Constants.FIELD_WIDTH / 2;
+
+        if (robotX < fieldQuarterX && robotY > fieldCenterY) {
+            state = ROBOT_STATES.BLUE_TOP;
+        } else if (robotX < fieldQuarterX && robotY <= fieldCenterY) {
+            state = ROBOT_STATES.BLUE_BOTTOM;
+        } else if (robotX >= fieldQuarterX && robotX < fieldHalfX && robotY > fieldCenterY) {
+            state = ROBOT_STATES.NEUTRAL_BLUE_TOP;
+        } else if (robotX >= fieldQuarterX && robotX < fieldHalfX && robotY <= fieldCenterY) {
+            state = ROBOT_STATES.NEUTRAL_BLUE_BOTTOM;
+        } else if (robotX >= fieldHalfX && robotX < fieldThreeQuarterX && robotY > fieldCenterY) {
+            state = ROBOT_STATES.NEUTRAL_RED_BOTTOM;
+        } else if (robotX >= fieldHalfX && robotX < fieldThreeQuarterX && robotY <= fieldCenterY) {
+            state = ROBOT_STATES.NEUTRAL_RED_TOP;
+        } else if (robotX >= fieldThreeQuarterX && robotY > fieldCenterY) {
+            state = ROBOT_STATES.RED_BOTTOM;
+        } else {
+            state = ROBOT_STATES.RED_TOP;
+        }
+        SmartDashboard.putString("Robot State", state.toString());
+        SmartDashboard.putNumber("Robot x", robotX);
+        SmartDashboard.putNumber("Robot y", robotY);
+        SmartDashboard.putNumber("xError", targetPoseBline.getX() - robotX);
+        SmartDashboard.putNumber("yError", targetPoseBline.getY() - robotY);
         SmartDashboard.putNumber("rError",
                 targetPoseBline.getRotation().getRadians() - getRobotRotation().getAsDouble());
         SmartDashboard.putBoolean("Robot Side", isRobotLeftHub().getAsBoolean());
@@ -343,6 +442,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             updateSimState(deltaTime, RobotController.getBatteryVoltage());
         });
         m_simNotifier.startPeriodic(kSimLoopPeriod);
+
     }
 
     /**

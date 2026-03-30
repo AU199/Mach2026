@@ -5,7 +5,7 @@
 package frc.robot;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
-
+import com.ctre.phoenix.led.FireAnimation;
 // import com.pathplanner.lib.auto.AutoBuilder;
 // import com.pathplanner.lib.config.PIDConstants;
 // import com.pathplanner.lib.controllers.PPHolonomicDriveController;
@@ -58,16 +58,8 @@ public class RobotContainer {
         // public final photon photon = new photon(drivetrain);
         // public final Shooter shooter = new Shooter(drivetrain,true,m_field);
         private SendableChooser<String> chooserAuto = new SendableChooser<String>();
-        private final double x = 2.362, y = 5.205;
-        private final Pose2d targetPoseHubLeft = new Pose2d(x, y,
-                        new Rotation2d(Constants.blueHubPose.getX() - x,
-                                        Constants.blueHubPose.getY() - y).plus(new Rotation2d(Math.PI)));
-        private final Pose2d targetPoseHubRight = new Pose2d(x, y,
-                        new Rotation2d(Constants.blueHubPose.getX() - x,
-                                        Constants.blueHubPose.getY() - (8 - y))
-                                        .plus(new Rotation2d((3 * Math.PI) / 2)));
-        private final Pose2d targetPoseTrenchLeft = new Pose2d(6, 7.4, new Rotation2d(0));
-        private final Pose2d targetPoseTrenchRight = new Pose2d(6, 0.6, new Rotation2d(0));
+       
+
 
         public RobotContainer() {
                 chooserAuto.addOption("nothing", "nothing");
@@ -135,9 +127,8 @@ public class RobotContainer {
                 controller1.povDown().whileTrue(levitator.runLevitator(-1));
 
                 controller1.circle().toggleOnTrue(
-                                drivetrain.BlineToPoint(targetPoseHubLeft, targetPoseHubRight, 1.90, 2.40, 0).alongWith(shooter.shooterOn(50).alongWith(hood.setHoodPosition(0.10))));
-                controller1.square().toggleOnTrue(
-                                drivetrain.BlineToPoint(targetPoseTrenchLeft, targetPoseTrenchRight, 6, 2, 1));
+                                drivetrain.BlineToHub(Constants.targetPoseHubLeft, Constants.targetPoseHubRight, 1.90, 2.40, 0).alongWith(shooter.shooterOn(50).alongWith(hood.setHoodPosition(0.10))));
+                controller1.square().toggleOnTrue(drivetrain.BlineToTrench());
 
                 // controller1.circle().onTrue(new InstantCommand(() ->
                 // shooter.applyConfigs()));
