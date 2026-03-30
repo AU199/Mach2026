@@ -1,6 +1,8 @@
 package frc.robot.subsystems;
 
 
+import java.util.function.BooleanSupplier;
+
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
@@ -51,14 +53,14 @@ public class Shooter extends SubsystemBase{
         slot0Configs.kP = 0.3; // Constants.shooterMotorKP; // A position error of 2.5 rotations results in 12 V output
         slot0Configs.kI = 0; // no output for integrated error
         slot0Configs.kD = 0; // A velocity error of 1 rps results in 0.1 V output
-
         var magicMotionConfigs = talonFXConfigs.MotionMagic;
-        magicMotionConfigs.MotionMagicAcceleration = 20;
-        magicMotionConfigs.MotionMagicJerk = 10;
+        magicMotionConfigs.MotionMagicAcceleration = 30;
+        magicMotionConfigs.MotionMagicJerk = 30;
         
         frontShooter1.getConfigurator().apply(talonFXConfigs);
         frontShooter2.getConfigurator().apply(talonFXConfigs);
         frontShooter3.getConfigurator().apply(talonFXConfigs);
+        
         
         frontShooter2.setControl(new Follower(Constants.frontShooter1Id, MotorAlignmentValue.Aligned));
         frontShooter3.setControl(new Follower(Constants.frontShooter1Id, MotorAlignmentValue.Aligned));
@@ -135,6 +137,12 @@ public class Shooter extends SubsystemBase{
         return Math.sqrt(Math.pow(transform.getX(), 2) + Math.pow(transform.getY(), 2));
     }
 
+    public BooleanSupplier atSpeed(double targetSpeed, double tolerance) {
+        return () -> {
+            return Math.abs(frontShooter1.getVelocity().getValueAsDouble() - targetSpeed) < tolerance;
+        };
+    }
+
     private Pose2d getFuturePose(Pose2d robotPose, ChassisSpeeds velocity, double airtime) {
         double futureX = robotPose.getX() + velocity.vxMetersPerSecond * airtime;
         double futureY = robotPose.getY() + velocity.vyMetersPerSecond * airtime;
@@ -196,11 +204,6 @@ public class Shooter extends SubsystemBase{
         SmartDashboard.getNumber("shooter/kp", Constants.shooterMotorKP);
         SmartDashboard.getNumber("shooter/ki", Constants.shooterMotorKI);
         SmartDashboard.getNumber("shooter/kd", Constants.shooterMotorKD);
-        // slot0Configs.kP = Constants.shooterMotorKP;
-        // slot0Configs.kI = Constants.shooterMotorKI;
-        // slot0Configs.kD = Constants.shooterMotorKD;
-        // frontShooter1.getConfigurator().apply(talonFXConfigs);
-
         
     }
 }

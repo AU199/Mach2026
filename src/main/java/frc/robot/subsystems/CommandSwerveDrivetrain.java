@@ -1,10 +1,13 @@
 package frc.robot.subsystems;
 
-import static edu.wpi.first.units.Units.*;
+import static edu.wpi.first.units.Units.Volts;
+
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
+import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
+
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
@@ -15,9 +18,9 @@ import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.util.FlippingUtil;
-import frc.robot.lib.BLine.FollowPath;
-import frc.robot.lib.BLine.Path;
+
 import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N1;
@@ -28,15 +31,15 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
-import edu.wpi.first.math.controller.PIDController;
-import java.util.function.DoubleSupplier;
+import frc.robot.lib.BLine.FollowPath;
+import frc.robot.lib.BLine.Path;
 
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements
@@ -162,8 +165,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
 
     // PID to the Point (START)
-
-    public Command BlineToHub(Pose2d targetPoseLeft, Pose2d targetPoseRight, double xTol, double yTol) {
+    public Command BlineToHub(Pose2d hubPose, double distanceFromHub, double xTol, double yTol) {
         FollowPath.Builder pathBuilder = new FollowPath.Builder(
                 this,
                 () -> this.getState().Pose,
@@ -172,25 +174,40 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 pidControllerT, pidControllerR, pidControllerCT);
 
         return Commands.defer(() -> {
-            Pose2d localPose = isRobotLeftHub().getAsBoolean() ? targetPoseLeft : targetPoseRight;
-            localPose = isAllianceRed().getAsBoolean() ? localPose = FlippingUtil.flipFieldPose(localPose) : localPose;
+            Pose2d localHub = isAllianceRed().getAsBoolean() ? FlippingUtil.flipFieldPose(hubPose) : hubPose;
+
+            // Vector from hub to robot
+            double dx = this.getState().Pose.getX() - localHub.getX();
+            double dy = this.getState().Pose.getY() - localHub.getY();
+
+            // Normalize and scale by desired distance
+            double magnitude = Math.sqrt(dx * dx + dy * dy);
+            double targetX = localHub.getX() + (dx / magnitude) * distanceFromHub;
+            double targetY = localHub.getY() + (dy / magnitude) * distanceFromHub;
+
+            // Face the hub from the target point
+            double angleToHub = Math.atan2(
+                    localHub.getY() - targetY,
+                    localHub.getX() - targetX);
+
+            Pose2d localPose = new Pose2d(targetX, targetY, new Rotation2d(angleToHub));
+
             targetPosedPublisherBlineHub.accept(localPose);
             targetPoseBline = localPose;
 
             double[] errors = getBlineErrors(localPose);
             xError = errors[0];
             yError = errors[1];
+
             if (Math.abs(yError) < yTol && Math.abs(xError) < xTol) {
                 Path path = new Path(
                         new Path.Waypoint(this.getState().Pose),
                         new Path.Waypoint(localPose));
-
                 return pathBuilder.build(path);
             } else {
                 return Commands.none();
             }
         }, Set.of(this));
-
     }
 
     private Command BlineToAllianceTrench(Pose2d targetPose, Boolean isAllianceRed, Boolean goingOut) {

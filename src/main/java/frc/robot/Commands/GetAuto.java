@@ -63,7 +63,7 @@ public class GetAuto {
                 new InstantCommand(() -> intake.setRollerSpeed(0)),
                 pathBuilder.build(blueBottomBallsToTopNeutralTrench),
                 pathBuilder.build(blueTopNeutralTrenchToTopBlueTrench),
-                drivetrain.BlineToHub(targetPoseHubLeft, targetPoseHubRight, 1.90, 2.40),
+                //drivetrain.BlineToHub(targetPoseHubLeft, targetPoseHubRight, 1.90, 2.40),
                 new ParallelCommandGroup(
                         hood.setHoodPosition(0.1),
                         shooter.shooterOn(50),

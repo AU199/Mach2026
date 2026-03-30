@@ -109,8 +109,8 @@ public class RobotContainer {
                 controller1.triangle().whileTrue(intake.setIntakePosition(Constants.IntakeRetractPos, 0.025, 0.3));
                 controller1.R1().whileTrue(intake.runRoller(1));
                 // controller1.square().whileTrue(intake.runRoller(0.35));
-                controller1.L2().whileTrue(shooter.shooterOn(50).alongWith(hood.setHoodPosition(0.10)));
-                controller1.L1().whileTrue(shooter.shooterOn(50).alongWith(hood.setHoodPosition(0.11)));
+                controller1.L2().toggleOnTrue(shooter.shooterOn(50).alongWith(hood.setHoodPosition(0.10)));
+              //  controller1.L1().whileTrue(shooter.shooterOn(50).alongWith(hood.setHoodPosition(0.11)));
                 // controller1.cross().whileTrue(shooter.shooterOn(50));
                 controller1.R2().whileTrue(feeder.feederOn(1));
 
@@ -120,7 +120,7 @@ public class RobotContainer {
                 controller1.povDown().whileTrue(levitator.runLevitator(-1));
 
                 controller1.circle().toggleOnTrue(
-                                drivetrain.BlineToHub(Constants.targetPoseHubLeft, Constants.targetPoseHubRight, 1.90, 2.40));
+                                drivetrain.BlineToHub(Constants.blueHubPose, 2.5, 1.90, 2.40));
                 controller1.square().toggleOnTrue(drivetrain.BlineToTrench());
 
                 // controller1.circle().onTrue(new InstantCommand(() ->
