@@ -17,7 +17,8 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
-import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.IntakePivot;
+import frc.robot.subsystems.IntakeRollers;
 import frc.robot.subsystems.Levitator;
 import frc.robot.subsystems.Limelight;
 import frc.robot.subsystems.Shooter;
@@ -45,8 +46,9 @@ public class RobotContainer {
         public final Shooter shooter = new Shooter(drivetrain, true, m_field);
         public final Hood hood = new Hood();
         public final Levitator levitator = new Levitator();
-        public final Intake intake = new Intake();
-        public final Feeder feeder = new Feeder(intake);
+        public final IntakePivot intakePivot = new IntakePivot();
+        public final IntakeRollers intakeRollers = new IntakeRollers();
+        public final Feeder feeder = new Feeder();
         public final Limelight limelight = new Limelight(drivetrain);
         // public final photon photon = new photon(drivetrain);
         // public final Shooter shooter = new Shooter(drivetrain,true,m_field);
@@ -72,7 +74,7 @@ public class RobotContainer {
                 // controller1.rightBumper().whileTrue(shooter.pivotMotorOn(-.25));
                 controller1.share().onTrue(Commands.sequence(
                                 // intake.setIntakePosition(Constants.IntakeDeployPos, 0.1, 0.5).withTimeout(2),
-                                intake.runRoller(.5).withTimeout(2),
+                                intakeRollers.runRoller(.5).withTimeout(2),
                                 // intake.setIntakePosition(Constants.IntakeRetractPos, 0.025,
                                 // 0.3).withTimeout(5),
                                 hood.setHoodPosition(0.2).withTimeout(1),
@@ -105,9 +107,9 @@ public class RobotContainer {
                                                                                                                  // (left)
                                 ));
 
-                controller1.cross().whileTrue(intake.setIntakePosition(Constants.IntakeDeployPos, 0.1, 0.5));
-                controller1.triangle().whileTrue(intake.setIntakePosition(Constants.IntakeRetractPos, 0.025, 0.3));
-                controller1.R1().whileTrue(intake.runRoller(1));
+                controller1.cross().whileTrue(intakePivot.setIntakePosition(Constants.IntakeDeployPos, 0.1, 0.5));
+                controller1.triangle().whileTrue(intakePivot.setIntakePosition(Constants.IntakeRetractPos, 0.025, 0.3));
+                controller1.R1().whileTrue(intakeRollers.runRoller(1));
                 // controller1.square().whileTrue(intake.runRoller(0.35));
                 controller1.L2().toggleOnTrue(shooter.shooterOn(50).alongWith(hood.setHoodPosition(0.10)));
               //  controller1.L1().whileTrue(shooter.shooterOn(50).alongWith(hood.setHoodPosition(0.11)));
@@ -155,29 +157,18 @@ public class RobotContainer {
                 // controller1.povRight().onTrue(hood.setHoodPosition(0.09));
                 // controller1.povLeft().onTrue(hood.setHoodPosition(0.07));
 
-                NamedCommands.registerCommand("DeployIntake",
-                                intake.setIntakePosition(Constants.IntakeDeployPos, 0.1, 0.5).withTimeout(3));
-                NamedCommands.registerCommand("RetractIntake",
-                                intake.setIntakePosition(Constants.IntakeRetractPos, 0.025, 0.3));
-                NamedCommands.registerCommand("StartBallIntake", new InstantCommand(() -> intake.setRollerSpeed(0.45)));
-                NamedCommands.registerCommand("EndBallIntake", new InstantCommand(() -> intake.setRollerSpeed(0)));
-                NamedCommands.registerCommand("ShootBalls",
-                                hood.setHoodPosition(0.09).andThen(
-                                                shooter.shooterOn(60).withTimeout(2).andThen(feeder.feederOn(1))));
-                // NamedCommands.registerCommand("PIDToShoot",
                 // drivetrain.pidToPoint(
                 // new Pose2d(1.728, 6.826,
                 // new Rotation2d(Constants.blueHubPose.getX() - 1.728,
                 // Constants.blueHubPose.getY() - 6.826).plus(new Rotation2d(Math.PI))),
                 // () ->
                 // DriverStation.getAlliance().get().equals(Alliance.Red)).withTimeout(3));
-                NamedCommands.registerCommand("StopMoving", drivetrain.applyRequest(() -> new SwerveRequest.Idle()));
 
                 drivetrain.registerTelemetry(logger::telemeterize);
         }
 
         public Command getAutonomousCommand() {
                 // Simple drive forward auton
-                return new BusterAuto(this, this.chooserAuto, drivetrain, intake, shooter, hood, feeder);
+                return new BusterAuto(this, this.chooserAuto, drivetrain, intakePivot, shooter, hood, feeder);
         }
 }

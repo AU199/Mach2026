@@ -27,6 +27,14 @@ public class Hood extends SubsystemBase{
     private TalonFXConfiguration talonFXConfigs = new TalonFXConfiguration();
     private Slot0Configs slot0Configs = talonFXConfigs.Slot0;
     private double hoodAngleDash = 0.11;
+
+    private enum States {
+        Idle,
+        Moving,
+        Shooting,
+        Feeding,
+    }
+
     public Hood() {
         // set slot 0 gains
         FeedbackConfigs feedbackConfigs = talonFXConfigs.Feedback;

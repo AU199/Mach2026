@@ -17,7 +17,7 @@ import frc.robot.lib.BLine.Path;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Feeder;
 import frc.robot.subsystems.Hood;
-import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.IntakePivot;
 import frc.robot.subsystems.Shooter;
 
 public class GetAuto {
@@ -33,7 +33,7 @@ public class GetAuto {
                     Constants.blueHubPose.getY() - (8 - y)).plus(new Rotation2d((3 * Math.PI) / 2)));
     private final SwerveRequest.ApplyRobotSpeeds autoRequest = new SwerveRequest.ApplyRobotSpeeds();
 
-    public Command blueTopCollectBalls(CommandSwerveDrivetrain drivetrain, Intake intake, Shooter shooter, Hood hood,
+    public Command blueTopCollectBalls(CommandSwerveDrivetrain drivetrain, IntakePivot intake, Shooter shooter, Hood hood,
             Feeder feeder) {
         pidControllerR.setTolerance(0.75);
         pidControllerT.setTolerance(0.75);

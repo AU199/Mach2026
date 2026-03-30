@@ -13,11 +13,6 @@ import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
-import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.config.PIDConstants;
-import com.pathplanner.lib.config.RobotConfig;
-import com.pathplanner.lib.controllers.PPHolonomicDriveController;
-import com.pathplanner.lib.util.FlippingUtil;
 
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.controller.PIDController;
@@ -38,6 +33,7 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
+import frc.robot.lib.BLine.FlippingUtil;
 import frc.robot.lib.BLine.FollowPath;
 import frc.robot.lib.BLine.Path;
 
@@ -67,7 +63,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private final PIDController pidControllerT = new PIDController(2.3, 0, 0.2);
     private final PIDController pidControllerR = new PIDController(4, 0, 0);
     private final PIDController pidControllerCT = new PIDController(2, 0, 0);
-    private ROBOT_STATES state = ROBOT_STATES.BLUE_TOP;
+    private POSITIONS state = POSITIONS.BLUE_TOP;
 
     private double xError, yError;
 
@@ -77,9 +73,18 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             .getStructTopic("Pid Target Pose (BLine HUB)", Pose2d.struct).publish();
     StructPublisher<Pose2d> targetPosedPublisherBlineTrench = NetworkTableInstance.getDefault()
             .getStructTopic("Pid Target Pose (BLine Trench)", Pose2d.struct).publish();
-    private static RobotConfig config;
 
-    public enum ROBOT_STATES {
+    private enum States {
+        Idle,
+        Driven,
+        Autonomous,
+        MovingToShoot,
+        Feeding,
+        Trench,
+        X
+    }
+
+    public enum POSITIONS {
         BLUE_TOP,
         BLUE_BOTTOM,
         NEUTRAL_BLUE_TOP,
@@ -90,14 +95,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         RED_BOTTOM
     }
 
-    static {
-        try {
-            config = RobotConfig.fromGUISettings();
-        } catch (Exception e) {
-            // Handle exception as needed
-            e.printStackTrace();
-        }
-    }
 
     /*
      * SysId routine for characterizing translation. This is used to find PID gains
@@ -140,28 +137,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         pidControllerR.setTolerance(0.75);
         pidControllerT.setTolerance(0.75);
         pidControllerCT.setTolerance(0.75);
-        Path.setDefaultGlobalConstraints(new Path.DefaultGlobalConstraints(
-                5.0, // max velocity m/s
-                20.0, // max acceleration m/s²
-                360.0, // max angular velocity deg/s
-                360.0, // max angular acceleration deg/s²
-                0.05, // end translation tolerance meters
-                2.0, // end rotation tolerance degrees
-                0.1 // intermediate handoff radius meters
-        ));
-        AutoBuilder.configure(() -> this.getState().Pose, this::resetPose,
-                () -> this.getState().Speeds,
-                (speeds, feedForwards) -> this.setControl(autoRequest.withSpeeds(speeds)),
-                new PPHolonomicDriveController(new PIDConstants(0, 0, 0), new PIDConstants(0, 0, 0)),
-                config,
-                () -> {
-                    var alliance = DriverStation.getAlliance();
-                    if (alliance.isPresent()) {
-                        return alliance.get() == DriverStation.Alliance.Red;
-                    }
-                    return false;
-                },
-                this);
     }
 
     // PID to the Point (START)
@@ -415,21 +390,21 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         double fieldCenterY = Constants.FIELD_WIDTH / 2;
 
         if (robotX < fieldQuarterX && robotY > fieldCenterY) {
-            state = ROBOT_STATES.BLUE_TOP;
+            state = POSITIONS.BLUE_TOP;
         } else if (robotX < fieldQuarterX && robotY <= fieldCenterY) {
-            state = ROBOT_STATES.BLUE_BOTTOM;
+            state = POSITIONS.BLUE_BOTTOM;
         } else if (robotX >= fieldQuarterX && robotX < fieldHalfX && robotY > fieldCenterY) {
-            state = ROBOT_STATES.NEUTRAL_BLUE_TOP;
+            state = POSITIONS.NEUTRAL_BLUE_TOP;
         } else if (robotX >= fieldQuarterX && robotX < fieldHalfX && robotY <= fieldCenterY) {
-            state = ROBOT_STATES.NEUTRAL_BLUE_BOTTOM;
+            state = POSITIONS.NEUTRAL_BLUE_BOTTOM;
         } else if (robotX >= fieldHalfX && robotX < fieldThreeQuarterX && robotY > fieldCenterY) {
-            state = ROBOT_STATES.NEUTRAL_RED_BOTTOM;
+            state = POSITIONS.NEUTRAL_RED_BOTTOM;
         } else if (robotX >= fieldHalfX && robotX < fieldThreeQuarterX && robotY <= fieldCenterY) {
-            state = ROBOT_STATES.NEUTRAL_RED_TOP;
+            state = POSITIONS.NEUTRAL_RED_TOP;
         } else if (robotX >= fieldThreeQuarterX && robotY > fieldCenterY) {
-            state = ROBOT_STATES.RED_BOTTOM;
+            state = POSITIONS.RED_BOTTOM;
         } else {
-            state = ROBOT_STATES.RED_TOP;
+            state = POSITIONS.RED_TOP;
         }
         SmartDashboard.putString("Robot State", state.toString());
         SmartDashboard.putNumber("Robot x", robotX);

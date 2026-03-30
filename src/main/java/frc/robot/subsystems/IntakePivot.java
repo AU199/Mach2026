@@ -14,10 +14,8 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
-public class Intake extends SubsystemBase {
+public class IntakePivot extends SubsystemBase {
     private TalonFX pivotMotor = new TalonFX(Constants.pivotMotorId, "DriveBase");
-    private TalonFX rollerMotor = new TalonFX(Constants.rollerMotorId, "DriveBase");
-    private TalonFX rollerMotor2 = new TalonFX(Constants.rollerMotor2Id, "DriveBase");
     BooleanSupplier isIntakeMoved = () -> {
         boolean result = Math.abs(pivotMotor.getPosition().getValueAsDouble() - 0) > 0.08;
       return result;
@@ -27,13 +25,24 @@ public class Intake extends SubsystemBase {
     //   return result;
     // };
 
-    public Intake() {
+
+    private enum States {
+        Stowed,
+        Retracted,
+        Retracting,
+        Deployed,
+        Deploying,
+        Depot,
+        Depoting,
+        Agitating,
+    }
+
+
+    public IntakePivot() {
         Slot0Configs pivotConfig = new Slot0Configs();
         pivotConfig.kP = Constants.intakePivotKP;
         pivotConfig.kI = 0;
         pivotConfig.kD = Constants.intakePivotKD;
-
-        rollerMotor2.setControl(new Follower(Constants.rollerMotorId, MotorAlignmentValue.Opposed));
     }
 
     public Command setIntakePosition(double targetPosition, double KP, double maxSpeed) {
@@ -76,25 +85,7 @@ public class Intake extends SubsystemBase {
         // });
     }
 
-    public Command runRoller(double speed) {
-        // if(isIntakeMoved.getAsBoolean()){
-            return startEnd(() -> {
-                rollerMotor.set(-speed);
-                SmartDashboard.putNumber("Intake roller speed", speed); 
-            }, () -> {
-                rollerMotor.set(0);
-            });
-        // } else {
-            //This is a fuction that doesn't do anything
-        //     return startEnd(() -> {}, 
-        //     () -> {});
-        // }
-    }
-
-    public void setRollerSpeed(double speed) {
-        rollerMotor.set(-speed);
-        SmartDashboard.putNumber("Intake roller speed", speed); 
-    }
+    
 
     public Command runPivotSetSpeed(double speed) {
         return startEnd(() -> {
@@ -110,9 +101,5 @@ public class Intake extends SubsystemBase {
                 pivotMotor.setPosition(0);
             }
         );
-    }
-
-    public BooleanSupplier getIntakeMovementSupplier(){
-        return isIntakeMoved;
     }
 }

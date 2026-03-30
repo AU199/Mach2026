@@ -13,7 +13,7 @@ import frc.robot.RobotContainer;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Feeder;
 import frc.robot.subsystems.Hood;
-import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.IntakePivot;
 import frc.robot.subsystems.Shooter;
 
 public class BusterAuto extends SequentialCommandGroup {
@@ -23,7 +23,7 @@ public class BusterAuto extends SequentialCommandGroup {
     private CommandSwerveDrivetrain drivebase;
 
     public BusterAuto(RobotContainer robotContainer, SendableChooser<String> chooserAuto,
-            CommandSwerveDrivetrain drivebase, Intake intake, Shooter shooter, Hood hood,Feeder feeder) {
+            CommandSwerveDrivetrain drivebase, IntakePivot intake, Shooter shooter, Hood hood,Feeder feeder) {
         this.robotContainer = robotContainer;
         this.chooserAuto = chooserAuto;
         this.drivebase = drivebase;

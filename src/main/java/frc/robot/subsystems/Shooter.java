@@ -45,6 +45,13 @@ public class Shooter extends SubsystemBase{
     private TalonFXConfiguration talonFXConfigs = new TalonFXConfiguration();
     private Slot0Configs slot0Configs = talonFXConfigs.Slot0;
 
+    private enum States {
+        Idle,
+        SpinningUp,
+        Feeding,
+        Shooting
+    }
+
     public Shooter(CommandSwerveDrivetrain drivetrain, boolean isBlue, Field2d field) {
 
         slot0Configs.kS = 0; // Add 0.25 V output to overcome static friction
