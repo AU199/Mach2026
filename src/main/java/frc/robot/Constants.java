@@ -127,10 +127,10 @@ public final class Constants {
     public static final Pose2d targetPoseHubLeft = new Pose2d(x, y,
             new Rotation2d(Constants.blueHubPose.getX() - x,
                     Constants.blueHubPose.getY() - y).plus(new Rotation2d(Math.PI)));
-    public static final Pose2d targetPoseHubRight = new Pose2d(x, y,
+    public static final Pose2d targetPoseHubRight = new Pose2d(x, (8 - y),
             new Rotation2d(Constants.blueHubPose.getX() - x,
                     Constants.blueHubPose.getY() - (8 - y))
-                    .plus(new Rotation2d((3 * Math.PI) / 2)));
+                    .plus(new Rotation2d((2 * Math.PI) / 2)));
     public static final Pose2d targetPoseTrenchLeft = new Pose2d(6, 7.4, new Rotation2d(0));
     public static final Pose2d targetPoseTrenchRight = new Pose2d(6, 0.6, new Rotation2d(0));
 }

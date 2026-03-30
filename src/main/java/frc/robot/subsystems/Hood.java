@@ -24,7 +24,6 @@ public class Hood extends SubsystemBase{
     
     private final double sensorToMechanismRatio = 11; // (48/12) * (44/16)
 
-    private double kp;
     private TalonFXConfiguration talonFXConfigs = new TalonFXConfiguration();
     private Slot0Configs slot0Configs = talonFXConfigs.Slot0;
     private double hoodAngleDash = 0.11;
@@ -70,11 +69,11 @@ public class Hood extends SubsystemBase{
         return hoodReachedPosition;
     }
 
-    private double convertShotAngleToHoodPosition(double shotAngle) {
-        double hoodAngle = -(shotAngle - 90);
-        hoodAngle /= 360;
-        return hoodAngle;
-    }
+    // private double convertShotAngleToHoodPosition(double shotAngle) {
+    //     double hoodAngle = -(shotAngle - 90);
+    //     hoodAngle /= 360;
+    //     return hoodAngle;
+    // }
 
     public Command setHoodPosition(double shotAngle) {
         return runEnd(
@@ -87,7 +86,6 @@ public class Hood extends SubsystemBase{
                 // SmartDashboard.putNumber("Target Position", targetPositionMechanism);
                 MotionMagicVoltage control = new MotionMagicVoltage(shotAngle); // Target position in mechanism rotations
 
-                var controlInfo = control.getControlInfo();
                 // SmartDashboard.putString("Feedforward", controlInfo.get("FeedForward").toString());
                 // SmartDashboard.putNumber("Cos", currentPosition * (2 * Math.PI));
                 

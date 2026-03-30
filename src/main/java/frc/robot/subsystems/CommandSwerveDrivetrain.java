@@ -5,9 +5,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
-
-import org.opencv.features2d.FlannBasedMatcher;
-
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
@@ -18,7 +15,6 @@ import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.util.FlippingUtil;
-
 import frc.robot.lib.BLine.FollowPath;
 import frc.robot.lib.BLine.Path;
 import edu.wpi.first.math.Matrix;
@@ -167,8 +163,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     // PID to the Point (START)
 
-    public Command BlineToHub(Pose2d targetPoseLeft, Pose2d targetPoseRight, double xTol, double yTol,
-            int pathIndex) {
+    public Command BlineToHub(Pose2d targetPoseLeft, Pose2d targetPoseRight, double xTol, double yTol) {
         FollowPath.Builder pathBuilder = new FollowPath.Builder(
                 this,
                 () -> this.getState().Pose,
@@ -211,14 +206,17 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
             Pose2d trenchWaypoint = new Pose2d(targetPose.getX() - 3, targetPose.getY(), new Rotation2d(0));
             Pose2d localPose = targetPose;
-            trenchWaypoint = isAllianceRed ? FlippingUtil.flipFieldPose(trenchWaypoint) : trenchWaypoint;
             targetPoseBline = localPose;
             if (!goingOut) {
                 localPose = new Pose2d(localPose.getX() - 3, localPose.getY(),
                         localPose.getRotation().plus(new Rotation2d(Math.PI)));
+                trenchWaypoint = new Pose2d(targetPose.getX() + 3, targetPose.getY(), new Rotation2d(0));
             }
+
+            trenchWaypoint = isAllianceRed ? FlippingUtil.flipFieldPose(trenchWaypoint) : trenchWaypoint;
             localPose = isAllianceRed ? FlippingUtil.flipFieldPose(localPose) : localPose;
-            targetPosedPublisherBlineTrench.accept(localPose);
+
+            targetPosedPublisherBlineTrench.accept(trenchWaypoint);
 
             double[] errors = getBlineErrors(localPose);
             xError = errors[0];

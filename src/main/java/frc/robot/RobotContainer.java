@@ -5,14 +5,8 @@
 package frc.robot;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
-import com.ctre.phoenix.led.FireAnimation;
-// import com.pathplanner.lib.auto.AutoBuilder;
-// import com.pathplanner.lib.config.PIDConstants;
-// import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import frc.robot.Commands.BusterAuto;
-import frc.robot.Sotm.DroneStrike;
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -29,7 +23,6 @@ import frc.robot.subsystems.Limelight;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.Feeder;
 import frc.robot.subsystems.Hood;
-import frc.robot.subsystems.photon;
 import com.pathplanner.lib.auto.NamedCommands;
 
 public class RobotContainer {
@@ -127,7 +120,7 @@ public class RobotContainer {
                 controller1.povDown().whileTrue(levitator.runLevitator(-1));
 
                 controller1.circle().toggleOnTrue(
-                                drivetrain.BlineToHub(Constants.targetPoseHubLeft, Constants.targetPoseHubRight, 1.90, 2.40, 0).alongWith(shooter.shooterOn(50).alongWith(hood.setHoodPosition(0.10))));
+                                drivetrain.BlineToHub(Constants.targetPoseHubLeft, Constants.targetPoseHubRight, 1.90, 2.40));
                 controller1.square().toggleOnTrue(drivetrain.BlineToTrench());
 
                 // controller1.circle().onTrue(new InstantCommand(() ->

@@ -14,7 +14,6 @@ import frc.robot.LimelightHelpers.RawFiducial;
 public class Limelight extends SubsystemBase {
 
     private CommandSwerveDrivetrain drivetrain;
-    private String limelightName = "MainCamera";
     StructPublisher<Pose2d> limelightPublisher = NetworkTableInstance.getDefault()
         .getStructTopic("limelightOdometry", Pose2d.struct).publish();
 
