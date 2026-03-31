@@ -86,6 +86,7 @@ public final class Constants {
 
     public static final double shootingSpeed = 50.0;
     public static final double feedingSpeed = 90.0;
+    public static final double shootingTolerance = 1.0;
 
     // ── Shooting geometry ─────────────────────────────────────────────────────
     /** Height of the hub opening (top of the ball's entry path), meters */
@@ -111,7 +112,10 @@ public final class Constants {
 
     // ── Intake positions (encoder units — tune before deploy) ────────────────
     public static final double IntakeDeployPos = 25;
-    public static final double IntakeRetractPos = 0;
+    public static final double IntakeDepotPos = 22;
+    public static final double IntakeRetractPos = 10;
+    public static final double IntakeStowedPos = 0;
+
 
     // ── Vision ───────────────────────────────────────────────────────────────
     /**

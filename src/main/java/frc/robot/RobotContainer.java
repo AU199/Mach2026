@@ -22,6 +22,7 @@ import frc.robot.subsystems.Feeder;
 import frc.robot.subsystems.Feeder.FeederStates;
 import frc.robot.subsystems.Hood;
 import frc.robot.subsystems.IntakePivot;
+import frc.robot.subsystems.IntakePivot.PivotStates;
 import frc.robot.subsystems.IntakeRollers;
 import frc.robot.subsystems.Levitator;
 import frc.robot.subsystems.Limelight;
@@ -130,13 +131,39 @@ public class RobotContainer {
         );
 
         controller1.cross().whileTrue(intakePivot.deploy(0.1, 0.5));
+
         controller1.triangle().whileTrue(intakePivot.retract(0.025, 0.3));
+
         controller1
             .R1()
             .whileTrue(
-                intakeRollers.runRoller(1, intakePivot.getIntakeState())
+                Commands.either(
+                    // Already deployed or in depot — just run rollers
+                    Commands.startEnd(
+                        () -> intakeRollers.setRollerSpeed(1.0),
+                        () -> intakeRollers.setRollerSpeed(0)
+                    ),
+                    // Not deployed — deploy first, then run rollers
+                    intakePivot
+                        .deploy(
+                            Constants.intakePivotKP,
+                            0.5
+                        )
+                        .andThen(
+                            Commands.startEnd(
+                                () -> intakeRollers.setRollerSpeed(1.0),
+                                () -> intakeRollers.setRollerSpeed(0)
+                            )
+                        ),
+                    // condition: either deployed or in depot
+                    () ->
+                        intakePivot
+                            .getIntakeState()
+                            .equals(PivotStates.Deployed) ||
+                        intakePivot.getIntakeState().equals(PivotStates.Depot)
+                )
             );
-        // controller1.square().whileTrue(intake.runRoller(0.35));
+
         controller1
             .L1()
             .whileTrue(
@@ -174,7 +201,8 @@ public class RobotContainer {
         controller1.povUp().whileTrue(levitator.runLevitator(1));
         controller1.povDown().whileTrue(levitator.runLevitator(-1));
 
-        controller1.square().toggleOnTrue(drivetrain.BlineToTrench());
+        controller1.circle().toggleOnTrue(drivetrain.BlineToTrench());
+        controller1.square().toggleOnTrue(intakePivot.depot(0.025, 0.5));
 
         // controller1.circle().onTrue(new InstantCommand(() ->
         // shooter.applyConfigs()));

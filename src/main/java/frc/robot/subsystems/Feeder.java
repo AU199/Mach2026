@@ -16,7 +16,7 @@ public class Feeder extends SubsystemBase {
         Feeding,
     }
 
-    TalonFX feederMotor = new TalonFX(Constants.feederMotorId, "DriveBase");
+    // TalonFX feederMotor = new TalonFX(Constants.feederMotorId, "DriveBase");
     TalonFX kickerMotor = new TalonFX(Constants.kickerMotorId, "DriveBase");
     private FeederStates feederState = FeederStates.Idle;
 
@@ -27,12 +27,8 @@ public class Feeder extends SubsystemBase {
         ShooterStates shooterState,
         PivotStates intakePivotState
     ) {
-        if (
-            !shooterState.equals(ShooterStates.SpinningUp) ||
-            !intakePivotState.equals(PivotStates.Stowed) ||
-            !intakePivotState.equals(PivotStates.Retracted)
-        ) {
-            return startEnd(
+
+    return startEnd(
                 () -> {
                     // feederMotor.set(-0.5);
                     feederState = FeederStates.Feeding;
@@ -43,18 +39,7 @@ public class Feeder extends SubsystemBase {
                     kickerMotor.set(0);
                 }
             );
-        } else {
-            return new InstantCommand(() ->
-                System.out.println(
-                    "Fuh naw, currentShooter State: " +
-                    shooterState.toString() +
-                    " current Intake State: " +
-                    intakePivotState.toString() +
-                    " one of which is leading to the feeder not running"
-                )
-            );
-        }
-    }
+        } 
 
     @Override
     public void periodic() {

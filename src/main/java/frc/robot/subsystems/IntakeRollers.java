@@ -35,24 +35,15 @@ public class IntakeRollers extends SubsystemBase {
     }
 
     public Command runRoller(double speed, PivotStates intakePivotState) {
-        if (
-            intakePivotState.equals(PivotStates.Stowed) ||
-            intakePivotState.equals(PivotStates.Retracted)
-        ) {
-            return startEnd(
-                () -> {
-                    rollerMotor.set(-speed);
-                    SmartDashboard.putNumber("Intake roller speed", speed);
-                },
-                () -> {
-                    rollerMotor.set(0);
-                }
-            );
-        } else {
-            return new InstantCommand(() ->
-                System.out.println("Intake has not been deployed")
-            );
-        }
+        return startEnd(
+            () -> {
+                rollerMotor.set(-speed);
+                SmartDashboard.putNumber("Intake roller speed", speed);
+            },
+            () -> {
+                rollerMotor.set(0);
+            }
+        );
     }
 
     public void setRollerSpeed(double speed) {

@@ -2,9 +2,11 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
 import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.CoastOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -19,6 +21,7 @@ import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.FuelSim;
@@ -124,11 +127,9 @@ public class Shooter extends SubsystemBase {
     }
 
     public Command shootFuel() {
-        return startEnd(
+        return Commands.startRun(
             () -> {
-                shooterState = atSpeed(Constants.shootingSpeed).getAsBoolean()
-                    ? ShooterStates.SpinningUp
-                    : ShooterStates.Shooting;
+                shooterState = ShooterStates.SpinningUp;
                 frontShooter1.setControl(
                     new MotionMagicVelocityVoltage(Constants.shootingSpeed)
                 );
@@ -136,11 +137,48 @@ public class Shooter extends SubsystemBase {
                 // frontShooter3.setControl(new MotionMagicVelocityVoltage(speed));
             },
             () -> {
-                frontShooter1.set(0);
-                // frontShooter2.set(0);
-                // frontShooter3.set(0);
+                double velocityError = frontShooter1.getClosedLoopError().getValueAsDouble();
+                if (velocityError < Constants.shootingTolerance) {
+                    shooterState = ShooterStates.Shooting;
+                }
+                SmartDashboard.putNumber("Shooting Velocity Error", velocityError);
             }
         );
+    }
+
+    public Command feedFuel() {
+        return Commands.startRun(
+            () -> {
+                shooterState = ShooterStates.SpinningUp;
+                // frontShooter2.setControl(new MotionMagicVelocityVoltage(speed));
+                // frontShooter3.setControl(new MotionMagicVelocityVoltage(speed));
+            },
+            () -> {
+                double targetVelocity = calculateFeedingVelocity();
+                frontShooter1.setControl(
+                    new MotionMagicVelocityVoltage(targetVelocity)
+                );
+                double velocityError = frontShooter1.getClosedLoopError().getValueAsDouble();
+                if (velocityError < Constants.shootingTolerance) {
+                    shooterState = ShooterStates.Shooting;
+                }
+                SmartDashboard.putNumber("Feeding Velocity Error", velocityError);
+            }
+        );
+    }
+
+    public Command idle() {
+        return Commands.runOnce(
+            () -> {
+                frontShooter1.setControl(new CoastOut());
+                shooterState = ShooterStates.Idle;
+            }
+        );
+    }
+
+    private double calculateFeedingVelocity() {
+        return 30.0;
+        // TODO: actually calculate ts lol
     }
 
     // public Command pivotMotorOn(double speed) {

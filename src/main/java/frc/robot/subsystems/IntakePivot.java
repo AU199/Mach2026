@@ -149,6 +149,48 @@ public class IntakePivot extends SubsystemBase {
             );
         }
     }
+    public Command depot(double KP, double maxSpeed) {
+        if (
+            !intakePivotState.equals(PivotStates.Retracted) ||
+            !intakePivotState.equals(PivotStates.Stowed)
+        ) {
+            return runEnd(
+                () -> {
+                    SmartDashboard.putNumber(
+                        "Intake target position",
+                        Constants.IntakeDepotPos
+                    );
+                    double error =
+                        Constants.IntakeDepotPos -
+                        pivotMotor.getPosition().getValueAsDouble();
+                    double output = Math.min(error * KP, maxSpeed);
+                    pivotMotor.set(output);
+                    intakePivotState = PivotStates.Depoting;
+                },
+                () -> {
+                    pivotMotor.set(0);
+                }
+            )
+                .until(() -> {
+                    boolean result =
+                        Math.abs(
+                            pivotMotor.getPosition().getValueAsDouble() -
+                            Constants.IntakeDepotPos
+                        ) <
+                        0.08;
+                    return result;
+                })
+                .andThen(
+                    new InstantCommand(() ->
+                        intakePivotState = PivotStates.Depot
+                    )
+                );
+        } else {
+            return new InstantCommand(() ->
+                System.out.println("INTAKE WAS NEVER DEPLOYED")
+            );
+        }
+    }
 
     public Command runPivotSetSpeed(double speed) {
         return startEnd(
