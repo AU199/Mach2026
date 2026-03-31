@@ -28,11 +28,18 @@ import frc.robot.FuelSim;
 
 
 public class Shooter extends SubsystemBase{
+    public enum ShooterStates {
+        Idle,
+        SpinningUp,
+        Feeding,
+        Shooting
+    }
+
+    
     TalonFX frontShooter1 = new TalonFX(Constants.frontShooter1Id, "DriveBase");
     TalonFX frontShooter2 = new TalonFX(Constants.frontShooter2Id, "DriveBase");  
     TalonFX frontShooter3 = new TalonFX(Constants.frontShooter3Id, "DriveBase"); 
 
-    PositionVoltage pivotAngleRequest = new PositionVoltage(0).withSlot(0);
     boolean isBlue;
     Field2d field;
     int tick = 0;
@@ -45,12 +52,10 @@ public class Shooter extends SubsystemBase{
     private TalonFXConfiguration talonFXConfigs = new TalonFXConfiguration();
     private Slot0Configs slot0Configs = talonFXConfigs.Slot0;
 
-    private enum States {
-        Idle,
-        SpinningUp,
-        Feeding,
-        Shooting
-    }
+    private double tolerance = 0.5;
+    private ShooterStates shooterState = ShooterStates.Idle;
+
+    
 
     public Shooter(CommandSwerveDrivetrain drivetrain, boolean isBlue, Field2d field) {
 
@@ -114,6 +119,19 @@ public class Shooter extends SubsystemBase{
         });
     }
 
+    public Command shootFuel(){
+        return startEnd(() -> {
+            shooterState = atSpeed(Constants.shootingSpeed).getAsBoolean() ? ShooterStates.SpinningUp:ShooterStates.Shooting;
+            frontShooter1.setControl(new MotionMagicVelocityVoltage(Constants.shootingSpeed));
+            // frontShooter2.setControl(new MotionMagicVelocityVoltage(speed));
+            // frontShooter3.setControl(new MotionMagicVelocityVoltage(speed));
+        }, () -> {
+            frontShooter1.set(0);
+            // frontShooter2.set(0);
+            // frontShooter3.set(0);
+        });
+    }
+
     // public Command pivotMotorOn(double speed) {
     //     return startEnd(() -> {
     //         hoodMotor.set(speed);
@@ -144,7 +162,7 @@ public class Shooter extends SubsystemBase{
         return Math.sqrt(Math.pow(transform.getX(), 2) + Math.pow(transform.getY(), 2));
     }
 
-    public BooleanSupplier atSpeed(double targetSpeed, double tolerance) {
+    public BooleanSupplier atSpeed(double targetSpeed) {
         return () -> {
             return Math.abs(frontShooter1.getVelocity().getValueAsDouble() - targetSpeed) < tolerance;
         };
@@ -198,9 +216,17 @@ public class Shooter extends SubsystemBase{
         frontShooter2.getConfigurator().apply(talonFXConfigs);
     }
 
+    public void setShooterState(ShooterStates newState){
+        shooterState = newState;
+    }
+    public ShooterStates getShooterState(){
+        return shooterState;
+    }
+
     @Override
     public void periodic(){
         tick += 1;
+        SmartDashboard.putString("Shooter State", shooterState.toString());
         SmartDashboard.putNumber("Front Shooter 1", frontShooter1.getVelocity().getValueAsDouble());
         SmartDashboard.putNumber("Front Shooter 1 Stator Current", frontShooter1.getStatorCurrent().getValueAsDouble());
         SmartDashboard.putNumber("Front Shooter 1 Supply Current", frontShooter1.getSupplyCurrent().getValueAsDouble());

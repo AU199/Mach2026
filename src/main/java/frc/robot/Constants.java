@@ -71,6 +71,12 @@ public final class Constants {
     public static final Pose2d blueHubPose = new Pose2d(4.61, FIELD_WIDTH / 2.0, new Rotation2d(0));
     public static final Pose2d redHubPose = new Pose2d(16.51 - 4.61, FIELD_WIDTH / 2.0, new Rotation2d(0));
 
+    // ──Shooter Velocity─────────────────────────────────────────────────────────
+
+    public static final double shootingSpeed = 50.0;
+    public static final double feedingSpeed = 90.0;
+
+
     // ── Shooting geometry ─────────────────────────────────────────────────────
     /** Height of the hub opening (top of the ball's entry path), meters */
     public static final double hubZ = 1.8288;
