@@ -65,8 +65,8 @@ public class CommandSwerveDrivetrain
     private final SwerveRequest.ApplyRobotSpeeds autoRequest =
         new SwerveRequest.ApplyRobotSpeeds();
 
-    private final PIDController pidControllerT = new PIDController(2.3, 0, 0.2);
-    private final PIDController pidControllerR = new PIDController(4, 0, 0);
+    private final PIDController pidControllerT = new PIDController(2.3, 0, 0);
+    private final PIDController pidControllerR = new PIDController(3, 0, 0);
     private final PIDController pidControllerCT = new PIDController(2, 0, 0);
     private POSITIONS state = POSITIONS.BLUE_TOP;
 
@@ -106,10 +106,6 @@ public class CommandSwerveDrivetrain
         RED_BOTTOM,
     }
 
-    /*
-     * SysId routine for characterizing translation. This is used to find PID gains
-     * for the drive motors.
-     */
     private final SysIdRoutine m_sysIdRoutineTranslation = new SysIdRoutine(
         new SysIdRoutine.Config(
             null, // Use default ramp rate (1 V/s)
@@ -133,18 +129,6 @@ public class CommandSwerveDrivetrain
     /* The SysId routine to test */
     private SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineTranslation;
 
-    /**
-     * Constructs a CTRE SwerveDrivetrain using the specified constants.
-     * <p>
-     * This constructs the underlying hardware devices, so users should not
-     * construct
-     * the devices themselves. If they need the devices, they can access them
-     * through
-     * getters in the classes.
-     *
-     * @param drivetrainConstants Drivetrain-wide constants for the swerve drive
-     * @param modules             Constants for each specific module
-     */
     public CommandSwerveDrivetrain(
         SwerveDrivetrainConstants drivetrainConstants,
         SwerveModuleConstants<?, ?, ?>... modules
@@ -240,34 +224,19 @@ public class CommandSwerveDrivetrain
             pidControllerCT
         );
 
-        return Commands.defer(
-            () -> {
-                Pose2d trenchWaypoint = new Pose2d(
-                    targetPose.getX() - 3,
-                    targetPose.getY(),
-                    new Rotation2d(0)
-                );
-                Pose2d localPose = targetPose;
-                targetPoseBline = localPose;
-                if (!goingOut) {
-                    localPose = new Pose2d(
-                        localPose.getX() - 3,
-                        localPose.getY(),
-                        localPose.getRotation().plus(new Rotation2d(Math.PI))
-                    );
-                    trenchWaypoint = new Pose2d(
-                        targetPose.getX() + 3,
-                        targetPose.getY(),
-                        new Rotation2d(0)
-                    );
-                }
+        return Commands.defer(() -> {
 
-                trenchWaypoint = isAllianceRed
-                    ? FlippingUtil.flipFieldPose(trenchWaypoint)
-                    : trenchWaypoint;
-                localPose = isAllianceRed
-                    ? FlippingUtil.flipFieldPose(localPose)
-                    : localPose;
+            Pose2d trenchWaypoint = new Pose2d(targetPose.getX() - 3, targetPose.getY(), new Rotation2d(0));
+            Pose2d localPose = targetPose;
+            targetPoseBline = localPose;
+            if (!goingOut) {
+                localPose = new Pose2d(localPose.getX() - 3, localPose.getY(),
+                        localPose.getRotation().plus(new Rotation2d(Math.PI)));
+                trenchWaypoint = new Pose2d(localPose.getX() + 3, localPose.getY(), new Rotation2d(0));
+            }
+
+            trenchWaypoint = isAllianceRed ? FlippingUtil.flipFieldPose(trenchWaypoint) : trenchWaypoint;
+            localPose = isAllianceRed ? FlippingUtil.flipFieldPose(localPose) : localPose;
 
                 targetPosedPublisherBlineTrench.accept(trenchWaypoint);
 
@@ -355,21 +324,6 @@ public class CommandSwerveDrivetrain
 
     // PID To Point (END)
 
-    /**
-     * Constructs a CTRE SwerveDrivetrain using the specified constants.
-     * <p>
-     * This constructs the underlying hardware devices, so users should not
-     * construct
-     * the devices themselves. If they need the devices, they can access them
-     * through
-     * getters in the classes.
-     *
-     * @param drivetrainConstants     Drivetrain-wide constants for the swerve drive
-     * @param odometryUpdateFrequency The frequency to run the odometry loop. If
-     *                                unspecified or set to 0 Hz, this is 250 Hz on
-     *                                CAN FD, and 100 Hz on CAN 2.0.
-     * @param modules                 Constants for each specific module
-     */
     public CommandSwerveDrivetrain(
         SwerveDrivetrainConstants drivetrainConstants,
         double odometryUpdateFrequency,
@@ -381,33 +335,6 @@ public class CommandSwerveDrivetrain
         }
     }
 
-    /**
-     * Constructs a CTRE SwerveDrivetrain using the specified constants.
-     * <p>
-     * This constructs the underlying hardware devices, so users should not
-     * construct
-     * the devices themselves. If they need the devices, they can access them
-     * through
-     * getters in the classes.
-     *
-     * @param drivetrainConstants       Drivetrain-wide constants for the swerve
-     *                                  drive
-     * @param odometryUpdateFrequency   The frequency to run the odometry loop. If
-     *                                  unspecified or set to 0 Hz, this is 250 Hz
-     *                                  on
-     *                                  CAN FD, and 100 Hz on CAN 2.0.
-     * @param odometryStandardDeviation The standard deviation for odometry
-     *                                  calculation
-     *                                  in the form [x, y, theta]ᵀ, with units in
-     *                                  meters
-     *                                  and radians
-     * @param visionStandardDeviation   The standard deviation for vision
-     *                                  calculation
-     *                                  in the form [x, y, theta]ᵀ, with units in
-     *                                  meters
-     *                                  and radians
-     * @param modules                   Constants for each specific module
-     */
     public CommandSwerveDrivetrain(
         SwerveDrivetrainConstants drivetrainConstants,
         double odometryUpdateFrequency,
@@ -427,52 +354,21 @@ public class CommandSwerveDrivetrain
         }
     }
 
-    /**
-     * Returns a command that applies the specified control request to this swerve
-     * drivetrain.
-     *
-     * @param request Function returning the request to apply
-     * @return Command to run
-     */
     public Command applyRequest(Supplier<SwerveRequest> request) {
         return run(() -> this.setControl(request.get()));
     }
 
-    /**
-     * Runs the SysId Quasistatic test in the given direction for the routine
-     * specified by {@link #m_sysIdRoutineToApply}.
-     *
-     * @param direction Direction of the SysId Quasistatic test
-     * @return Command to run
-     */
     public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
         return m_sysIdRoutineToApply.quasistatic(direction);
     }
 
-    /**
-     * Runs the SysId Dynamic test in the given direction for the routine
-     * specified by {@link #m_sysIdRoutineToApply}.
-     *
-     * @param direction Direction of the SysId Dynamic test
-     * @return Command to run
-     */
     public Command sysIdDynamic(SysIdRoutine.Direction direction) {
         return m_sysIdRoutineToApply.dynamic(direction);
     }
 
     @Override
     public void periodic() {
-        /*
-         * Periodically try to apply the operator perspective.
-         * If we haven't applied the operator perspective before, then we should apply
-         * it regardless of DS state.
-         * This allows us to correct the perspective in case the robot code restarts
-         * mid-match.
-         * Otherwise, only check and apply the operator perspective if the DS is
-         * disabled.
-         * This ensures driving behavior doesn't change until an explicit disable event
-         * occurs during testing.
-         */
+
         if (!m_hasAppliedOperatorPerspective || DriverStation.isDisabled()) {
             DriverStation.getAlliance()
                 .ifPresent(allianceColor -> {
@@ -525,6 +421,15 @@ public class CommandSwerveDrivetrain
         } else {
             state = POSITIONS.RED_TOP;
         }
+        Path.setDefaultGlobalConstraints(new Path.DefaultGlobalConstraints(
+                5.0, // max velocity m/s
+                10.0, // max acceleration m/s²
+                360.0, // max angular velocity deg/s
+                360.0, // max angular acceleration deg/s²
+                0.2, // end translation tolerance meters
+                2.0, // end rotation tolerance degrees
+                0.5 // intermediate handoff radius meters
+        ));
         SmartDashboard.putString("Robot State", state.toString());
         SmartDashboard.putNumber("Robot x", robotX);
         SmartDashboard.putNumber("Robot y", robotY);
@@ -563,65 +468,20 @@ public class CommandSwerveDrivetrain
         m_simNotifier.startPeriodic(kSimLoopPeriod);
     }
 
-    /**
-     * Adds a vision measurement to the Kalman Filter. This will correct the
-     * odometry pose estimate
-     * while still accounting for measurement noise.
-     *
-     * @param visionRobotPoseMeters The pose of the robot as measured by the vision
-     *                              camera.
-     * @param timestampSeconds      The timestamp of the vision measurement in
-     *                              seconds.
-     */
     @Override
-    public void addVisionMeasurement(
-        Pose2d visionRobotPoseMeters,
-        double timestampSeconds
-    ) {
-        super.addVisionMeasurement(
-            visionRobotPoseMeters,
-            Utils.fpgaToCurrentTime(timestampSeconds)
-        );
+    public void addVisionMeasurement(Pose2d visionRobotPoseMeters, double timestampSeconds) {
+        super.addVisionMeasurement(visionRobotPoseMeters, Utils.fpgaToCurrentTime(timestampSeconds));
     }
 
-    /**
-     * Adds a vision measurement to the Kalman Filter. This will correct the
-     * odometry pose estimate
-     * while still accounting for measurement noise.
-     * <p>
-     * Note that the vision measurement standard deviations passed into this method
-     * will continue to apply to future measurements until a subsequent call to
-     * {@link #setVisionMeasurementStdDevs(Matrix)} or this method.
-     *
-     * @param visionRobotPoseMeters    The pose of the robot as measured by the
-     *                                 vision camera.
-     * @param timestampSeconds         The timestamp of the vision measurement in
-     *                                 seconds.
-     * @param visionMeasurementStdDevs Standard deviations of the vision pose
-     *                                 measurement
-     *                                 in the form [x, y, theta]ᵀ, with units in
-     *                                 meters and radians.
-     */
     @Override
     public void addVisionMeasurement(
-        Pose2d visionRobotPoseMeters,
-        double timestampSeconds,
-        Matrix<N3, N1> visionMeasurementStdDevs
-    ) {
-        super.addVisionMeasurement(
-            visionRobotPoseMeters,
-            Utils.fpgaToCurrentTime(timestampSeconds),
-            visionMeasurementStdDevs
-        );
+            Pose2d visionRobotPoseMeters,
+            double timestampSeconds,
+            Matrix<N3, N1> visionMeasurementStdDevs) {
+        super.addVisionMeasurement(visionRobotPoseMeters, Utils.fpgaToCurrentTime(timestampSeconds),
+                visionMeasurementStdDevs);
     }
 
-    /**
-     * Return the pose at a given timestamp, if the buffer is not empty.
-     *
-     * @param timestampSeconds The timestamp of the pose in seconds.
-     * @return The pose at the given timestamp (or Optional.empty() if the buffer is
-     *         empty).
-     */
     @Override
     public Optional<Pose2d> samplePoseAt(double timestampSeconds) {
         return super.samplePoseAt(Utils.fpgaToCurrentTime(timestampSeconds));
