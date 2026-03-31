@@ -22,6 +22,7 @@ import frc.robot.subsystems.IntakeRollers;
 import frc.robot.subsystems.Levitator;
 import frc.robot.subsystems.Limelight;
 import frc.robot.subsystems.Shooter;
+import frc.robot.subsystems.Feeder.FeederStates;
 import frc.robot.subsystems.Feeder;
 import frc.robot.subsystems.Hood;
 import com.pathplanner.lib.auto.NamedCommands;
@@ -73,16 +74,17 @@ public class RobotContainer {
                 // controller1.leftBumper().whileTrue(shooter.pivotMotorOn(.25));
                 // controller1.rightBumper().whileTrue(shooter.pivotMotorOn(-.25));
                 controller1.share().onTrue(Commands.sequence(
-                                // intake.setIntakePosition(Constants.IntakeDeployPos, 0.1, 0.5).withTimeout(2),
-                                intakeRollers.runRoller(.5).withTimeout(2),
+                                intakePivot.deploy(0.1, 0.5).withTimeout(2),
+                                intakeRollers.runRoller(.5,intakePivot.getIntakeState()).withTimeout(2),
                                 // intake.setIntakePosition(Constants.IntakeRetractPos, 0.025,
                                 // 0.3).withTimeout(5),
                                 hood.setHoodPosition(0.2).withTimeout(1),
                                 shooter.shooterOn(1).withTimeout(2),
-                                hood.setHoodPosition(0).withTimeout(1),
-                                feeder.feederOn(1).withTimeout(2),
-                                levitator.lift().withTimeout(2),
-                                levitator.retract().withTimeout(2)));
+                                hood.setHoodPosition(0).withTimeout(1)
+                                // feeder.feederOn(1).withTimeout(2),
+                                // levitator.lift().withTimeout(2),
+                                // levitator.retract().withTimeout(2)
+                ));
 
                 // Note that X is defined as forward according to WPILib convention,
                 // and Y is defined as to the left according to WPILib convention.
@@ -107,14 +109,14 @@ public class RobotContainer {
                                                                                                                  // (left)
                                 ));
 
-                controller1.cross().whileTrue(intakePivot.setIntakePosition(Constants.IntakeDeployPos, 0.1, 0.5));
-                controller1.triangle().whileTrue(intakePivot.setIntakePosition(Constants.IntakeRetractPos, 0.025, 0.3));
-                controller1.R1().whileTrue(intakeRollers.runRoller(1));
+                controller1.cross().whileTrue(intakePivot.deploy(0.1, 0.5));
+                controller1.triangle().whileTrue(intakePivot.retract(0.025, 0.3));
+                controller1.R1().whileTrue(intakeRollers.runRoller(1, intakePivot.getIntakeState()));
                 // controller1.square().whileTrue(intake.runRoller(0.35));
                 controller1.L2().toggleOnTrue(shooter.shooterOn(50).alongWith(hood.setHoodPosition(0.10)));
               //  controller1.L1().whileTrue(shooter.shooterOn(50).alongWith(hood.setHoodPosition(0.11)));
                 // controller1.cross().whileTrue(shooter.shooterOn(50));
-                controller1.R2().whileTrue(feeder.feederOn(1));
+                controller1.R2().whileTrue(feeder.feederOn(1)).onChange(new InstantCommand(() -> feeder.setFeederState(FeederStates.Idle)));
 
                 controller1.options().onTrue(new InstantCommand(() -> drivetrain.resetRotation(new Rotation2d(0))));
 
@@ -169,6 +171,6 @@ public class RobotContainer {
 
         public Command getAutonomousCommand() {
                 // Simple drive forward auton
-                return new BusterAuto(this, this.chooserAuto, drivetrain, intakePivot, shooter, hood, feeder);
+                return new BusterAuto(this, this.chooserAuto, drivetrain, intakePivot, intakeRollers,shooter, hood, feeder);
         }
 }

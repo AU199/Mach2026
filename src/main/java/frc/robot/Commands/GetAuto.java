@@ -18,6 +18,7 @@ import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Feeder;
 import frc.robot.subsystems.Hood;
 import frc.robot.subsystems.IntakePivot;
+import frc.robot.subsystems.IntakeRollers;
 import frc.robot.subsystems.Shooter;
 
 public class GetAuto {
@@ -33,7 +34,7 @@ public class GetAuto {
                     Constants.blueHubPose.getY() - (8 - y)).plus(new Rotation2d((3 * Math.PI) / 2)));
     private final SwerveRequest.ApplyRobotSpeeds autoRequest = new SwerveRequest.ApplyRobotSpeeds();
 
-    public Command blueTopCollectBalls(CommandSwerveDrivetrain drivetrain, IntakePivot intake, Shooter shooter, Hood hood,
+    public Command blueTopCollectBalls(CommandSwerveDrivetrain drivetrain, IntakePivot intakePivot, IntakeRollers intakeRoller,Shooter shooter, Hood hood,
             Feeder feeder) {
         pidControllerR.setTolerance(0.75);
         pidControllerT.setTolerance(0.75);
@@ -57,10 +58,10 @@ public class GetAuto {
 
         return Commands.sequence(
                 pathBuilder.build(blueTopTrenchToTopOfBalls),
-                intake.setIntakePosition(Constants.IntakeDeployPos, 0.1, 0.5),
-                new InstantCommand(() -> intake.setRollerSpeed(1)),
+                intakePivot.deploy(0.1, 0.5),
+                new InstantCommand(() -> intakeRoller.setRollerSpeed(1)),
                 pathBuilder.build(blueTopBallsToBottomBalls),
-                new InstantCommand(() -> intake.setRollerSpeed(0)),
+                new InstantCommand(() -> intakeRoller.setRollerSpeed(0)),
                 pathBuilder.build(blueBottomBallsToTopNeutralTrench),
                 pathBuilder.build(blueTopNeutralTrenchToTopBlueTrench),
                 //drivetrain.BlineToHub(targetPoseHubLeft, targetPoseHubRight, 1.90, 2.40),

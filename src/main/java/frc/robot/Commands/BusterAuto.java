@@ -14,6 +14,7 @@ import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Feeder;
 import frc.robot.subsystems.Hood;
 import frc.robot.subsystems.IntakePivot;
+import frc.robot.subsystems.IntakeRollers;
 import frc.robot.subsystems.Shooter;
 
 public class BusterAuto extends SequentialCommandGroup {
@@ -23,7 +24,7 @@ public class BusterAuto extends SequentialCommandGroup {
     private CommandSwerveDrivetrain drivebase;
 
     public BusterAuto(RobotContainer robotContainer, SendableChooser<String> chooserAuto,
-            CommandSwerveDrivetrain drivebase, IntakePivot intake, Shooter shooter, Hood hood,Feeder feeder) {
+            CommandSwerveDrivetrain drivebase, IntakePivot intakePivot, IntakeRollers intakeRollers, Shooter shooter, Hood hood,Feeder feeder) {
         this.robotContainer = robotContainer;
         this.chooserAuto = chooserAuto;
         this.drivebase = drivebase;
@@ -47,7 +48,7 @@ public class BusterAuto extends SequentialCommandGroup {
                 } else {
                     angle = Math.PI;
                 }
-                addCommands(new GetAuto().blueTopCollectBalls(drivebase, intake, shooter, hood, feeder));
+                addCommands(new GetAuto().blueTopCollectBalls(drivebase, intakePivot, intakeRollers, shooter, hood, feeder));
                 break;
 //             case "right":
 //                 // PathPlannerPath path = PathPlannerPath.fromPathFile("1 coral");

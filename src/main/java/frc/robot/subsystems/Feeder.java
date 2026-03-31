@@ -8,26 +8,31 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
 public class Feeder extends SubsystemBase {
-    TalonFX feederMotor = new TalonFX(Constants.feederMotorId, "DriveBase");
-    TalonFX kickerMotor = new TalonFX(Constants.kickerMotorId, "DriveBase");
-
-    public enum States {
+    
+    public enum FeederStates {
         Idle,
         Feeding
     }
+
+    TalonFX feederMotor = new TalonFX(Constants.feederMotorId, "DriveBase");
+    TalonFX kickerMotor = new TalonFX(Constants.kickerMotorId, "DriveBase");
+    private FeederStates feederState = FeederStates.Idle;
 
     public Feeder() {
 
     }
 
     public Command feederOn(double speed) {
-        return startEnd(() -> {
-            // feederMotor.set(-0.5);
-            kickerMotor.set(-speed);
-        }, () -> {
-            // feederMotor.set(0);
-            kickerMotor.set(0);
-        });
+        
+            return startEnd(() -> {
+                // feederMotor.set(-0.5);
+                feederState = FeederStates.Feeding;
+                kickerMotor.set(-speed);
+                
+            }, () -> {
+                // feederMotor.set(0);
+                kickerMotor.set(0);
+            });
     }
 
     @Override
@@ -35,5 +40,9 @@ public class Feeder extends SubsystemBase {
         SmartDashboard.putNumber("Kicker Motor", kickerMotor.getVelocity().getValueAsDouble());
         SmartDashboard.putNumber("Kicker Motor Stator Current", kickerMotor.getStatorCurrent().getValueAsDouble());
         SmartDashboard.putNumber("Kicker Motor Supply Current", kickerMotor.getSupplyCurrent().getValueAsDouble());
+    }
+
+    public void setFeederState(FeederStates newState) {
+        feederState = newState;
     }
 }
