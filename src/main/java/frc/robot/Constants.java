@@ -22,12 +22,15 @@ import frc.robot.generated.TunerConstants;
 public final class Constants {
 
     public static class OperatorConstants {
+
         public static final int kDriverControllerPort = 0;
     }
 
     // Drive Constants
-    public static final double MaxDrivingSpeed = 1 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
-    public static final double MaxAngularDrivingSpeed = 1 * RotationsPerSecond.of(0.75).in(RadiansPerSecond);
+    public static final double MaxDrivingSpeed =
+        1 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
+    public static final double MaxAngularDrivingSpeed =
+        1 * RotationsPerSecond.of(0.75).in(RadiansPerSecond);
 
     /** Half-diagonal of robot, used for angular velocity estimation (meters) */
     public static final double robotRadius = 12.5 * 0.0254; // 12.5 inches → meters
@@ -68,14 +71,21 @@ public final class Constants {
 
     public static final double FIELD_WIDTH = 8.21;
     public static final double FIELD_LENGTH = 16.54;
-    public static final Pose2d blueHubPose = new Pose2d(4.61, FIELD_WIDTH / 2.0, new Rotation2d(0));
-    public static final Pose2d redHubPose = new Pose2d(16.51 - 4.61, FIELD_WIDTH / 2.0, new Rotation2d(0));
+    public static final Pose2d blueHubPose = new Pose2d(
+        4.61,
+        FIELD_WIDTH / 2.0,
+        new Rotation2d(0)
+    );
+    public static final Pose2d redHubPose = new Pose2d(
+        16.51 - 4.61,
+        FIELD_WIDTH / 2.0,
+        new Rotation2d(0)
+    );
 
     // ──Shooter Velocity─────────────────────────────────────────────────────────
 
     public static final double shootingSpeed = 50.0;
     public static final double feedingSpeed = 90.0;
-
 
     // ── Shooting geometry ─────────────────────────────────────────────────────
     /** Height of the hub opening (top of the ball's entry path), meters */
@@ -109,34 +119,62 @@ public final class Constants {
      * x = forward, y = left, z = up (meters). Rotation is camera pitch/roll/yaw.
      * Measure actual mount position on robot.
      */
-    public static final Matrix<N3, N1> kSingleTagStdDevs = VecBuilder.fill(4, 4, Double.POSITIVE_INFINITY);
-    public static final Matrix<N3, N1> kMultiTagStdDevs = VecBuilder.fill(0.5, 0.5, Double.POSITIVE_INFINITY);
+    public static final Matrix<N3, N1> kSingleTagStdDevs = VecBuilder.fill(
+        4,
+        4,
+        Double.POSITIVE_INFINITY
+    );
+    public static final Matrix<N3, N1> kMultiTagStdDevs = VecBuilder.fill(
+        0.5,
+        0.5,
+        Double.POSITIVE_INFINITY
+    );
 
     public static final Transform3d kRobotToCam = new Transform3d(
-            -0.309, -0.064, 0.193,
-            new Rotation3d(0, -Math.toRadians(27), Math.PI));
+        -0.309,
+        -0.064,
+        0.193,
+        new Rotation3d(0, -Math.toRadians(27), Math.PI)
+    );
 
     public static double closestFiducialIgnoreThreshold = 10;
 
     // ── AprilTag layout ───────────────────────────────────────────────────────
     public static AprilTagFieldLayout kTagLayout;
-    static {
-        try {
 
-        } catch (Exception e) {
+    static {
+        try {} catch (Exception e) {
             e.printStackTrace();
             kTagLayout = null;
         }
     }
+
     // ── Poses ───────────────────────────────────────────────────
     private static final double x = 2.362, y = 5.205;
-    public static final Pose2d targetPoseHubLeft = new Pose2d(x, y,
-            new Rotation2d(Constants.blueHubPose.getX() - x,
-                    Constants.blueHubPose.getY() - y).plus(new Rotation2d(Math.PI)));
-    public static final Pose2d targetPoseHubRight = new Pose2d(x, (8 - y),
-            new Rotation2d(Constants.blueHubPose.getX() - x,
-                    Constants.blueHubPose.getY() - (8 - y))
-                    .plus(new Rotation2d((2 * Math.PI) / 2)));
-    public static final Pose2d targetPoseTrenchLeft = new Pose2d(6, 7.4, new Rotation2d(0));
-    public static final Pose2d targetPoseTrenchRight = new Pose2d(6, 0.6, new Rotation2d(0));
+    public static final Pose2d targetPoseHubLeft = new Pose2d(
+        x,
+        y,
+        new Rotation2d(
+            Constants.blueHubPose.getX() - x,
+            Constants.blueHubPose.getY() - y
+        ).plus(new Rotation2d(Math.PI))
+    );
+    public static final Pose2d targetPoseHubRight = new Pose2d(
+        x,
+        (8 - y),
+        new Rotation2d(
+            Constants.blueHubPose.getX() - x,
+            Constants.blueHubPose.getY() - (8 - y)
+        ).plus(new Rotation2d((2 * Math.PI) / 2))
+    );
+    public static final Pose2d targetPoseTrenchLeft = new Pose2d(
+        6,
+        7.4,
+        new Rotation2d(0)
+    );
+    public static final Pose2d targetPoseTrenchRight = new Pose2d(
+        6,
+        0.6,
+        new Rotation2d(0)
+    );
 }

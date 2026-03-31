@@ -19,7 +19,11 @@ public class LatencyCompensation {
      * @param latencySeconds How many seconds ago the pose was observed
      * @return Estimated current pose
      */
-    public Pose2d compensate(Pose2d observedPose, ChassisSpeeds fieldSpeeds, double latencySeconds) {
+    public Pose2d compensate(
+        Pose2d observedPose,
+        ChassisSpeeds fieldSpeeds,
+        double latencySeconds
+    ) {
         double dx = fieldSpeeds.vxMetersPerSecond * latencySeconds;
         double dy = fieldSpeeds.vyMetersPerSecond * latencySeconds;
         double dtheta = fieldSpeeds.omegaRadiansPerSecond * latencySeconds;

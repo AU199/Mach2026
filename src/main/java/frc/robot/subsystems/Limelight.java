@@ -14,8 +14,10 @@ import frc.robot.LimelightHelpers.RawFiducial;
 public class Limelight extends SubsystemBase {
 
     private CommandSwerveDrivetrain drivetrain;
-    StructPublisher<Pose2d> limelightPublisher = NetworkTableInstance.getDefault()
-        .getStructTopic("limelightOdometry", Pose2d.struct).publish();
+    StructPublisher<Pose2d> limelightPublisher =
+        NetworkTableInstance.getDefault()
+            .getStructTopic("limelightOdometry", Pose2d.struct)
+            .publish();
 
     public Limelight(CommandSwerveDrivetrain drivetrain) {
         this.drivetrain = drivetrain;
@@ -32,13 +34,15 @@ public class Limelight extends SubsystemBase {
 
         LimelightHelpers.SetRobotOrientation("", yawDegrees, 0, 0, 0, 0, 0);
 
-        LimelightHelpers.PoseEstimate mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("");
+        LimelightHelpers.PoseEstimate mt2 =
+            LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("");
         if (mt2 == null) {
             System.out.println("limelight no worky");
             return;
         }
 
-        LimelightHelpers.RawFiducial[] rawFiducials = LimelightHelpers.getRawFiducials("");
+        LimelightHelpers.RawFiducial[] rawFiducials =
+            LimelightHelpers.getRawFiducials("");
 
         if (mt2.tagCount == 0) {
             doRejectUpdate = true;
@@ -61,15 +65,22 @@ public class Limelight extends SubsystemBase {
             SmartDashboard.putNumber("closestFiducial", closestFiducial);
 
             double[] stds = NetworkTableInstance.getDefault()
-                .getTable("limelight").getEntry("stddevs").getDoubleArray(new double[9]);
+                .getTable("limelight")
+                .getEntry("stddevs")
+                .getDoubleArray(new double[9]);
 
             // Limelight stddevs array is [tx, ty, tz, rx, ry, rz, ...] — indices 0 and 1 are x/y
             SmartDashboard.putNumber("std x", stds[0]);
             SmartDashboard.putNumber("std y", stds[1]);
 
-            SmartDashboard.putNumber("mt2 rotation2d", mt2.pose.getRotation().getDegrees());
+            SmartDashboard.putNumber(
+                "mt2 rotation2d",
+                mt2.pose.getRotation().getDegrees()
+            );
 
-            drivetrain.setVisionMeasurementStdDevs(VecBuilder.fill(stds[0], stds[1], 9999999));
+            drivetrain.setVisionMeasurementStdDevs(
+                VecBuilder.fill(stds[0], stds[1], 9999999)
+            );
             drivetrain.addVisionMeasurement(mt2.pose, mt2.timestampSeconds);
 
             limelightPublisher.set(mt2.pose);

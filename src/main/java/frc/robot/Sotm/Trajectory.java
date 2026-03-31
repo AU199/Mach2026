@@ -6,6 +6,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import frc.robot.Constants;
 
 public class Trajectory {
+
     double dragCoefficient = 0.47;
     double carlsenCoefficient;
     double ballInitialVelocity = 10;
@@ -18,7 +19,11 @@ public class Trajectory {
     Pose2d robotPose;
     ChassisSpeeds robotVelocity;
 
-    public Trajectory(Pose2d robotPose, Pose2d hubPose,ChassisSpeeds robotVelocity) {
+    public Trajectory(
+        Pose2d robotPose,
+        Pose2d hubPose,
+        ChassisSpeeds robotVelocity
+    ) {
         this.robotPose = robotPose;
         this.hubPose = hubPose;
         this.robotVelocity = robotVelocity;
@@ -29,15 +34,40 @@ public class Trajectory {
 
         double dx = delta.getX();
         double dy = delta.getY();
-        double horizontalDistance = Math.sqrt(dx*dx + dy*dy);
+        double horizontalDistance = Math.sqrt(dx * dx + dy * dy);
         double heightDifference = Constants.hubZ - Constants.shooterHeight;
 
-        double[] angles = {Math.atan((Math.pow(ballInitialVelocity, 2) + Math.sqrt(Math.pow(ballInitialVelocity, 4) - 9.81* (9.81* Math.pow(horizontalDistance, 2) + 2 * heightDifference * Math.pow(ballInitialVelocity, 2)))) / (9.81* horizontalDistance)), Math.atan((Math.pow(ballInitialVelocity, 2) - Math.sqrt(Math.pow(ballInitialVelocity, 4) - 9.81* (9.81* Math.pow(horizontalDistance, 2) + 2 * heightDifference * Math.pow(ballInitialVelocity, 2)))) / (9.81* horizontalDistance))};
+        double[] angles = {
+            Math.atan(
+                (Math.pow(ballInitialVelocity, 2) +
+                    Math.sqrt(
+                        Math.pow(ballInitialVelocity, 4) -
+                        9.81 *
+                        (9.81 * Math.pow(horizontalDistance, 2) +
+                            2 *
+                            heightDifference *
+                            Math.pow(ballInitialVelocity, 2))
+                    )) /
+                (9.81 * horizontalDistance)
+            ),
+            Math.atan(
+                (Math.pow(ballInitialVelocity, 2) -
+                    Math.sqrt(
+                        Math.pow(ballInitialVelocity, 4) -
+                        9.81 *
+                        (9.81 * Math.pow(horizontalDistance, 2) +
+                            2 *
+                            heightDifference *
+                            Math.pow(ballInitialVelocity, 2))
+                    )) /
+                (9.81 * horizontalDistance)
+            ),
+        };
         double theta;
-        if (angles[1] < 0 || angles[1] > Math.PI/2) {
+        if (angles[1] < 0 || angles[1] > Math.PI / 2) {
             theta = angles[0]; // High angle
         } else {
-            theta = angles[1];  // Low angle
+            theta = angles[1]; // Low angle
         }
 
         double phi = Math.atan2(dy, dx);

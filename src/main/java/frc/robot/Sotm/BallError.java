@@ -1,6 +1,7 @@
 package frc.robot.Sotm;
 
 public class BallError {
+
     private double xError;
     private double yError;
 

@@ -5,6 +5,7 @@ package frc.robot.Sotm;
  * dx = d(xError)/d(angle), dy = d(yError)/d(angle)
  */
 public class Derivative {
+
     private double dx;
     private double dy;
 
@@ -14,6 +15,6 @@ public class Derivative {
     }
 
     public double[] getDerivatives() {
-        return new double[]{dx, dy};
+        return new double[] { dx, dy };
     }
 }

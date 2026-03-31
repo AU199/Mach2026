@@ -19,29 +19,27 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  */
 public class Newton {
 
-   
     private ChassisSpeeds robotFieldRelativeVelocity;
     private Pose2d robotPose;
     private Pose2d hubPose;
     private double ballAngularSpeedRelativeToRobot; // rad/s, spin speed from shooter wheel
     private double ballInitalSpeedFromShooter;
 
-    
-    private static final double DT      = 0.01;  // RK4 timestep (seconds)
-    private static final double EPSILON = 1e-3;   // finite difference step for Jacobian
+    private static final double DT = 0.01; // RK4 timestep (seconds)
+    private static final double EPSILON = 1e-3; // finite difference step for Jacobian
 
-    
-    private static final int    MAX_ITER      = 30;
-    private static final double CONVERGE_TOL  = 1e-4; // meters — stop when error < 0.1mm
+    private static final int MAX_ITER = 30;
+    private static final double CONVERGE_TOL = 1e-4; // meters — stop when error < 0.1mm
 
     private Vector finalBallLinearVelocity;
-    
+
     public Newton(
-            Pose2d robotPose,
-            Pose2d hubPose,
-            ChassisSpeeds robotFieldRelativeVelocity,
-            double ballInitialSpeedFromShooter,
-            double ballInitialSpinFromShooter) {
+        Pose2d robotPose,
+        Pose2d hubPose,
+        ChassisSpeeds robotFieldRelativeVelocity,
+        double ballInitialSpeedFromShooter,
+        double ballInitialSpinFromShooter
+    ) {
         this.robotPose = robotPose;
         this.hubPose = hubPose;
         this.robotFieldRelativeVelocity = robotFieldRelativeVelocity;
@@ -49,7 +47,11 @@ public class Newton {
         this.ballInitalSpeedFromShooter = ballInitialSpeedFromShooter;
     }
 
-    public Vector<N3> calculateBallLinearVelocity(double theta, double phi, double ballSpeed) {
+    public Vector<N3> calculateBallLinearVelocity(
+        double theta,
+        double phi,
+        double ballSpeed
+    ) {
         double heading = robotPose.getRotation().getRadians();
 
         // ── Ball linear velocity in robot frame ──
@@ -62,21 +64,37 @@ public class Newton {
         double vz_robot = ballSpeed * Math.sin(theta);
 
         // ── Rotate ball velocity into field frame and add robot velocity ──
-        double vx_field = vx_robot * Math.cos(heading) - vy_robot * Math.sin(heading)
-                          + robotFieldRelativeVelocity.vxMetersPerSecond;
-        double vy_field = vx_robot * Math.sin(heading) + vy_robot * Math.cos(heading)
-                          + robotFieldRelativeVelocity.vyMetersPerSecond;
+        double vx_field =
+            vx_robot * Math.cos(heading) -
+            vy_robot * Math.sin(heading) +
+            robotFieldRelativeVelocity.vxMetersPerSecond;
+        double vy_field =
+            vx_robot * Math.sin(heading) +
+            vy_robot * Math.cos(heading) +
+            robotFieldRelativeVelocity.vyMetersPerSecond;
         double vz_field = vz_robot; // vertical is unchanged by yaw rotation
 
-        Vector<N3> ballLinearVelocity = VecBuilder.fill(vx_field, vy_field, vz_field);
+        Vector<N3> ballLinearVelocity = VecBuilder.fill(
+            vx_field,
+            vy_field,
+            vz_field
+        );
 
         return ballLinearVelocity;
     }
 
     public BallError calculateError(double theta, double phi, double speed) {
-        Vector<N3> ballLinearVelocity = calculateBallLinearVelocity(theta, phi, speed);
-        
-        Vector<N3> ballAngularVelocity = VecBuilder.fill(-Math.sin(phi), Math.cos(phi), 0).times(ballAngularSpeedRelativeToRobot);
+        Vector<N3> ballLinearVelocity = calculateBallLinearVelocity(
+            theta,
+            phi,
+            speed
+        );
+
+        Vector<N3> ballAngularVelocity = VecBuilder.fill(
+            -Math.sin(phi),
+            Math.cos(phi),
+            0
+        ).times(ballAngularSpeedRelativeToRobot);
 
         // ── Run RK4 ──
         RK4 rk4 = new RK4(
@@ -96,7 +114,7 @@ public class Newton {
 
     public ShotAngles findOptimalTrajectory(ShotAngles initialGuess) {
         double theta = initialGuess.getTheta();
-        double phi   = initialGuess.getPhi();
+        double phi = initialGuess.getPhi();
         double speed = ballInitalSpeedFromShooter;
 
         double deltaTheta = 0;
@@ -133,30 +151,45 @@ public class Newton {
 
             // Converged
             if (Math.abs(ex) < CONVERGE_TOL && Math.abs(ey) < CONVERGE_TOL) {
-                finalBallLinearVelocity = calculateBallLinearVelocity(theta, phi, speed);
+                finalBallLinearVelocity = calculateBallLinearVelocity(
+                    theta,
+                    phi,
+                    speed
+                );
                 break;
             }
 
             // ── Numerical Jacobian via forward finite differences ──
             BallError eThetaPlus = calculateError(theta + EPSILON, phi, speed);
-            BallError ePhiPlus   = calculateError(theta, phi + EPSILON, speed);
+            BallError ePhiPlus = calculateError(theta, phi + EPSILON, speed);
 
             // Guard: if perturbed trajectories are also NaN, Jacobian is unusable
-            if (Double.isNaN(eThetaPlus.getxError()) || Double.isNaN(ePhiPlus.getxError())) {
-                finalBallLinearVelocity = calculateBallLinearVelocity(theta, phi, speed);
+            if (
+                Double.isNaN(eThetaPlus.getxError()) ||
+                Double.isNaN(ePhiPlus.getxError())
+            ) {
+                finalBallLinearVelocity = calculateBallLinearVelocity(
+                    theta,
+                    phi,
+                    speed
+                );
                 break;
             }
 
             double dEx_dTheta = (eThetaPlus.getxError() - ex) / EPSILON;
             double dEy_dTheta = (eThetaPlus.getyError() - ey) / EPSILON;
-            double dEx_dPhi   = (ePhiPlus.getxError()   - ex) / EPSILON;
-            double dEy_dPhi   = (ePhiPlus.getyError()   - ey) / EPSILON;
+            double dEx_dPhi = (ePhiPlus.getxError() - ex) / EPSILON;
+            double dEy_dPhi = (ePhiPlus.getyError() - ey) / EPSILON;
 
             double det = dEx_dTheta * dEy_dPhi - dEx_dPhi * dEy_dTheta;
 
             // Singular or near-singular Jacobian — can't invert
             if (Math.abs(det) < 1e-10) {
-                finalBallLinearVelocity = calculateBallLinearVelocity(theta, phi, speed);
+                finalBallLinearVelocity = calculateBallLinearVelocity(
+                    theta,
+                    phi,
+                    speed
+                );
                 break;
             }
 
@@ -170,11 +203,10 @@ public class Newton {
             deltaTheta = (-ey - deltaPhi * dEy_dPhi) / dEy_dTheta;
 
             theta += deltaTheta;
-            phi   += deltaPhi;
+            phi += deltaPhi;
 
             iterationThetas[iter + 1] = theta;
             iterationPhis[iter + 1] = phi;
-
             // Don't clamp (we just won't shoot if it's over 75)
             // Clamp theta to physically valid range [0, PI/2]
             // theta = Math.max(0.0, Math.min(Math.PI / 2.0, theta));
@@ -188,9 +220,13 @@ public class Newton {
         SmartDashboard.putNumberArray("Iteration Theta", iterationThetas);
         SmartDashboard.putNumberArray("Iteration Phi", iterationPhis);
         SmartDashboard.putNumberArray("X Errors", xErrors);
-        SmartDashboard.putNumberArray("Y Errors", yErrors);        
+        SmartDashboard.putNumberArray("Y Errors", yErrors);
 
-        finalBallLinearVelocity = calculateBallLinearVelocity(theta, phi, speed);
+        finalBallLinearVelocity = calculateBallLinearVelocity(
+            theta,
+            phi,
+            speed
+        );
         return new ShotAngles(theta, phi);
     }
 }

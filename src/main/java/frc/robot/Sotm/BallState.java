@@ -4,6 +4,7 @@ import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.numbers.N3;
 
 public class BallState {
+
     private Vector<N3> position;
     private Vector<N3> velocity;
 
