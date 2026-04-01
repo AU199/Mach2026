@@ -1,14 +1,15 @@
 package frc.robot.subsystems;
 
+import java.util.function.BooleanSupplier;
+
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.DutyCycleOut;
+import com.ctre.phoenix6.controls.CoastOut;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
-import com.ctre.phoenix6.controls.PositionVoltage;
-import com.ctre.phoenix6.controls.CoastOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -25,7 +26,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.FuelSim;
-import java.util.function.BooleanSupplier;
 
 public class Shooter extends SubsystemBase {
 
@@ -177,8 +177,26 @@ public class Shooter extends SubsystemBase {
     }
 
     private double calculateFeedingVelocity() {
-        return 30.0;
-        // TODO: actually calculate ts lol
+        // Fake data go collect this later
+        double[] distances  = {5};
+        double[] velocities = {30};
+
+        int totalDistances = distances.length;
+        double sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+        for (int i = 0; i < totalDistances; i++) {
+            sumX  += distances[i];
+            sumY  += velocities[i];
+            sumXY += distances[i] * velocities[i];
+            sumX2 += distances[i] * distances[i];
+        }
+
+        double slopeOfRegressionLine = (totalDistances * sumXY - sumX * sumY) / (totalDistances * sumX2 - sumX * sumX);
+        double interceptOfRegressionLine = (sumY - slopeOfRegressionLine * sumX) / totalDistances;
+
+        double totalShootingDistance = isBlue? Math.abs(drivebase.getState().Pose.getX() - 40) : Math.abs(drivebase.getState().Pose.getX() - 90);
+        double feedingVelocity = slopeOfRegressionLine * totalShootingDistance + interceptOfRegressionLine;
+
+        return feedingVelocity;
     }
 
     // public Command pivotMotorOn(double speed) {
