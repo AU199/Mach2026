@@ -7,6 +7,8 @@ package frc.robot;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.NamedCommands;
+
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -59,7 +61,9 @@ public class RobotContainer {
     // public final photon photon = new photon(drivetrain);
     // public final Shooter shooter = new Shooter(drivetrain,true,m_field);
     private SendableChooser<String> chooserAuto = new SendableChooser<String>();
-
+    private final SlewRateLimiter driverControllerSlewRateLimiterX = new SlewRateLimiter(4.5);    
+    private final SlewRateLimiter driverControllerSlewRateLimiterY = new SlewRateLimiter(5.5);    
+    
     public RobotContainer() {
         chooserAuto.addOption("nothing", "nothing");
         chooserAuto.addOption("Straight 1m", "straight");
@@ -102,12 +106,12 @@ public class RobotContainer {
                 drivetrain.applyRequest(
                         () -> drive
                                 .withVelocityX(
-                                        -Math.pow(controller1.getRawAxis(1), 3) * MaxSpeed) // Drive
+                                        driverControllerSlewRateLimiterX.calculate(-Math.pow(controller1.getRawAxis(1), 3) * MaxSpeed)) // Drive
                                                                                             // forward
                                                                                             // with negative Y
                                                                                             // (forward)
                                 .withVelocityY(
-                                        -Math.pow(controller1.getRawAxis(0), 3) * MaxSpeed) // Drive
+                                         driverControllerSlewRateLimiterY.calculate(-Math.pow(controller1.getRawAxis(0), 3) * MaxSpeed)) // Drive
                                                                                             // left
                                                                                             // with
                                                                                             // negative
