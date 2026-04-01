@@ -316,6 +316,15 @@ public class CommandSwerveDrivetrain
         );
     }
 
+    public BooleanSupplier isRobotInShootingZone(){
+
+            if (isAllianceRed().getAsBoolean()){
+                return () -> state == POSITIONS.RED_TOP || state == POSITIONS.RED_BOTTOM;
+            } else {
+                return () -> state == POSITIONS.BLUE_TOP || state == POSITIONS.BLUE_BOTTOM;
+            }
+        
+    }
     public double[] getBlineErrors(Pose2d targetPose) {
         double _xError = targetPose.getX() - this.getState().Pose.getX();
         double _yError = targetPose.getY() - this.getState().Pose.getY();

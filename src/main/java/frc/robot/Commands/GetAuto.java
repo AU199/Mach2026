@@ -93,10 +93,10 @@ public class GetAuto {
                 pathBuilder.build(blueTopNeutralTrenchToTopBlueTrench),
                 //drivetrain.BlineToHub(targetPoseHubLeft, targetPoseHubRight, 1.90, 2.40),
                 new ParallelCommandGroup(
-                        hood.setHoodPosition(0.1),
+                        hood.shoot(),
                         shooter.shooterOn(50),
                         new SequentialCommandGroup(
                                 new WaitCommand(5),
-                                feeder.feederOn(1, ShooterStates.Feeding, PivotStates.Deployed))));
+                                feeder.feederOn(1))));
     }
 }

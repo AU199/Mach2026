@@ -131,7 +131,7 @@ public class DroneStrike extends Command {
             System.out.println("Shot was NaN");
 
             // Ends but with no rotation
-            feeder.feederOn(1, ShooterStates.Feeding, PivotStates.Deployed);
+            feeder.feederOn(1);
             drivetrain
                     .applyRequest(() -> drive
                             .withVelocityX(
@@ -147,7 +147,7 @@ public class DroneStrike extends Command {
             System.out.println("Ball Velocity Null");
 
             // Ends but with no rotation
-            feeder.feederOn(1, ShooterStates.Feeding, PivotStates.Deployed);
+            feeder.feederOn(1);
             drivetrain
                     .applyRequest(() -> drive
                             .withVelocityX(
@@ -163,7 +163,7 @@ public class DroneStrike extends Command {
         SmartDashboard.putNumber("Newton Theta", theta);
         SmartDashboard.putNumber("Newton Phi", phi);
 
-        hoodMotor.setHoodPosition(theta);
+        hoodMotor.shoot();
         publisher.set(
                 new Pose3d(
                         robotPose.getX(),

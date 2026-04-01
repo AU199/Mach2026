@@ -84,7 +84,7 @@ public final class Constants {
 
     // ──Shooter Velocity─────────────────────────────────────────────────────────
 
-    public static final double shootingSpeed = 50.0;
+    public static final double shootingSpeed = 45.0; //43
     public static final double feedingSpeed = 90.0;
     public static final double shootingTolerance = 1.0;
 
@@ -117,7 +117,7 @@ public final class Constants {
     public static final double IntakeStowedPos = 0;
 
     // Hood positions
-    public static final double shootingHoodAngle = 0.1;
+    public static final double shootingHoodAngle = 0.088;
     public static final double feedingHoodAngle = 0.08;
 
 

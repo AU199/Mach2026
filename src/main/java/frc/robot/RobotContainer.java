@@ -149,23 +149,34 @@ public class RobotContainer {
                                         .equals(PivotStates.Deployed) ||
                                         intakePivot.getIntakeState().equals(PivotStates.Depot)));
 
-        controller1
-            .L1()
-            .toggleOnTrue(
-                shooter.shootFuel().alongWith(hood.shoot())
-            )
-            .toggleOnFalse(
-                shooter.idle().alongWith(hood.idle())
-            );
+        if(drivetrain.isRobotInShootingZone().getAsBoolean()) {
+                controller1
+                    .L1()
+                    .toggleOnTrue(
+                        shooter.shootFuel().alongWith(hood.shoot()).alongWith(drivetrain.BlineToHub(Constants.blueHubPose, 1.235, 2.4,1.9))
+                    )
+                    .toggleOnFalse(
+                        shooter.idle().alongWith(hood.idle())
+                    );
+        } else{
+                controller1
+                    .L1()
+                    .toggleOnTrue(
+                        shooter.feedFuel().alongWith(hood.feed())
+                    )
+                    .toggleOnFalse(
+                        shooter.idle().alongWith(hood.idle())
+                    );
+        }
 
-        controller1
-            .L2()
-            .toggleOnTrue(
-                shooter.feedFuel().alongWith(hood.feed())
-            )
-            .toggleOnFalse(
-                shooter.idle().alongWith(hood.idle())
-            );
+        // controller1
+        //     .L2()
+        //     .toggleOnTrue(
+        //         shooter.feedFuel().alongWith(hood.feed())
+        //     )
+        //     .toggleOnFalse(
+        //         shooter.idle().alongWith(hood.idle())
+        //     );
 
         controller1
             .R2()
@@ -189,46 +200,6 @@ public class RobotContainer {
         controller1.povDown().whileTrue(levitator.runLevitator(-1));
 
         controller1.circle().toggleOnTrue(drivetrain.BlineToTrench());
-        // controller1.square().toggleOnTrue(intakePivot.depot(0.025, 0.5));
-        //controller1.circle().toggleOnTrue(drivetrain.BlineToHub(Constants.blueHubPose, 2.5, 1.9, 2.4));
-        // controller1.circle().onTrue(new InstantCommand(() ->
-        // shooter.applyConfigs()));
-
-        // controller1.L1().whileTrue(new DroneStrike(drivetrain, Constants.blueHubPose,
-        // hood, shooter, feeder, Constants.ballInitialVelocityFromShooterHub,
-        // Constants.ballInitialSpinFromShooterHub, () -> controller1.getRawAxis(1), ()
-        // -> controller1.getRawAxis(0)));
-
-        // controller1.L2().whileTrue(new InstantCommand(() ->
-        // FuelSim.getInstance().clearFuel()));
-
-        // Feeding balls into alliance zone
-
-        // Aim robot at blue hub
-        // controller1.triangle().whileTrue(drivetrain.pidToRotation(Math.atan2(Constants.blueHubPose.getY()
-        // - drivetrain.getState().Pose.getY(), Constants.blueHubPose.getX() -
-        // drivetrain.getState().Pose.getX())-Robot.phiPassing, () ->
-        // controller1.getRawAxis(0),() -> controller1.getRawAxis(1)));
-
-        // controller1.circle().whileTrue(drivetrain.pidToRotation(Robot.phiPassing, ()
-        // -> controller1.getRawAxis(0),() -> controller1.getRawAxis(1)));
-        // controller1.square()
-        // .whileTrue(drivetrain.pidToPoint(
-        // new Pose2d(1.728, 6.826,
-        // new Rotation2d(Constants.blueHubPose.getX() - 1.728,
-        // Constants.blueHubPose.getY() - 6.826).plus(new Rotation2d(Math.PI))),
-        // () -> DriverStation.getAlliance().get().equals(Alliance.Red)));
-        // controller1.povUp().onTrue(hood.setHoodPosition(hood.getHoodAngleDash().getAsDouble()));
-        // controller1.povDown().onTrue(hood.setHoodPosition(0.11));
-        // controller1.povRight().onTrue(hood.setHoodPosition(0.09));
-        // controller1.povLeft().onTrue(hood.setHoodPosition(0.07));
-
-        // drivetrain.pidToPoint(
-        // new Pose2d(1.728, 6.826,
-        // new Rotation2d(Constants.blueHubPose.getX() - 1.728,
-        // Constants.blueHubPose.getY() - 6.826).plus(new Rotation2d(Math.PI))),
-        // () ->
-        // DriverStation.getAlliance().get().equals(Alliance.Red)).withTimeout(3));
 
         drivetrain.registerTelemetry(logger::telemeterize);
     }
