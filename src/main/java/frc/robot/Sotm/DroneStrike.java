@@ -23,7 +23,10 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Feeder;
 import frc.robot.subsystems.Hood;
+import frc.robot.subsystems.IntakePivot.PivotStates;
 import frc.robot.subsystems.Shooter;
+import frc.robot.subsystems.Shooter.ShooterStates;
+
 import java.util.function.Supplier;
 
 public class DroneStrike extends Command {
@@ -37,16 +40,13 @@ public class DroneStrike extends Command {
     private Supplier<Double> controllerXAxis;
     private Supplier<Double> controllerYAxis;
 
-    private double MaxSpeed =
-        1 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top
+    private double MaxSpeed = 1 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top
     // speed
-    private double MaxAngularRate =
-        1 * RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per
+    private double MaxAngularRate = 1 * RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per
     // second max angular
     // velocity
 
-    private SwerveRequest.FieldCentricFacingAngle drive =
-        new SwerveRequest.FieldCentricFacingAngle()
+    private SwerveRequest.FieldCentricFacingAngle drive = new SwerveRequest.FieldCentricFacingAngle()
             .withDeadband(MaxSpeed * 0.1)
             .withRotationalDeadband(MaxAngularRate * 0.1) // Add a 10% deadband
             .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
@@ -60,20 +60,19 @@ public class DroneStrike extends Command {
     private double shootingTick = 0;
 
     StructPublisher<Pose3d> publisher = NetworkTableInstance.getDefault()
-        .getStructTopic("RobotPose", Pose3d.struct)
-        .publish();
+            .getStructTopic("RobotPose", Pose3d.struct)
+            .publish();
 
     public DroneStrike(
-        CommandSwerveDrivetrain drivetrain,
-        Pose2d targetPose,
-        Hood hoodMotor,
-        Shooter shooter,
-        Feeder feeder,
-        double ballInitialSpeedFromShooter,
-        double ballInitialSpinFromShooter,
-        Supplier<Double> controllerXAxis,
-        Supplier<Double> controllerYAxis
-    ) {
+            CommandSwerveDrivetrain drivetrain,
+            Pose2d targetPose,
+            Hood hoodMotor,
+            Shooter shooter,
+            Feeder feeder,
+            double ballInitialSpeedFromShooter,
+            double ballInitialSpinFromShooter,
+            Supplier<Double> controllerXAxis,
+            Supplier<Double> controllerYAxis) {
         this.drivetrain = drivetrain;
         this.targetPose = targetPose;
         this.hoodMotor = hoodMotor;
@@ -88,7 +87,8 @@ public class DroneStrike extends Command {
     }
 
     @Override
-    public void initialize() {}
+    public void initialize() {
+    }
 
     // spinDirection: 1.0 = backspin, -1.0 = topspin
     @Override
@@ -97,18 +97,15 @@ public class DroneStrike extends Command {
 
         Pose2d robotPose = drivetrain.getState().Pose;
         ChassisSpeeds robotRobotRelativeVelocity = drivetrain.getState().Speeds;
-        ChassisSpeeds robotFieldRelativeVelocity =
-            ChassisSpeeds.fromRobotRelativeSpeeds(
+        ChassisSpeeds robotFieldRelativeVelocity = ChassisSpeeds.fromRobotRelativeSpeeds(
                 robotRobotRelativeVelocity,
-                robotPose.getRotation()
-            );
+                robotPose.getRotation());
 
         IdealTrajectory idealTrajectory = new IdealTrajectory(
-            robotPose,
-            targetPose,
-            robotFieldRelativeVelocity,
-            ballInitialSpeedFromShooter
-        );
+                robotPose,
+                targetPose,
+                robotFieldRelativeVelocity,
+                ballInitialSpeedFromShooter);
         ShotAngles currentAngles = idealTrajectory.getIdealShotAngles();
 
         theta = currentAngles.getTheta();
@@ -118,38 +115,30 @@ public class DroneStrike extends Command {
         SmartDashboard.putNumber("Ideal Phi", phi);
 
         Newton newton = new Newton(
-            robotPose,
-            targetPose,
-            robotFieldRelativeVelocity,
-            ballInitialSpeedFromShooter,
-            ballInitialSpinFromShooter
-        );
+                robotPose,
+                targetPose,
+                robotFieldRelativeVelocity,
+                ballInitialSpeedFromShooter,
+                ballInitialSpinFromShooter);
 
         ShotAngles anglesFromNewton = newton.findOptimalTrajectory(
-            currentAngles
-        );
-        if (
-            !(Double.isNaN(anglesFromNewton.getTheta()) ||
-                Double.isNaN(anglesFromNewton.getPhi()))
-        ) {
+                currentAngles);
+        if (!(Double.isNaN(anglesFromNewton.getTheta()) ||
+                Double.isNaN(anglesFromNewton.getPhi()))) {
             System.out.println("Newton returned");
             currentAngles = anglesFromNewton;
         } else {
             System.out.println("Shot was NaN");
 
             // Ends but with no rotation
-            feeder.feederOn(0);
+            feeder.feederOn(1, ShooterStates.Feeding, PivotStates.Deployed);
             drivetrain
-                .applyRequest(() ->
-                    drive
-                        .withVelocityX(
-                            -Math.pow(controllerXAxis.get(), 3) * MaxSpeed
-                        )
-                        .withVelocityY(
-                            -Math.pow(controllerYAxis.get(), 3) * MaxSpeed
-                        )
-                )
-                .execute();
+                    .applyRequest(() -> drive
+                            .withVelocityX(
+                                    -Math.pow(controllerXAxis.get(), 3) * MaxSpeed)
+                            .withVelocityY(
+                                    -Math.pow(controllerYAxis.get(), 3) * MaxSpeed))
+                    .execute();
             return;
         }
 
@@ -158,18 +147,14 @@ public class DroneStrike extends Command {
             System.out.println("Ball Velocity Null");
 
             // Ends but with no rotation
-            feeder.feederOn(0);
+            feeder.feederOn(1, ShooterStates.Feeding, PivotStates.Deployed);
             drivetrain
-                .applyRequest(() ->
-                    drive
-                        .withVelocityX(
-                            -Math.pow(controllerXAxis.get(), 3) * MaxSpeed
-                        )
-                        .withVelocityY(
-                            -Math.pow(controllerYAxis.get(), 3) * MaxSpeed
-                        )
-                )
-                .execute();
+                    .applyRequest(() -> drive
+                            .withVelocityX(
+                                    -Math.pow(controllerXAxis.get(), 3) * MaxSpeed)
+                            .withVelocityY(
+                                    -Math.pow(controllerYAxis.get(), 3) * MaxSpeed))
+                    .execute();
             return;
         }
 
@@ -180,13 +165,11 @@ public class DroneStrike extends Command {
 
         hoodMotor.setHoodPosition(theta);
         publisher.set(
-            new Pose3d(
-                robotPose.getX(),
-                robotPose.getY(),
-                0,
-                new Rotation3d(0, 0, phi)
-            )
-        );
+                new Pose3d(
+                        robotPose.getX(),
+                        robotPose.getY(),
+                        0,
+                        new Rotation3d(0, 0, phi)));
 
         SmartDashboard.putNumber("ControllerXAxis", controllerXAxis.get());
         SmartDashboard.putNumber("ControllerYAxis", controllerYAxis.get());
@@ -194,38 +177,33 @@ public class DroneStrike extends Command {
         shooter.shooterOn(MaxSpeed).execute();
 
         drivetrain
-            .applyRequest(() ->
-                drive
-                    .withVelocityX(
-                        -Math.pow(controllerXAxis.get(), 3) * MaxSpeed
-                    ) // Drive
-                    // forward
-                    // with negative Y
-                    // (forward)
-                    .withVelocityY(
-                        -Math.pow(controllerYAxis.get(), 3) * MaxSpeed
-                    ) // Drive left with negative X (left)
-                    .withTargetDirection(new Rotation2d(phi)) // Drive counterclockwise with negative X (left)
-                    .withHeadingPID(20, 0, 0)
-                    .withMaxAbsRotationalRate(MaxAngularRate)
-            )
-            .execute();
+                .applyRequest(() -> drive
+                        .withVelocityX(
+                                -Math.pow(controllerXAxis.get(), 3) * MaxSpeed) // Drive
+                                                                                // forward
+                                                                                // with negative Y
+                                                                                // (forward)
+                        .withVelocityY(
+                                -Math.pow(controllerYAxis.get(), 3) * MaxSpeed) // Drive left with negative X (left)
+                        .withTargetDirection(new Rotation2d(phi)) // Drive counterclockwise with negative X (left)
+                        .withHeadingPID(20, 0, 0)
+                        .withMaxAbsRotationalRate(MaxAngularRate))
+                .execute();
 
         // Spawn fuel ball in FuelSim with velocity from shot angles
 
         if (shootingTick % 20 == 0) {
             FuelSim.getInstance()
-                .spawnFuel(
-                    new Translation3d(
-                        robotPose.getX(),
-                        robotPose.getY(),
-                        Constants.shooterHeight
-                    ),
-                    new Translation3d(ballLinearVelocity)
-                );
+                    .spawnFuel(
+                            new Translation3d(
+                                    robotPose.getX(),
+                                    robotPose.getY(),
+                                    Constants.shooterHeight),
+                            new Translation3d(ballLinearVelocity));
         }
     }
 
     @Override
-    public void end(boolean interupted) {}
+    public void end(boolean interupted) {
+    }
 }

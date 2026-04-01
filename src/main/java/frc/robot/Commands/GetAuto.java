@@ -19,6 +19,8 @@ import frc.robot.subsystems.Hood;
 import frc.robot.subsystems.IntakePivot;
 import frc.robot.subsystems.IntakeRollers;
 import frc.robot.subsystems.Shooter;
+import frc.robot.subsystems.IntakePivot.PivotStates;
+import frc.robot.subsystems.Shooter.ShooterStates;
 
 public class GetAuto {
 
@@ -81,22 +83,20 @@ public class GetAuto {
         blueTopNeutralTrenchToTopBlueTrench.mirror();
 
         return Commands.sequence(
-            pathBuilder.build(blueTopTrenchToTopOfBalls),
-            intakePivot.deploy(0.1, 0.5),
-            new InstantCommand(() -> intakeRoller.setRollerSpeed(1)),
-            pathBuilder.build(blueTopBallsToBottomBalls),
-            new InstantCommand(() -> intakeRoller.setRollerSpeed(0)),
-            pathBuilder.build(blueBottomBallsToTopNeutralTrench),
-            pathBuilder.build(blueTopNeutralTrenchToTopBlueTrench),
-            //drivetrain.BlineToHub(targetPoseHubLeft, targetPoseHubRight, 1.90, 2.40),
-            new ParallelCommandGroup(
-                hood.setHoodPosition(0.1),
-                shooter.shooterOn(50),
-                new SequentialCommandGroup(
-                    new WaitCommand(5),
-                    feeder.feederOn(1)
-                )
-            )
-        );
+
+                pathBuilder.build(blueTopTrenchToTopOfBalls),
+                intakePivot.deploy(0.1, 0.5),
+           //     new InstantCommand(() -> intake.setRollerSpeed(1)),
+                pathBuilder.build(blueTopBallsToBottomBalls),
+               // new InstantCommand(() -> intake.setRollerSpeed(0)),
+                pathBuilder.build(blueBottomBallsToTopNeutralTrench),
+                pathBuilder.build(blueTopNeutralTrenchToTopBlueTrench),
+                //drivetrain.BlineToHub(targetPoseHubLeft, targetPoseHubRight, 1.90, 2.40),
+                new ParallelCommandGroup(
+                        hood.setHoodPosition(0.1),
+                        shooter.shooterOn(50),
+                        new SequentialCommandGroup(
+                                new WaitCommand(5),
+                                feeder.feederOn(1, ShooterStates.Feeding, PivotStates.Deployed))));
     }
 }
