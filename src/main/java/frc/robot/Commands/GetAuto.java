@@ -85,7 +85,7 @@ public class GetAuto {
         return Commands.sequence(
 
                 pathBuilder.build(blueTopTrenchToTopOfBalls),
-                intakePivot.deploy(0.1, 0.5),
+                intakePivot.deploy(),
            //     new InstantCommand(() -> intake.setRollerSpeed(1)),
                 pathBuilder.build(blueTopBallsToBottomBalls),
                // new InstantCommand(() -> intake.setRollerSpeed(0)),

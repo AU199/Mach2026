@@ -115,7 +115,14 @@ public final class Constants {
     public static final double IntakeDepotPos = 22;
     public static final double IntakeRetractPos = 10;
     public static final double IntakeStowedPos = 0;
+    
 
+    public static final double intakeDeployKP = 0.1;
+    public static final double intakeDeployMaxSpeed = 0.5;
+    public static final double intakeRetractKP = 0.025;
+    public static final double intakeRetractMaxSpeed = 0.3;
+    public static final double intakeDepotKP = 0.1;
+    public static final double intakeDepotMaxSpeed = 0.5;
     // Hood positions
     public static final double shootingHoodAngle = 0.088;
     public static final double feedingHoodAngle = 0.08;

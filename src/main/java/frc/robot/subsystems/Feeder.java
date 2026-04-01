@@ -22,22 +22,24 @@ public class Feeder extends SubsystemBase {
 
     public Feeder() {}
 
-    public Command feederOn(
-        double speed
-    ) {
+    public Command feederOn(double speed) {
+        return startEnd(
+            () -> {
+                // feederMotor.set(-0.5);
+                feederState = FeederStates.Feeding;
+                kickerMotor.set(-speed);
+            },
+            () -> {
+                // feederMotor.set(0);
+                
+            }
+        );
+    }
 
-    return startEnd(
-                () -> {
-                    // feederMotor.set(-0.5);
-                    feederState = FeederStates.Feeding;
-                    kickerMotor.set(-speed);
-                },
-                () -> {
-                    // feederMotor.set(0);
-                    kickerMotor.set(0);
-                }
-            );
-        } 
+    public void feederIdle(){
+        feederState = feederState.Idle;
+        kickerMotor.set(0);
+    }
 
     @Override
     public void periodic() {

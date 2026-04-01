@@ -71,7 +71,7 @@ public class IntakePivot extends SubsystemBase {
 
     // }
 
-    public Command deploy(double KP, double maxSpeed) {
+    public Command deploy() {
         return runEnd(
             () -> {
                 SmartDashboard.putNumber(
@@ -81,7 +81,7 @@ public class IntakePivot extends SubsystemBase {
                 double error =
                     Constants.IntakeDeployPos -
                     pivotMotor.getPosition().getValueAsDouble();
-                double output = Math.min(error * KP, maxSpeed);
+                double output = Math.min(error * Constants.intakeDeployKP, Constants.intakeDeployMaxSpeed);
                 pivotMotor.set(output);
                 intakePivotState = PivotStates.Deploying;
             },
@@ -101,7 +101,7 @@ public class IntakePivot extends SubsystemBase {
             .andThen(runOnce(() -> intakePivotState = PivotStates.Deployed));
     }
 
-    public Command retract(double KP, double maxSpeed) {
+    public Command retract() {
         return runEnd(
             () -> {
                 SmartDashboard.putNumber(
@@ -111,7 +111,7 @@ public class IntakePivot extends SubsystemBase {
                 double error =
                     Constants.IntakeRetractPos -
                     pivotMotor.getPosition().getValueAsDouble();
-                double output = Math.min(error * KP, maxSpeed);
+                double output = Math.min(error * Constants.intakeRetractKP, Constants.intakeRetractMaxSpeed);
                 pivotMotor.set(output);
                 intakePivotState = PivotStates.Retracting;
             },
@@ -131,7 +131,7 @@ public class IntakePivot extends SubsystemBase {
             .andThen(runOnce(() -> intakePivotState = PivotStates.Retracted));
     }
 
-    public Command depot(double KP, double maxSpeed) {
+    public Command depot() {
         return runEnd(
             () -> {
                 SmartDashboard.putNumber(
@@ -141,7 +141,7 @@ public class IntakePivot extends SubsystemBase {
                 double error =
                     Constants.IntakeDepotPos -
                     pivotMotor.getPosition().getValueAsDouble();
-                double output = Math.min(error * KP, maxSpeed);
+                double output = Math.min(error * Constants.intakeDepotKP, Constants.intakeDepotMaxSpeed);
                 pivotMotor.set(output);
                 intakePivotState = PivotStates.Depoting;
             },
@@ -163,8 +163,8 @@ public class IntakePivot extends SubsystemBase {
 
     public Command agitate() {
         return Commands.repeatingSequence(
-            Commands.deadline(Commands.waitSeconds(2), deploy(0.1, 0.5)),
-            Commands.deadline(Commands.waitSeconds(2), retract(0.025, 0.3))
+            Commands.deadline(Commands.waitSeconds(0.5), deploy()),
+            Commands.deadline(Commands.waitSeconds(0.8), retract())
         );
     }
 

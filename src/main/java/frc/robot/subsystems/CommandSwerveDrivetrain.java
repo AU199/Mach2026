@@ -68,8 +68,8 @@ public class CommandSwerveDrivetrain
     private final PIDController pidControllerT = new PIDController(2.3, 0, 0);
     private final PIDController pidControllerR = new PIDController(3, 0, 0);
     private final PIDController pidControllerCT = new PIDController(2, 0, 0);
-    private POSITIONS state = POSITIONS.BLUE_TOP;
-
+    private POSITIONS positionState = POSITIONS.BLUE_TOP;
+    public States driveBaseState = States.Idle;
     private double xError, yError;
 
     StructPublisher<Pose2d> targetPosedPublisher =
@@ -85,11 +85,12 @@ public class CommandSwerveDrivetrain
             .getStructTopic("Pid Target Pose (BLine Trench)", Pose2d.struct)
             .publish();
 
-    private enum States {
+    public enum States {
         Idle,
         Driven,
         Autonomous,
         MovingToShoot,
+        InShootingPosition,
         Feeding,
         Trench,
         X,
@@ -144,7 +145,6 @@ public class CommandSwerveDrivetrain
 
     // PID to the Point (START)
     public Command BlineToHub(
-        Pose2d hubPose,
         double distanceFromHub,
         double xTol,
         double yTol
@@ -162,8 +162,8 @@ public class CommandSwerveDrivetrain
         return Commands.defer(
             () -> {
                 Pose2d localHub = isAllianceRed().getAsBoolean()
-                    ? FlippingUtil.flipFieldPose(hubPose)
-                    : hubPose;
+                    ? FlippingUtil.flipFieldPose(Constants.blueHubPose)
+                    : Constants.blueHubPose;
 
                 // Vector from hub to robot
                 double dx = this.getState().Pose.getX() - localHub.getX();
@@ -200,9 +200,12 @@ public class CommandSwerveDrivetrain
                         new Path.Waypoint(this.getState().Pose),
                         new Path.Waypoint(localPose)
                     );
+                    driveBaseState = States.MovingToShoot;
                     return pathBuilder.build(path);
                 } else {
+                    driveBaseState = States.InShootingPosition;
                     return Commands.none();
+
                 }
             },
             Set.of(this)
@@ -259,7 +262,7 @@ public class CommandSwerveDrivetrain
     public Command BlineToTrench() {
         return Commands.defer(
             () -> {
-                switch (state) {
+                switch (positionState) {
                     case BLUE_TOP:
                         return BlineToAllianceTrench(
                             Constants.targetPoseTrenchLeft,
@@ -319,9 +322,9 @@ public class CommandSwerveDrivetrain
     public BooleanSupplier isRobotInShootingZone(){
 
             if (isAllianceRed().getAsBoolean()){
-                return () -> state == POSITIONS.RED_TOP || state == POSITIONS.RED_BOTTOM;
+                return () -> positionState == POSITIONS.RED_TOP || positionState == POSITIONS.RED_BOTTOM;
             } else {
-                return () -> state == POSITIONS.BLUE_TOP || state == POSITIONS.BLUE_BOTTOM;
+                return () -> positionState == POSITIONS.BLUE_TOP || positionState == POSITIONS.BLUE_BOTTOM;
             }
         
     }
@@ -398,37 +401,37 @@ public class CommandSwerveDrivetrain
         double fieldCenterY = Constants.FIELD_WIDTH / 2;
 
         if (robotX < fieldQuarterX && robotY > fieldCenterY) {
-            state = POSITIONS.BLUE_TOP;
+            positionState = POSITIONS.BLUE_TOP;
         } else if (robotX < fieldQuarterX && robotY <= fieldCenterY) {
-            state = POSITIONS.BLUE_BOTTOM;
+            positionState = POSITIONS.BLUE_BOTTOM;
         } else if (
             robotX >= fieldQuarterX &&
             robotX < fieldHalfX &&
             robotY > fieldCenterY
         ) {
-            state = POSITIONS.NEUTRAL_BLUE_TOP;
+            positionState = POSITIONS.NEUTRAL_BLUE_TOP;
         } else if (
             robotX >= fieldQuarterX &&
             robotX < fieldHalfX &&
             robotY <= fieldCenterY
         ) {
-            state = POSITIONS.NEUTRAL_BLUE_BOTTOM;
+            positionState = POSITIONS.NEUTRAL_BLUE_BOTTOM;
         } else if (
             robotX >= fieldHalfX &&
             robotX < fieldThreeQuarterX &&
             robotY > fieldCenterY
         ) {
-            state = POSITIONS.NEUTRAL_RED_BOTTOM;
+            positionState = POSITIONS.NEUTRAL_RED_BOTTOM;
         } else if (
             robotX >= fieldHalfX &&
             robotX < fieldThreeQuarterX &&
             robotY <= fieldCenterY
         ) {
-            state = POSITIONS.NEUTRAL_RED_TOP;
+            positionState = POSITIONS.NEUTRAL_RED_TOP;
         } else if (robotX >= fieldThreeQuarterX && robotY > fieldCenterY) {
-            state = POSITIONS.RED_BOTTOM;
+            positionState = POSITIONS.RED_BOTTOM;
         } else {
-            state = POSITIONS.RED_TOP;
+            positionState = POSITIONS.RED_TOP;
         }
         Path.setDefaultGlobalConstraints(new Path.DefaultGlobalConstraints(
                 5.0, // max velocity m/s
@@ -439,7 +442,7 @@ public class CommandSwerveDrivetrain
                 2.0, // end rotation tolerance degrees
                 0.5 // intermediate handoff radius meters
         ));
-        SmartDashboard.putString("Robot State", state.toString());
+        SmartDashboard.putString("Robot State", positionState.toString());
         SmartDashboard.putNumber("Robot x", robotX);
         SmartDashboard.putNumber("Robot y", robotY);
         SmartDashboard.putNumber("xError", targetPoseBline.getX() - robotX);
