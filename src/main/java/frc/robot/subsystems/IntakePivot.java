@@ -1,11 +1,15 @@
 package frc.robot.subsystems;
 
+// import edu.wpi.first.wpilibj2.command.Commands.repeatingSequence;
+import static edu.wpi.first.wpilibj2.command.Commands.*;
+
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -68,128 +72,100 @@ public class IntakePivot extends SubsystemBase {
     // }
 
     public Command deploy(double KP, double maxSpeed) {
-        if (!intakePivotState.equals(PivotStates.Deployed)) {
-            return runEnd(
-                () -> {
-                    SmartDashboard.putNumber(
-                        "Intake target position",
-                        Constants.IntakeDeployPos
-                    );
-                    double error =
-                        Constants.IntakeDeployPos -
-                        pivotMotor.getPosition().getValueAsDouble();
-                    double output = Math.min(error * KP, maxSpeed);
-                    pivotMotor.set(output);
-                    intakePivotState = PivotStates.Deploying;
-                },
-                () -> {
-                    pivotMotor.set(0);
-                }
-            )
-                .until(() -> {
-                    boolean result =
-                        Math.abs(
-                            pivotMotor.getPosition().getValueAsDouble() -
-                            Constants.IntakeDeployPos
-                        ) <
-                        0.08;
-                    return result;
-                })
-                .andThen(
-                    new InstantCommand(() ->
-                        intakePivotState = PivotStates.Deployed
-                    )
+        return runEnd(
+            () -> {
+                SmartDashboard.putNumber(
+                    "Intake target position",
+                    Constants.IntakeDeployPos
                 );
-        } else {
-            return new InstantCommand(() ->
-                System.out.println("INTAKE ALREADY DEPLOYED")
-            );
-        }
+                double error =
+                    Constants.IntakeDeployPos -
+                    pivotMotor.getPosition().getValueAsDouble();
+                double output = Math.min(error * KP, maxSpeed);
+                pivotMotor.set(output);
+                intakePivotState = PivotStates.Deploying;
+            },
+            () -> {
+                pivotMotor.set(0);
+            }
+        )
+            .until(() -> {
+                boolean result =
+                    Math.abs(
+                        pivotMotor.getPosition().getValueAsDouble() -
+                        Constants.IntakeDeployPos
+                    ) <
+                    0.08;
+                return result;
+            })
+            .andThen(runOnce(() -> intakePivotState = PivotStates.Deployed));
     }
 
     public Command retract(double KP, double maxSpeed) {
-        if (
-            !intakePivotState.equals(PivotStates.Retracted) ||
-            !intakePivotState.equals(PivotStates.Stowed)
-        ) {
-            return runEnd(
-                () -> {
-                    SmartDashboard.putNumber(
-                        "Intake target position",
+        return runEnd(
+            () -> {
+                SmartDashboard.putNumber(
+                    "Intake target position",
+                    Constants.IntakeRetractPos
+                );
+                double error =
+                    Constants.IntakeRetractPos -
+                    pivotMotor.getPosition().getValueAsDouble();
+                double output = Math.min(error * KP, maxSpeed);
+                pivotMotor.set(output);
+                intakePivotState = PivotStates.Retracting;
+            },
+            () -> {
+                pivotMotor.set(0);
+            }
+        )
+            .until(() -> {
+                boolean result =
+                    Math.abs(
+                        pivotMotor.getPosition().getValueAsDouble() -
                         Constants.IntakeRetractPos
-                    );
-                    double error =
-                        Constants.IntakeRetractPos -
-                        pivotMotor.getPosition().getValueAsDouble();
-                    double output = Math.min(error * KP, maxSpeed);
-                    pivotMotor.set(output);
-                    intakePivotState = PivotStates.Retracting;
-                },
-                () -> {
-                    pivotMotor.set(0);
-                }
-            )
-                .until(() -> {
-                    boolean result =
-                        Math.abs(
-                            pivotMotor.getPosition().getValueAsDouble() -
-                            Constants.IntakeRetractPos
-                        ) <
-                        0.08;
-                    return result;
-                })
-                .andThen(
-                    new InstantCommand(() ->
-                        intakePivotState = PivotStates.Retracted
-                    )
-                );
-        } else {
-            return new InstantCommand(() ->
-                System.out.println("INTAKE WAS NEVER DEPLOYED")
-            );
-        }
+                    ) <
+                    0.08;
+                return result;
+            })
+            .andThen(runOnce(() -> intakePivotState = PivotStates.Retracted));
     }
+
     public Command depot(double KP, double maxSpeed) {
-        if (
-            !intakePivotState.equals(PivotStates.Retracted) ||
-            !intakePivotState.equals(PivotStates.Stowed)
-        ) {
-            return runEnd(
-                () -> {
-                    SmartDashboard.putNumber(
-                        "Intake target position",
-                        Constants.IntakeDepotPos
-                    );
-                    double error =
-                        Constants.IntakeDepotPos -
-                        pivotMotor.getPosition().getValueAsDouble();
-                    double output = Math.min(error * KP, maxSpeed);
-                    pivotMotor.set(output);
-                    intakePivotState = PivotStates.Depoting;
-                },
-                () -> {
-                    pivotMotor.set(0);
-                }
-            )
-                .until(() -> {
-                    boolean result =
-                        Math.abs(
-                            pivotMotor.getPosition().getValueAsDouble() -
-                            Constants.IntakeDepotPos
-                        ) <
-                        0.08;
-                    return result;
-                })
-                .andThen(
-                    new InstantCommand(() ->
-                        intakePivotState = PivotStates.Depot
-                    )
+        return runEnd(
+            () -> {
+                SmartDashboard.putNumber(
+                    "Intake target position",
+                    Constants.IntakeDepotPos
                 );
-        } else {
-            return new InstantCommand(() ->
-                System.out.println("INTAKE WAS NEVER DEPLOYED")
-            );
-        }
+                double error =
+                    Constants.IntakeDepotPos -
+                    pivotMotor.getPosition().getValueAsDouble();
+                double output = Math.min(error * KP, maxSpeed);
+                pivotMotor.set(output);
+                intakePivotState = PivotStates.Depoting;
+            },
+            () -> {
+                pivotMotor.set(0);
+            }
+        )
+            .until(() -> {
+                boolean result =
+                    Math.abs(
+                        pivotMotor.getPosition().getValueAsDouble() -
+                        Constants.IntakeDepotPos
+                    ) <
+                    0.08;
+                return result;
+            })
+            .andThen(runOnce(() -> intakePivotState = PivotStates.Depot));
+    }
+
+    public Command agitate() {
+        return Commands.repeatingSequence(
+            Commands.deadline(Commands.waitSeconds(2), deploy(0.1, 0.5)),
+            Commands.deadline(Commands.waitSeconds(2), retract(0.025, 0.3))
+        );
     }
 
     public Command runPivotSetSpeed(double speed) {
@@ -204,7 +180,7 @@ public class IntakePivot extends SubsystemBase {
     }
 
     public Command zeroPivotEncoder() {
-        return new InstantCommand(() -> {
+        return runOnce(() -> {
             pivotMotor.setPosition(0);
         });
     }

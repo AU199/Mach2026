@@ -295,13 +295,14 @@ public class Shooter extends SubsystemBase {
         });
     }
 
-    public void applyConfigs() {
-        slot0Configs.kP = Constants.shooterMotorKP;
-        slot0Configs.kI = Constants.shooterMotorKI;
-        slot0Configs.kD = Constants.shooterMotorKD;
-        frontShooter1.getConfigurator().apply(talonFXConfigs);
-        frontShooter2.getConfigurator().apply(talonFXConfigs);
-    }
+    // public void applyConfigs() {
+    //     slot0Configs.kP = Constants.shooterMotorKP;
+    //     slot0Configs.kI = Constants.shooterMotorKI;
+    //     slot0Configs.kD = Constants.shooterMotorKD;
+    //     frontShooter1.getConfigurator().apply(talonFXConfigs);
+    //     frontShooter2.getConfigurator().apply(talonFXConfigs);
+    //     frontShooter3.getConfigurator().apply(talonFXConfigs);
+    // }
 
     public void setShooterState(ShooterStates newState) {
         shooterState = newState;

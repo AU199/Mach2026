@@ -5,6 +5,7 @@ import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.StaticBrake;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -26,12 +27,14 @@ public class Hood extends SubsystemBase {
     private Slot0Configs slot0Configs = talonFXConfigs.Slot0;
     private double hoodAngleDash = 0.11;
 
-    private enum HoodStates {
+    public enum HoodStates {
         Idle,
         Moving,
         Shooting,
         Feeding,
     }
+
+    public HoodStates hoodState = HoodStates.Idle;
 
     public Hood() {
         // set slot 0 gains
@@ -87,27 +90,59 @@ public class Hood extends SubsystemBase {
     //     return hoodAngle;
     // }
 
-    public Command setHoodPosition(double shotAngle) {
-        return runEnd(
+    public Command shoot() {
+        return runOnce(
             () -> {
+                MotionMagicVoltage control = new MotionMagicVoltage(Constants.shootingHoodAngle); // Target position in mechanism rotations
+                hoodMotor.setControl(control); // Target position in mechanism rotations, feedforward in volts
+
+
                 // double targetPositionMechanism = convertShotAngleToHoodPosition(shotAngle);
                 // double currentPosition = hoodMotor.getPosition().getValueAsDouble() / sensorToMechanismRatio; // Mechanism rotations
                 // double error = targetPositionMechanism - currentPosition; // Mechanism rotations
                 // SmartDashboard.putNumber("Error", error);
                 // SmartDashboard.putNumber("Current Position", currentPosition);
                 // SmartDashboard.putNumber("Target Position", targetPositionMechanism);
-                MotionMagicVoltage control = new MotionMagicVoltage(shotAngle); // Target position in mechanism rotations
+
 
                 // SmartDashboard.putString("Feedforward", controlInfo.get("FeedForward").toString());
                 // SmartDashboard.putNumber("Cos", currentPosition * (2 * Math.PI));
 
-                hoodMotor.setControl(control); // Target position in mechanism rotations, feedforward in volts
-            },
+            }
+        ).until(hoodReachedPosition(Constants.shootingHoodAngle))
+        .finallyDo(() -> hoodState = HoodStates.Shooting);
+    }
+
+    public Command feed() {
+        return runOnce(
             () -> {
-                hoodMotor.setVoltage(Constants.hoodPivotKG);
+                MotionMagicVoltage control = new MotionMagicVoltage(Constants.feedingHoodAngle); // Target position in mechanism rotations
+                hoodMotor.setControl(control); // Target position in mechanism rotations, feedforward in volts
+
+
+                // double targetPositionMechanism = convertShotAngleToHoodPosition(shotAngle);
+                // double currentPosition = hoodMotor.getPosition().getValueAsDouble() / sensorToMechanismRatio; // Mechanism rotations
+                // double error = targetPositionMechanism - currentPosition; // Mechanism rotations
+                // SmartDashboard.putNumber("Error", error);
+                // SmartDashboard.putNumber("Current Position", currentPosition);
+                // SmartDashboard.putNumber("Target Position", targetPositionMechanism);
+
+
+                // SmartDashboard.putString("Feedforward", controlInfo.get("FeedForward").toString());
+                // SmartDashboard.putNumber("Cos", currentPosition * (2 * Math.PI));
+
+            }
+        ).until(hoodReachedPosition(Constants.feedingHoodAngle))
+        .finallyDo(() -> hoodState = HoodStates.Feeding);
+    }
+
+    public Command idle() {
+        return runOnce(
+            () -> {
+                hoodMotor.setControl(new StaticBrake());
+                hoodState = HoodStates.Idle;
             }
         );
-        // ).until(hoodReachedPosition(targetPositionMotor));
     }
 
     @Override

@@ -116,6 +116,10 @@ public final class Constants {
     public static final double IntakeRetractPos = 10;
     public static final double IntakeStowedPos = 0;
 
+    // Hood positions
+    public static final double shootingHoodAngle = 0.1;
+    public static final double feedingHoodAngle = 0.08;
+
 
     // ── Vision ───────────────────────────────────────────────────────────────
     /**

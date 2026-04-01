@@ -79,24 +79,24 @@ public class RobotContainer {
         // controller1.b().whileTrue(feeder.feederOn(1));
         // controller1.leftBumper().whileTrue(shooter.pivotMotorOn(.25));
         // controller1.rightBumper().whileTrue(shooter.pivotMotorOn(-.25));
-        controller1
-            .share()
-            .onTrue(
-                Commands.sequence(
-                    intakePivot.deploy(0.1, 0.5).withTimeout(2),
-                    intakeRollers
-                        .runRoller(.5, intakePivot.getIntakeState())
-                        .withTimeout(2),
-                    // intake.setIntakePosition(Constants.IntakeRetractPos, 0.025,
-                    // 0.3).withTimeout(5),
-                    hood.setHoodPosition(0.2).withTimeout(1),
-                    shooter.shooterOn(1).withTimeout(2),
-                    hood.setHoodPosition(0).withTimeout(1)
-                    // feeder.feederOn(1).withTimeout(2),
-                    // levitator.lift().withTimeout(2),
-                    // levitator.retract().withTimeout(2)
-                )
-            );
+        // controller1
+        //     .share()
+        //     .onTrue(
+        //         Commands.sequence(
+        //             intakePivot.deploy(0.1, 0.5).withTimeout(2),
+        //             intakeRollers
+        //                 .runRoller(.5, intakePivot.getIntakeState())
+        //                 .withTimeout(2),
+        //             // intake.setIntakePosition(Constants.IntakeRetractPos, 0.025,
+        //             // 0.3).withTimeout(5),
+        //             hood.setHoodPosition(0.2).withTimeout(1),
+        //             shooter.shooterOn(1).withTimeout(2),
+        //             hood.setHoodPosition(0).withTimeout(1)
+        //             // feeder.feederOn(1).withTimeout(2),
+        //             // levitator.lift().withTimeout(2),
+        //             // levitator.retract().withTimeout(2)
+        //         )
+        //     );
 
         // Note that X is defined as forward according to WPILib convention,
         // and Y is defined as to the left according to WPILib convention.
@@ -166,22 +166,27 @@ public class RobotContainer {
 
         controller1
             .L1()
-            .whileTrue(
-                shooter.shootFuel().alongWith(hood.setHoodPosition(0.10))
+            .toggleOnTrue(
+                shooter.shootFuel().alongWith(hood.shoot())
             )
-            .onFalse(
-                new InstantCommand(() ->
-                    shooter.setShooterState(ShooterStates.Idle)
-                )
+            .toggleOnFalse(
+                shooter.idle().alongWith(hood.idle())
             );
-        // controller1.cross().whileTrue(shooter.shooterOn(50));
+
+        controller1
+            .L2()
+            .toggleOnTrue(
+                shooter.feedFuel().alongWith(hood.feed())
+            )
+            .toggleOnFalse(
+                shooter.idle().alongWith(hood.idle())
+            );
+
         controller1
             .R2()
             .whileTrue(
                 feeder.feederOn(
-                    1,
-                    shooter.getShooterState(),
-                    intakePivot.getIntakeState()
+                    1
                 )
             )
             .onChange(

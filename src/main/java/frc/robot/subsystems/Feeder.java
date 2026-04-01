@@ -23,9 +23,7 @@ public class Feeder extends SubsystemBase {
     public Feeder() {}
 
     public Command feederOn(
-        double speed,
-        ShooterStates shooterState,
-        PivotStates intakePivotState
+        double speed
     ) {
 
     return startEnd(
