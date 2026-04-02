@@ -188,4 +188,8 @@ public class IntakePivot extends SubsystemBase {
     public PivotStates getIntakeState() {
         return intakePivotState;
     }
+    @Override
+    public void periodic(){
+        SmartDashboard.putString("states/Pivot State", intakePivotState.toString());
+    }
 }

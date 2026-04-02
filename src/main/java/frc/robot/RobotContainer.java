@@ -143,8 +143,8 @@ public class RobotContainer {
             )
         );
 
-        controller1.cross().whileTrue(intakePivot.deploy());
-        controller1.square().whileTrue(intakePivot.depot());
+        controller1.cross().toggleOnTrue(intakePivot.deploy());
+        controller1.square().toggleOnTrue(intakePivot.depot());
         controller1.triangle().whileTrue(intakePivot.retract());
 
         controller1
@@ -193,33 +193,34 @@ public class RobotContainer {
         // shooter.idle().alongWith(hood.idle())
         // );
 
-        // controller1
-        //     .R2()
-        //     .whileTrue(
-        //         new ParallelCommandGroup(
-        //             drivetrain.BlineToHub(1.778, 0.5, 0.5),
-        //             shooter.shootFuel(),
-        //             intakePivot.deploy(),
-        //             feeder
-        //                 .feederOn(0)
-        //                 .until(
-        //                     () ->
-        //                         shooter
-        //                             .getShooterState()
-        //                             .equals(ShooterStates.Shooting) &&
-        //                         drivetrain.driveBaseState.equals(
-        //                             States.InShootingPosition
-        //                         )
-        //                 )
-        //                 .andThen(feeder.feederOn(1)).alongWith(intakePivot.agitate())
-        //         )
-        //     )
-        //     .onFalse(
-        //         new InstantCommand(() ->
-        //             feeder.feederIdle()
+        controller1
+            .R2()
+            .whileTrue(
+                new ParallelCommandGroup(
+                    drivetrain.BlineToHub(1.778, 0.5, 0.5),
+                    shooter.shootFuel(),
+                    intakePivot.deploy(),
+                    drivetrain.enterXMode(),
+                    feeder
+                        .feederOn(0)
+                        .until(
+                            () ->
+                                shooter
+                                    .getShooterState()
+                                    .equals(ShooterStates.Shooting) &&
+                                drivetrain.driveBaseState.equals(
+                                    States.InShootingPosition
+                                )
+                        )
+                        .andThen(feeder.feederOn(1)).alongWith(intakePivot.agitate())
+                )
+            )
+            .onFalse(
+                new InstantCommand(() ->
+                    feeder.feederIdle()
                     
-        //         ).alongWith(intakePivot.deploy())
-        //     );
+                ).alongWith(intakePivot.deploy())
+            );
 
         controller1
             .options()

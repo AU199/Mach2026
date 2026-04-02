@@ -367,6 +367,7 @@ public class Shooter extends SubsystemBase {
         SmartDashboard.getNumber("shooter/kd", Constants.shooterMotorKD);
         SmartDashboard.putNumber("shooter/velocity", calculateFeedingVelocity());
         SmartDashboard.putNumber("shooter/PoseTrench", poseFromTrench);
+        SmartDashboard.putString("states/state", shooterState.toString());
 
     }
 }
