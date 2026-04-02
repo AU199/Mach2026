@@ -26,7 +26,9 @@ public class Feeder extends SubsystemBase {
         return startEnd(
             () -> {
                 // feederMotor.set(-0.5);
-                feederState = FeederStates.Feeding;
+                if(Math.abs(speed) !=0){
+                    feederState = FeederStates.Feeding;
+                }
                 kickerMotor.set(-speed);
             },
             () -> {
@@ -61,4 +63,5 @@ public class Feeder extends SubsystemBase {
     public void setFeederState(FeederStates newState) {
         feederState = newState;
     }
+
 }

@@ -63,7 +63,7 @@ public class CommandSwerveDrivetrain
 
     private final SwerveRequest.SwerveDriveBrake brakeRequest = new SwerveRequest.SwerveDriveBrake();
     private final PIDController pidControllerT = new PIDController(2.3, 0, 0);
-    private final PIDController pidControllerR = new PIDController(3, 0, 0);
+    private final PIDController pidControllerR = new PIDController(10, 0, 0);
     private final PIDController pidControllerCT = new PIDController(2, 0, 0);
     private POSITIONS positionState = POSITIONS.BLUE_TOP;
     public States driveBaseState = States.Idle;
@@ -176,7 +176,8 @@ public class CommandSwerveDrivetrain
                     xError = errors[0];
                     yError = errors[1];
 
-                    if (Math.abs(yError) < yTol && Math.abs(xError) < xTol) {
+                    if (Math.abs(yError) < yTol && Math.abs(xError) < xTol
+                            && checkIfInsameAlliance(isAllianceRed().getAsBoolean(), positionState)) {
                         Path path = new Path(
                                 new Path.Waypoint(this.getState().Pose),
                                 new Path.Waypoint(localPose));
@@ -189,6 +190,22 @@ public class CommandSwerveDrivetrain
                     }
                 },
                 Set.of(this));
+    }
+
+    private boolean checkIfInsameAlliance(boolean asBoolean, POSITIONS positionState) {
+        String fAlliance = asBoolean ? "red" : "blue";
+        String positionStateString = positionState.toString();
+        String positionStateAlliance = positionStateString.contains("RED")
+                ? positionStateString.substring(0, 3).toLowerCase()
+                : positionStateString.substring(0, 4).toLowerCase();
+        System.out.println(positionStateAlliance);
+        System.out.println(fAlliance);
+        if (positionStateAlliance.equals(fAlliance)) {
+            return true;
+
+        }
+        return false;
+
     }
 
     private Command BlineToAllianceTrench(
@@ -287,6 +304,17 @@ public class CommandSwerveDrivetrain
 
     public Command enterXMode(){
         return Commands.runOnce(() -> driveBaseState = States.X).andThen(run(() -> this.setControl(brakeRequest)));
+    }
+
+    public Command pidToRotation(double targetRotationRad, DoubleSupplier x, DoubleSupplier y) {
+        pidControllerR.enableContinuousInput(-Math.PI, Math.PI);
+        pidControllerR.setSetpoint(targetRotationRad);
+
+        return this.applyRequest(() -> new SwerveRequest.FieldCentric()
+                .withVelocityX(-x.getAsDouble() * Constants.MaxDrivingSpeed)
+                .withVelocityY(-y.getAsDouble() * Constants.MaxDrivingSpeed)
+                .withRotationalRate(pidControllerR.calculate(this.getState().RawHeading.getRadians())))
+                .until(() -> pidControllerR.atSetpoint());
     }
 
     public BooleanSupplier isRobotInShootingZone() {

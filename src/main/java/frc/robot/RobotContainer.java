@@ -6,7 +6,6 @@ package frc.robot;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
-import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -22,7 +21,6 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.CommandSwerveDrivetrain.States;
 import frc.robot.subsystems.Feeder;
-import frc.robot.subsystems.Feeder.FeederStates;
 import frc.robot.subsystems.Hood;
 import frc.robot.subsystems.IntakePivot;
 import frc.robot.subsystems.IntakePivot.PivotStates;
@@ -145,6 +143,20 @@ public class RobotContainer {
 
         controller1.cross().toggleOnTrue(intakePivot.deploy());
         controller1.square().toggleOnTrue(intakePivot.depot());
+        // controller1.square().whileTrue(intakePivot.depot());
+        // controller1
+        //     .square()
+        //     .whileTrue(
+        //         drivetrain.pidToRotation(
+        //             Math.PI,
+        //             () -> {
+        //                 return controller1.getRawAxis(1);
+        //             },
+        //             () -> {
+        //                 return controller1.getRawAxis(0);
+        //             }
+        //         )
+        //     );
         controller1.triangle().whileTrue(intakePivot.retract());
 
         controller1
@@ -195,33 +207,32 @@ public class RobotContainer {
 
         controller1
             .R2()
-            .whileTrue(
-                new ParallelCommandGroup(
-                    drivetrain.BlineToHub(1.778, 0.5, 0.5),
-                    shooter.shootFuel(),
-                    intakePivot.deploy(),
-                    drivetrain.enterXMode(),
-                    feeder
-                        .feederOn(0)
-                        .until(
-                            () ->
-                                shooter
-                                    .getShooterState()
-                                    .equals(ShooterStates.Shooting) &&
-                                drivetrain.driveBaseState.equals(
-                                    States.InShootingPosition
-                                )
-                        )
-                        .andThen(feeder.feederOn(1)).alongWith(intakePivot.agitate())
+            .whileTrue(drivetrain
+                        .BlineToHub(1.778, 10, 10).deadlineFor(shooter.shootFuel()).andThen(
+                    new ParallelCommandGroup(
+                        feeder
+                            .feederOn(0)
+                            .until(
+                                () ->
+                                    shooter
+                                        .getShooterState()
+                                        .equals(ShooterStates.Shooting) &&
+                                    drivetrain.driveBaseState.equals(
+                                        States.InShootingPosition
+                                    )
+                            )
+                            .andThen(feeder.feederOn(1).alongWith(intakePivot.agitate()))
+                            
+                    )
                 )
             )
             .onFalse(
-                new InstantCommand(() ->
-                    feeder.feederIdle()
-                    
-                ).alongWith(intakePivot.deploy())
+                new InstantCommand(() -> feeder.feederIdle()).alongWith(
+                    intakePivot.deploy()
+                )
             );
-
+        controller1
+            .R2().whileTrue(new InstantCommand(() -> System.out.println("Balling") ));
         controller1
             .options()
             .onTrue(
@@ -230,7 +241,6 @@ public class RobotContainer {
                 )
             );
 
-        
         controller1.povUp().whileTrue(levitator.runLevitator(1));
         controller1.povDown().whileTrue(levitator.runLevitator(-1));
 
