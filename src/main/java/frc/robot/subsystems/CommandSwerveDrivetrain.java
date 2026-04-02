@@ -63,7 +63,7 @@ public class CommandSwerveDrivetrain
 
     private final SwerveRequest.SwerveDriveBrake brakeRequest = new SwerveRequest.SwerveDriveBrake();
     private final PIDController pidControllerT = new PIDController(2.3, 0, 0);
-    private final PIDController pidControllerR = new PIDController(10, 0, 0);
+    private final PIDController pidControllerR = new PIDController(3, 0, 0);
     private final PIDController pidControllerCT = new PIDController(2, 0, 0);
     private POSITIONS positionState = POSITIONS.BLUE_TOP;
     public States driveBaseState = States.Idle;
@@ -167,7 +167,7 @@ public class CommandSwerveDrivetrain
                     Pose2d localPose = new Pose2d(
                             targetX,
                             targetY,
-                            new Rotation2d(angleToHub));
+                            new Rotation2d(angleToHub).plus(Rotation2d.k180deg));
 
                     targetPosedPublisherBlineHub.accept(localPose);
                     targetPoseBline = localPose;
@@ -176,15 +176,16 @@ public class CommandSwerveDrivetrain
                     xError = errors[0];
                     yError = errors[1];
 
-                    if (Math.abs(yError) < yTol && Math.abs(xError) < xTol
-                            && checkIfInsameAlliance(isAllianceRed().getAsBoolean(), positionState)) {
+                    if (checkIfInsameAlliance(isAllianceRed().getAsBoolean(), positionState)) {
                         Path path = new Path(
                                 new Path.Waypoint(this.getState().Pose),
                                 new Path.Waypoint(localPose));
+
+                        BooleanSupplier atTarget = () -> Math.abs(errors[1]) < yTol && Math.abs(errors[0]) < xTol;
                         driveBaseState = States.MovingToShoot;
-                        return pathBuilder.build(path);
+                        return pathBuilder.build(path).until(() -> atTarget.getAsBoolean())
+                                .andThen(() -> driveBaseState = States.InShootingPosition);
                     } else {
-                        driveBaseState = States.InShootingPosition;
                         return Commands.none();
 
                     }
@@ -211,7 +212,7 @@ public class CommandSwerveDrivetrain
     private Command BlineToAllianceTrench(
             Pose2d targetPose,
             Boolean isAllianceRed,
-            Boolean goingOut) {
+            Boolean goingOut, double xTol, double yTol) {
         FollowPath.Builder pathBuilder = new FollowPath.Builder(
                 this,
                 () -> this.getState().Pose,
@@ -223,30 +224,31 @@ public class CommandSwerveDrivetrain
 
         return Commands.defer(() -> {
 
-            Pose2d trenchWaypoint = new Pose2d(targetPose.getX() - 3, targetPose.getY(), new Rotation2d(0));
-            Pose2d localPose = targetPose;
+            Pose2d trenchWaypoint = new Pose2d(targetPose.getX() - 3, targetPose.getY(), this.getState().Pose.getRotation());
+            Pose2d localPose = new Pose2d(targetPose.getTranslation(), this.getState().Pose.getRotation());
             targetPoseBline = localPose;
             if (!goingOut) {
                 localPose = new Pose2d(localPose.getX() - 3, localPose.getY(),
-                        localPose.getRotation().plus(new Rotation2d(Math.PI)));
-                trenchWaypoint = new Pose2d(localPose.getX() + 3, localPose.getY(), new Rotation2d(0));
+                         this.getState().Pose.getRotation());
+                trenchWaypoint = new Pose2d(localPose.getX() + 3, localPose.getY(), this.getState().Pose.getRotation());
             }
 
-            trenchWaypoint = isAllianceRed ? FlippingUtil.flipFieldPose(trenchWaypoint) : trenchWaypoint;
-            localPose = isAllianceRed ? FlippingUtil.flipFieldPose(localPose) : localPose;
+            trenchWaypoint = isAllianceRed ? new Pose2d(FlippingUtil.flipFieldPosition(trenchWaypoint.getTranslation()), this.getState().Pose.getRotation()) : trenchWaypoint;
+            localPose = isAllianceRed ? new Pose2d(FlippingUtil.flipFieldPosition(localPose.getTranslation()), this.getState().Pose.getRotation())  : localPose;
 
             targetPosedPublisherBlineTrench.accept(trenchWaypoint);
 
             double[] errors = getBlineErrors(localPose);
             xError = errors[0];
             yError = errors[1];
+            BooleanSupplier atTarget = () -> Math.abs(errors[1]) < yTol && Math.abs(errors[0]) < xTol;
 
             Path path = new Path(
                     new Path.Waypoint(this.getState().Pose),
                     new Path.TranslationTarget(trenchWaypoint.getTranslation()),
                     new Path.Waypoint(localPose));
 
-            return pathBuilder.build(path);
+            return pathBuilder.build(path).until(() -> atTarget.getAsBoolean());
         },
                 Set.of(this));
     }
@@ -259,42 +261,42 @@ public class CommandSwerveDrivetrain
                             return BlineToAllianceTrench(
                                     Constants.targetPoseTrenchLeft,
                                     false,
-                                    true);
+                                    true, 0.1, 0.1);
                         case BLUE_BOTTOM:
                             return BlineToAllianceTrench(
                                     Constants.targetPoseTrenchRight,
                                     false,
-                                    true);
+                                    true, 0.1, 0.1);
                         case NEUTRAL_BLUE_TOP:
                             return BlineToAllianceTrench(
                                     Constants.targetPoseTrenchLeft,
                                     false,
-                                    false);
+                                    false, 0.1, 0.1);
                         case NEUTRAL_BLUE_BOTTOM:
                             return BlineToAllianceTrench(
                                     Constants.targetPoseTrenchRight,
                                     false,
-                                    false);
+                                    false, 0.1, 0.1);
                         case NEUTRAL_RED_TOP:
                             return BlineToAllianceTrench(
                                     Constants.targetPoseTrenchLeft,
                                     true,
-                                    false);
+                                    false, 0.1, 0.1);
                         case NEUTRAL_RED_BOTTOM:
                             return BlineToAllianceTrench(
                                     Constants.targetPoseTrenchRight,
                                     true,
-                                    false);
+                                    false, 0.1, 0.1);
                         case RED_TOP:
                             return BlineToAllianceTrench(
                                     Constants.targetPoseTrenchLeft,
                                     true,
-                                    true);
+                                    true, 0.1, 0.1);
                         case RED_BOTTOM:
                             return BlineToAllianceTrench(
                                     Constants.targetPoseTrenchRight,
                                     true,
-                                    true);
+                                    true, 0.1, 0.1);
                         default:
                             return Commands.none();
                     }
@@ -302,7 +304,7 @@ public class CommandSwerveDrivetrain
                 Set.of(this));
     }
 
-    public Command enterXMode(){
+    public Command enterXMode() {
         return Commands.runOnce(() -> driveBaseState = States.X).andThen(run(() -> this.setControl(brakeRequest)));
     }
 
@@ -430,6 +432,7 @@ public class CommandSwerveDrivetrain
                 0.5 // intermediate handoff radius meters
         ));
         SmartDashboard.putString("states/Robot State", positionState.toString());
+        SmartDashboard.putString("states/Swerve State", driveBaseState.toString());
         SmartDashboard.putNumber("Robot x", robotX);
         SmartDashboard.putNumber("Robot y", robotY);
         SmartDashboard.putNumber("xError", targetPoseBline.getX() - robotX);

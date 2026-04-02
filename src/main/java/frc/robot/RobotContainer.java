@@ -142,6 +142,7 @@ public class RobotContainer {
         );
 
         controller1.cross().toggleOnTrue(intakePivot.deploy());
+        // controller1.cross().toggleOnTrue(drivetrain.BlineToHub(1.778, 10, 10));
         controller1.square().toggleOnTrue(intakePivot.depot());
         // controller1.square().whileTrue(intakePivot.depot());
         // controller1
@@ -157,7 +158,7 @@ public class RobotContainer {
         //             }
         //         )
         //     );
-        controller1.triangle().whileTrue(intakePivot.retract());
+        controller1.triangle().toggleOnTrue(intakePivot.retract());
 
         controller1
             .R1()
@@ -208,7 +209,7 @@ public class RobotContainer {
         controller1
             .R2()
             .whileTrue(drivetrain
-                        .BlineToHub(1.778, 10, 10).deadlineFor(shooter.shootFuel()).andThen(
+                        .BlineToHub(1.778, 0.1, 0.1).deadlineFor(shooter.shootFuel()).andThen(
                     new ParallelCommandGroup(
                         feeder
                             .feederOn(0)
