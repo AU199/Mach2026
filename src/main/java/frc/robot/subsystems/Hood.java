@@ -93,7 +93,7 @@ public class Hood extends SubsystemBase {
     public Command shoot() {
         return runOnce(
             () -> {
-                hoodMotor.setVoltage(1);
+                hoodMotor.setVoltage(2);
                 hoodState = HoodStates.Shooting;
                 // MotionMagicVoltage control = new MotionMagicVoltage(Constants.shootingHoodAngle); // Target position in mechanism rotations
                 // hoodMotor.setControl(control); // Target position in mechanism rotations, feedforward in volts

@@ -256,47 +256,49 @@ public class CommandSwerveDrivetrain
     public Command BlineToTrench() {
         return Commands.defer(
                 () -> {
+                    double xTol = 2;
+                    double yTol = 2;
                     switch (positionState) {
                         case BLUE_TOP:
                             return BlineToAllianceTrench(
                                     Constants.targetPoseTrenchLeft,
                                     false,
-                                    true, 0.1, 0.1);
+                                    true, xTol, yTol);
                         case BLUE_BOTTOM:
                             return BlineToAllianceTrench(
                                     Constants.targetPoseTrenchRight,
                                     false,
-                                    true, 0.1, 0.1);
+                                    true, xTol, yTol);
                         case NEUTRAL_BLUE_TOP:
                             return BlineToAllianceTrench(
                                     Constants.targetPoseTrenchLeft,
                                     false,
-                                    false, 0.1, 0.1);
+                                    false, xTol, yTol);
                         case NEUTRAL_BLUE_BOTTOM:
                             return BlineToAllianceTrench(
                                     Constants.targetPoseTrenchRight,
                                     false,
-                                    false, 0.1, 0.1);
+                                    false, xTol, yTol);
                         case NEUTRAL_RED_TOP:
                             return BlineToAllianceTrench(
                                     Constants.targetPoseTrenchLeft,
                                     true,
-                                    false, 0.1, 0.1);
+                                    false, xTol, yTol);
                         case NEUTRAL_RED_BOTTOM:
                             return BlineToAllianceTrench(
                                     Constants.targetPoseTrenchRight,
                                     true,
-                                    false, 0.1, 0.1);
+                                    false, xTol, yTol);
                         case RED_TOP:
                             return BlineToAllianceTrench(
                                     Constants.targetPoseTrenchLeft,
                                     true,
-                                    true, 0.1, 0.1);
+                                    true, xTol, yTol);
                         case RED_BOTTOM:
                             return BlineToAllianceTrench(
                                     Constants.targetPoseTrenchRight,
                                     true,
-                                    true, 0.1, 0.1);
+                                    true, xTol, yTol);
                         default:
                             return Commands.none();
                     }
