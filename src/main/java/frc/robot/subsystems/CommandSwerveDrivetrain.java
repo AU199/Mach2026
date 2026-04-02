@@ -525,4 +525,8 @@ public class CommandSwerveDrivetrain
                 .orElse(Alliance.Blue)
                 .equals(Alliance.Red);
     }
+    public Supplier<POSITIONS> getPositionState() {
+        return () -> positionState;
+    }
 }
+
