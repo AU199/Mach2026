@@ -6,7 +6,6 @@ package frc.robot;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
-import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -22,7 +21,6 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.CommandSwerveDrivetrain.States;
 import frc.robot.subsystems.Feeder;
-import frc.robot.subsystems.Feeder.FeederStates;
 import frc.robot.subsystems.Hood;
 import frc.robot.subsystems.IntakePivot;
 import frc.robot.subsystems.IntakePivot.PivotStates;
@@ -31,7 +29,6 @@ import frc.robot.subsystems.Levitator;
 import frc.robot.subsystems.Limelight;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.Shooter.ShooterStates;
-import java.util.function.DoubleSupplier;
 
 public class RobotContainer {
 
@@ -66,10 +63,10 @@ public class RobotContainer {
     // public final photon photon = new photon(drivetrain);
     // public final Shooter shooter = new Shooter(drivetrain,true,m_field);
     private SendableChooser<String> chooserAuto = new SendableChooser<String>();
-    private final SlewRateLimiter driverControllerSlewRateLimiterX =
-        new SlewRateLimiter(4.5);
-    private final SlewRateLimiter driverControllerSlewRateLimiterY =
-        new SlewRateLimiter(5.5);
+    // private final SlewRateLimiter driverControllerSlewRateLimiterX =
+    //     new SlewRateLimiter(4.5);
+    // private final SlewRateLimiter driverControllerSlewRateLimiterY =
+    //     new SlewRateLimiter(5.5);
 
     public RobotContainer() {
         chooserAuto.addOption("nothing", "nothing");
@@ -114,19 +111,19 @@ public class RobotContainer {
                 () ->
                     drive
                         .withVelocityX(
-                            driverControllerSlewRateLimiterX.calculate(
+                            // driverControllerSlewRateLimiterX.calculate(
                                 -Math.pow(controller1.getRawAxis(1), 3) *
                                 MaxSpeed
-                            )
+                            //)
                         ) // Drive
                         // forward
                         // with negative Y
                         // (forward)
                         .withVelocityY(
-                            driverControllerSlewRateLimiterY.calculate(
+                            // driverControllerSlewRateLimiterY.calculate(
                                 -Math.pow(controller1.getRawAxis(0), 3) *
                                 MaxSpeed
-                            )
+                            //)
                         ) // Drive
                         // left
                         // with
@@ -144,16 +141,24 @@ public class RobotContainer {
             )
         );
 
-        //controller1.cross().whileTrue(intakePivot.deploy());
+        controller1.cross().toggleOnTrue(intakePivot.deploy());
+        // controller1.cross().toggleOnTrue(drivetrain.BlineToHub(1.778, 10, 10));
+        controller1.square().toggleOnTrue(intakePivot.depot());
         // controller1.square().whileTrue(intakePivot.depot());
-
-        controller1.square().whileTrue(drivetrain.pidToRotation(Math.PI, () -> {
-            return controller1.getRawAxis(1);
-        }, () -> {
-            return controller1.getRawAxis(0);
-        }));
-        controller1.cross().toggleOnTrue(drivetrain.enterXMode());
-        controller1.triangle().whileTrue(intakePivot.retract());
+        // controller1
+        //     .square()
+        //     .whileTrue(
+        //         drivetrain.pidToRotation(
+        //             Math.PI,
+        //             () -> {
+        //                 return controller1.getRawAxis(1);
+        //             },
+        //             () -> {
+        //                 return controller1.getRawAxis(0);
+        //             }
+        //         )
+        //     );
+        controller1.triangle().toggleOnTrue(intakePivot.retract());
 
         controller1
             .R1()
@@ -161,7 +166,7 @@ public class RobotContainer {
                 Commands.either(
                     // Already deployed or in depot — just run rollers
                     Commands.startEnd(
-                        () -> intakeRollers.setRollerSpeed(1.0),
+                        () -> intakeRollers.setRollerSpeed(0.4),
                         () -> intakeRollers.setRollerSpeed(0)
                     ),
                     // Not deployed — deploy first, then run rollers
@@ -169,7 +174,7 @@ public class RobotContainer {
                         .deploy()
                         .andThen(
                             Commands.startEnd(
-                                () -> intakeRollers.setRollerSpeed(1.0),
+                                () -> intakeRollers.setRollerSpeed(0.4),
                                 () -> intakeRollers.setRollerSpeed(0)
                             )
                         ),
@@ -184,13 +189,13 @@ public class RobotContainer {
 
         controller1
             .L1()
-            .toggleOnTrue(shooter.shootFuel().alongWith(hood.shoot()))
-            .toggleOnFalse(shooter.idle().alongWith(hood.idle()));
+            .onTrue(shooter.shootFuel().alongWith(hood.shoot()))
+            .onFalse(shooter.idle().alongWith(hood.idle()));
 
         controller1
             .L2()
-            .toggleOnTrue(shooter.feedFuel().alongWith(hood.feed()))
-            .toggleOnFalse(shooter.idle().alongWith(hood.idle()));
+            .onTrue(shooter.feedFuel().alongWith(hood.feed()))
+            .onFalse(shooter.idle().alongWith(hood.idle()));
 
         // controller1
         // .L2()
@@ -203,9 +208,11 @@ public class RobotContainer {
 
         controller1
             .R2()
-            .whileTrue(drivetrain
-                        .BlineToHub(1.778, 10, 10).deadlineFor(shooter.shootFuel()).andThen(
+            .whileTrue(
                     new ParallelCommandGroup(
+                        drivetrain.BlineToHub(1.778, 0.1, 0.1),
+                        shooter.shootFuel(),
+                        hood.shoot(),
                         feeder
                             .feederOn(0)
                             .until(
@@ -219,16 +226,17 @@ public class RobotContainer {
                             )
                             .andThen(feeder.feederOn(1).alongWith(intakePivot.agitate()))
                             
-                    )
                 )
             )
+            
             .onFalse(
                 new InstantCommand(() -> feeder.feederIdle()).alongWith(
-                    intakePivot.deploy()
+                    intakePivot.deploy(),
+                    shooter.idle(),
+                    hood.idle()
                 )
             );
-        controller1
-            .R2().whileTrue(new InstantCommand(() -> System.out.println("Balling") ));
+
         controller1
             .options()
             .onTrue(

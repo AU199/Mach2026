@@ -57,10 +57,7 @@ public class Feeder extends SubsystemBase {
             "Kicker Motor Supply Current",
             kickerMotor.getSupplyCurrent().getValueAsDouble()
         );
-        SmartDashboard.putString(
-            "Kicker Motor Status",
-            feederState.toString()
-        );
+        SmartDashboard.putString("states/kicker_state", feederState.toString());
     }
 
     public void setFeederState(FeederStates newState) {

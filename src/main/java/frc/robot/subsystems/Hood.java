@@ -93,7 +93,7 @@ public class Hood extends SubsystemBase {
     public Command shoot() {
         return runOnce(
             () -> {
-                hoodMotor.setVoltage(1);
+                hoodMotor.setVoltage(2);
                 hoodState = HoodStates.Shooting;
                 // MotionMagicVoltage control = new MotionMagicVoltage(Constants.shootingHoodAngle); // Target position in mechanism rotations
                 // hoodMotor.setControl(control); // Target position in mechanism rotations, feedforward in volts
@@ -133,7 +133,7 @@ public class Hood extends SubsystemBase {
 
 
                 // SmartDashboard.putString("Feedforward", controlInfo.get("FeedForward").toString());
-                // SmartDashboard.putNumber("Cos", currentPosition * (2 * Math.PI));
+                // SmartDashboard.puwtNumber("Cos", currentPosition * (2 * Math.PI));
 
             }
         ); // .until(hoodReachedPosition(Constants.feedingHoodAngle))
@@ -165,6 +165,7 @@ public class Hood extends SubsystemBase {
         double currentPosition =
             hoodMotor.getPosition().getValueAsDouble() / sensorToMechanismRatio;
         SmartDashboard.putNumber("Current Position", currentPosition);
+        SmartDashboard.putString("states/hood_state", hoodState.toString());
     }
 
     public DoubleSupplier getHoodAngleDash() {

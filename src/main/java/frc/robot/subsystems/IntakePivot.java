@@ -28,6 +28,8 @@ public class IntakePivot extends SubsystemBase {
         Agitating,
     }
 
+
+
     private TalonFX pivotMotor = new TalonFX(
         Constants.pivotMotorId,
         "DriveBase"
@@ -95,7 +97,7 @@ public class IntakePivot extends SubsystemBase {
                         pivotMotor.getPosition().getValueAsDouble() -
                         Constants.IntakeDeployPos
                     ) <
-                    0.08;
+                    0.5;
                 return result;
             })
             .andThen(runOnce(() -> intakePivotState = PivotStates.Deployed));
@@ -187,5 +189,9 @@ public class IntakePivot extends SubsystemBase {
 
     public PivotStates getIntakeState() {
         return intakePivotState;
+    }
+    @Override
+    public void periodic(){
+        SmartDashboard.putString("states/Pivot State", intakePivotState.toString());
     }
 }

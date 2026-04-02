@@ -111,7 +111,7 @@ public final class Constants {
     public static final double ballInitialSpinFromShooterEnemyZone = 100;
 
     // ── Intake positions (encoder units — tune before deploy) ────────────────
-    public static final double IntakeDeployPos = 25;
+    public static final double IntakeDeployPos = 24;
     public static final double IntakeDepotPos = 22;
     public static final double IntakeRetractPos = 10;
     public static final double IntakeStowedPos = 0;
@@ -119,7 +119,7 @@ public final class Constants {
 
     public static final double intakeDeployKP = 0.1;
     public static final double intakeDeployMaxSpeed = 0.5;
-    public static final double intakeRetractKP = 0.025;
+    public static final double intakeRetractKP = 0.05;
     public static final double intakeRetractMaxSpeed = 0.3;
     public static final double intakeDepotKP = 0.1;
     public static final double intakeDepotMaxSpeed = 0.5;

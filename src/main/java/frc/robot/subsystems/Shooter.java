@@ -135,7 +135,11 @@ public class Shooter extends SubsystemBase {
                     // frontShooter3.setControl(new MotionMagicVelocityVoltage(speed));
                 },
                 () -> {
-                    double velocityError = frontShooter1.getClosedLoopError().getValueAsDouble();
+                    double velocity = frontShooter1.getVelocity().getValueAsDouble();
+                    double velocityError = Math.abs(velocity - Constants.shootingSpeed);
+                    SmartDashboard.putNumber("Shooting Velocity Error", velocityError);
+                    SmartDashboard.putBoolean("shooter at velocity", velocityError < Constants.shootingTolerance);
+
                     if (velocityError < Constants.shootingTolerance) {
                         shooterState = ShooterStates.Shooting;
                     }
@@ -367,6 +371,7 @@ public class Shooter extends SubsystemBase {
         SmartDashboard.getNumber("shooter/kd", Constants.shooterMotorKD);
         SmartDashboard.putNumber("shooter/velocity", calculateFeedingVelocity());
         SmartDashboard.putNumber("shooter/PoseTrench", poseFromTrench);
+        SmartDashboard.putString("states/state", shooterState.toString());
 
     }
 }
