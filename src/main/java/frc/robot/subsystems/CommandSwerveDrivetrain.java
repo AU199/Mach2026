@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
+import com.ctre.phoenix6.mechanisms.swerve.LegacySwerveRequest.SwerveDriveBrake;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
@@ -60,7 +61,7 @@ public class CommandSwerveDrivetrain
     /* Swerve requests to apply during SysId characterization */
     private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization = new SwerveRequest.SysIdSwerveTranslation();
     private final SwerveRequest.ApplyRobotSpeeds autoRequest = new SwerveRequest.ApplyRobotSpeeds();
-
+    private final SwerveRequest.SwerveDriveBrake brakeRequest = new SwerveRequest.SwerveDriveBrake();
     private final PIDController pidControllerT = new PIDController(2.3, 0, 0);
     private final PIDController pidControllerR = new PIDController(10, 0, 0);
     private final PIDController pidControllerCT = new PIDController(2, 0, 0);
@@ -306,6 +307,11 @@ public class CommandSwerveDrivetrain
                 .withVelocityY(-y.getAsDouble() * Constants.MaxDrivingSpeed)
                 .withRotationalRate(pidControllerR.calculate(this.getState().RawHeading.getRadians())))
                 .until(() -> pidControllerR.atSetpoint());
+    }
+
+    public Command enterXMode() {
+        return Commands.runOnce(() -> driveBaseState = States.X)
+                .andThen(run(() -> this.setControl(brakeRequest)));
     }
 
     public BooleanSupplier isRobotInShootingZone() {

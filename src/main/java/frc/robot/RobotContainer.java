@@ -144,21 +144,15 @@ public class RobotContainer {
             )
         );
 
-        controller1.cross().whileTrue(intakePivot.deploy());
+        //controller1.cross().whileTrue(intakePivot.deploy());
         // controller1.square().whileTrue(intakePivot.depot());
-        controller1
-            .square()
-            .whileTrue(
-                drivetrain.pidToRotation(
-                    Math.PI,
-                    () -> {
-                        return controller1.getRawAxis(1);
-                    },
-                    () -> {
-                        return controller1.getRawAxis(0);
-                    }
-                )
-            );
+
+        controller1.square().whileTrue(drivetrain.pidToRotation(Math.PI, () -> {
+            return controller1.getRawAxis(1);
+        }, () -> {
+            return controller1.getRawAxis(0);
+        }));
+        controller1.cross().toggleOnTrue(drivetrain.enterXMode());
         controller1.triangle().whileTrue(intakePivot.retract());
 
         controller1
