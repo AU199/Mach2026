@@ -37,7 +37,7 @@ public class Limelight extends SubsystemBase {
         LimelightHelpers.PoseEstimate mt2 =
             LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("");
         if (mt2 == null) {
-            System.out.println("limelight no worky");
+            // System.out.println("limelight no worky");
             return;
         }
 

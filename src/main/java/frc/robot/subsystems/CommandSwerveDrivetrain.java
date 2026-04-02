@@ -62,7 +62,7 @@ public class CommandSwerveDrivetrain
     private final SwerveRequest.ApplyRobotSpeeds autoRequest = new SwerveRequest.ApplyRobotSpeeds();
 
     private final PIDController pidControllerT = new PIDController(2.3, 0, 0);
-    private final PIDController pidControllerR = new PIDController(3, 0, 0);
+    private final PIDController pidControllerR = new PIDController(10, 0, 0);
     private final PIDController pidControllerCT = new PIDController(2, 0, 0);
     private POSITIONS positionState = POSITIONS.BLUE_TOP;
     public States driveBaseState = States.Idle;
@@ -162,7 +162,7 @@ public class CommandSwerveDrivetrain
                     double angleToHub = Math.atan2(
                             localHub.getY() - targetY,
                             localHub.getX() - targetX);
-
+                    
                     Pose2d localPose = new Pose2d(
                             targetX,
                             targetY,
@@ -175,7 +175,7 @@ public class CommandSwerveDrivetrain
                     xError = errors[0];
                     yError = errors[1];
 
-                    if (Math.abs(yError) < yTol && Math.abs(xError) < xTol) {
+                    if (Math.abs(yError) < yTol && Math.abs(xError) < xTol && checkIfInsameAlliance(isAllianceRed().getAsBoolean(),positionState)) {
                         Path path = new Path(
                                 new Path.Waypoint(this.getState().Pose),
                                 new Path.Waypoint(localPose));
@@ -188,6 +188,19 @@ public class CommandSwerveDrivetrain
                     }
                 },
                 Set.of(this));
+    }
+
+    private boolean checkIfInsameAlliance(boolean asBoolean, POSITIONS positionState) {
+        String fAlliance = asBoolean?"red":"blue";
+        String positionStateAlliance = positionState.toString().substring(0, 4).toLowerCase();
+        System.out.println(positionStateAlliance);
+        System.out.println(fAlliance);
+        if(positionStateAlliance.equals(fAlliance)){
+            return true;
+
+        }
+        return false;
+
     }
 
     private Command BlineToAllianceTrench(
