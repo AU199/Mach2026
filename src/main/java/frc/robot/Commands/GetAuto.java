@@ -1,9 +1,12 @@
 package frc.robot.Commands;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import com.pathplanner.lib.util.FlippingUtil;
+
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -72,20 +75,17 @@ public class GetAuto {
         blueBottomBallsToTopNeutralTrench.mirror();
         Path blueTopNeutralTrenchToTopBlueTrench = new Path(
                 "BlueTopNeutralTrenchToTopBlueTrench");
+        Path middlePath = new Path("middle_auto");       
         blueTopNeutralTrenchToTopBlueTrench.mirror();
-
+        Translation2d rightPose2d = drivetrain.isAllianceRed().getAsBoolean() ? FlippingUtil.flipFieldPosition(new Translation2d(4.414, 8.042656 - 7.486)) : new Translation2d(4.414, 8.042656 - 7.486);
+        Translation2d leftPose2d = drivetrain.isAllianceRed().getAsBoolean() ? FlippingUtil.flipFieldPosition(new Translation2d(4.414, 7.486)) : new Translation2d(4.414, 8.042656 - 7.486);
+        Translation2d midPose2d = drivetrain.isAllianceRed().getAsBoolean() ? FlippingUtil.flipFieldPosition(new Translation2d(3.7, 4)) : new Translation2d(4.414, 8.042656 - 7.486);
+        // IF RIGHT THEN MIRROR ALL PATHS
         return Commands.sequence(
-                new InstantCommand(() -> drivetrain.resetPose(new Pose2d(4.414, 8.042656-7.486, new Rotation2d(0)))),
-                pathBuilder.build(blueTopTrenchToTopOfBalls),
+                new InstantCommand(() -> drivetrain.resetPose(new Pose2d(rightPose2d, new Rotation2d(0)))),
                 new ParallelCommandGroup(
                         intakePivot.deploy().until(() -> intakePivot.getIntakeState() == PivotStates.Deployed),
-                        new InstantCommand(() -> intakeRoller.setRollerSpeed(1)),
-                        pathBuilder.build(blueTopBallsToBottomBalls)),
-                new InstantCommand(() -> intakeRoller.setRollerSpeed(0)),
-                // new InstantCommand(() -> intake.setRollerSpeed(0)),
-                pathBuilder.build(blueBottomBallsToTopNeutralTrench),
-                pathBuilder.build(blueTopNeutralTrenchToTopBlueTrench),
-                // drivetrain.BlineToHub(targetPoseHubLeft, targetPoseHubRight, 1.90, 2.40),
+                                        pathBuilder.build(blueTopTrenchToTopOfBalls)),
                 drivetrain
                         .BlineToHub(1.778, 0.1, 0.1).deadlineFor(shooter.shootFuel()).andThen(
                                 new ParallelCommandGroup(
@@ -103,3 +103,67 @@ public class GetAuto {
 
     }
 }
+
+// SIDE AUTO
+
+
+/*
+return Commands.sequence(
+                new InstantCommand(() -> drivetrain.resetPose(new Pose2d(rightPose2d, new Rotation2d(0)))),
+                new ParallelCommandGroup(
+                        intakePivot.deploy().until(() -> intakePivot.getIntakeState() == PivotStates.Deployed),
+                        new InstantCommand(() -> intakeRoller.setRollerSpeed(1)),
+                                        pathBuilder.build(blueTopTrenchToTopOfBalls)),
+                pathBuilder.build(blueTopBallsToBottomBalls),
+                new InstantCommand(() -> intakeRoller.setRollerSpeed(0)),
+                pathBuilder.build(blueBottomBallsToTopNeutralTrench),
+                pathBuilder.build(blueTopNeutralTrenchToTopBlueTrench),
+                drivetrain
+                        .BlineToHub(1.778, 0.1, 0.1).deadlineFor(shooter.shootFuel()).andThen(
+                                new ParallelCommandGroup(
+                                        feeder
+                                                .feederOn(0)
+                                                .until(
+                                                        () -> shooter
+                                                                .getShooterState()
+                                                                .equals(ShooterStates.Shooting) &&
+                                                                drivetrain.driveBaseState.equals(
+                                                                        States.InShootingPosition))
+                                                .andThen(feeder.feederOn(1).alongWith(intakePivot.agitate()))
+
+                                )));
+
+    }
+*/
+
+
+// MID AUTO
+
+/*                 new InstantCommand(() -> drivetrain.resetPose(new Pose2d(rightPose2d, new Rotation2d(0)))),
+                new ParallelCommandGroup(
+                        intakePivot.deploy().until(() -> intakePivot.getIntakeState() == PivotStates.Deployed),
+                                        pathBuilder.build(blueTopTrenchToTopOfBalls)),
+                drivetrain
+                        .BlineToHub(1.778, 0.1, 0.1).deadlineFor(shooter.shootFuel()).andThen(
+                                new ParallelCommandGroup(
+                                        feeder
+                                                .feederOn(0)
+                                                .until(
+                                                        () -> shooter
+                                                                .getShooterState()
+                                                                .equals(ShooterStates.Shooting) &&
+                                                                drivetrain.driveBaseState.equals(
+                                                                        States.InShootingPosition))
+                                                .andThen(feeder.feederOn(1).alongWith(intakePivot.agitate()))
+
+                                )));
+
+    } */
+
+
+
+
+
+
+
+
