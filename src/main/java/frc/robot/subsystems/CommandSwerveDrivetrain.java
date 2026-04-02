@@ -192,7 +192,8 @@ public class CommandSwerveDrivetrain
 
     private boolean checkIfInsameAlliance(boolean asBoolean, POSITIONS positionState) {
         String fAlliance = asBoolean?"red":"blue";
-        String positionStateAlliance = positionState.toString().substring(0, 4).toLowerCase();
+        String positionStateString = positionState.toString();
+        String positionStateAlliance = positionStateString.contains("RED")? positionStateString.substring(0,3).toLowerCase():positionStateString.substring(0,4).toLowerCase();
         System.out.println(positionStateAlliance);
         System.out.println(fAlliance);
         if(positionStateAlliance.equals(fAlliance)){

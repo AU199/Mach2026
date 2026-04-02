@@ -146,19 +146,19 @@ public class RobotContainer {
 
         controller1.cross().whileTrue(intakePivot.deploy());
         // controller1.square().whileTrue(intakePivot.depot());
-        controller1
-            .square()
-            .whileTrue(
-                drivetrain.pidToRotation(
-                    Math.PI,
-                    () -> {
-                        return controller1.getRawAxis(1);
-                    },
-                    () -> {
-                        return controller1.getRawAxis(0);
-                    }
-                )
-            );
+        // controller1
+        //     .square()
+        //     .whileTrue(
+        //         drivetrain.pidToRotation(
+        //             Math.PI,
+        //             () -> {
+        //                 return controller1.getRawAxis(1);
+        //             },
+        //             () -> {
+        //                 return controller1.getRawAxis(0);
+        //             }
+        //         )
+        //     );
         controller1.triangle().whileTrue(intakePivot.retract());
 
         controller1
@@ -208,7 +208,7 @@ public class RobotContainer {
         // );
 
         controller1
-            .R2()
+            .square()
             .whileTrue(drivetrain
                         .BlineToHub(1.778, 10, 10).deadlineFor(shooter.shootFuel()).andThen(
                     new ParallelCommandGroup(
