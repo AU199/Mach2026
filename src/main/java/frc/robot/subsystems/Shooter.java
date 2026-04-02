@@ -151,7 +151,7 @@ public class Shooter extends SubsystemBase {
                     // frontShooter3.setControl(new MotionMagicVelocityVoltage(speed));
                 },
                 () -> {
-                    double targetVelocity = 0;
+                    double targetVelocity = calculateFeedingVelocity();
                     frontShooter1.setControl(
                             new MotionMagicVelocityVoltage(targetVelocity));
                     double velocityError = frontShooter1.getClosedLoopError().getValueAsDouble();
