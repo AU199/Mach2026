@@ -65,8 +65,6 @@ public class GetAuto {
                 pidControllerT,
                 pidControllerR,
                 pidControllerCT);
-
-        Path blueTopTrenchToTopOfBalls = new Path("BlueTopTrenchToTopOfBalls");
         
         // blueTopTrenchToTopOfBalls.mirror();
         Path blueTopBallsToBottomBalls = new Path("BlueTopBallsToBottomBalls");

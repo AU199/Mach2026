@@ -39,6 +39,29 @@ public class BusterAuto extends SequentialCommandGroup {
     private final PIDController pidControllerR = new PIDController(4, 0, 0);
     private final PIDController pidControllerCT = new PIDController(2, 0, 0);
     private final SwerveRequest.ApplyRobotSpeeds autoRequest = new SwerveRequest.ApplyRobotSpeeds();
+    private final Path middlePath = new Path("middle_auto");
+    private final Path blueTopBallsToBottomBalls = new Path("BlueTopBallsToBottomBalls");
+    private final Path blueTopNeutralTrenchToTopBlueTrench = new Path(
+            "BlueTopNeutralTrenchToTopBlueTrench");
+    private final Path blueBottomBallsToTopNeutralTrench = new Path(
+            "BlueBottomBallsToTopNeutralTrench");
+    private final Path blueTopTrenchToTopOfBalls = new Path("BlueTopTrenchToTopOfBalls");
+
+    private void flipPaths() {
+        middlePath.flip();
+        blueTopBallsToBottomBalls.flip();
+        blueTopNeutralTrenchToTopBlueTrench.flip();
+        blueBottomBallsToTopNeutralTrench.flip();
+        blueTopTrenchToTopOfBalls.flip();
+    }
+
+    private void mirrorPaths() {
+        middlePath.mirror();
+        blueTopBallsToBottomBalls.mirror();
+        blueTopNeutralTrenchToTopBlueTrench.mirror();
+        blueBottomBallsToTopNeutralTrench.mirror();
+        blueTopTrenchToTopOfBalls.mirror();
+    }
 
     public BusterAuto(
             RobotContainer robotContainer,
@@ -96,19 +119,19 @@ public class BusterAuto extends SequentialCommandGroup {
                 Translation2d midPose2d = drivebase.isAllianceRed().getAsBoolean()
                         ? FlippingUtil.flipFieldPosition(new Translation2d(3.7, 4))
                         : new Translation2d(3.7, 4);
-                Path middlePath = new Path("middle_auto");
-                middlePath.flip();
                 if (isRed) {
-                    angle = Math.PI;
-                } else {
                     angle = 0;
+                    flipPaths();
+                } else {
+                    angle = Math.PI;
                 }
                 addCommands(
-                        new InstantCommand(() -> drivebase.resetPose(new Pose2d(midPose2d, new Rotation2d(0)))),
-                        pathBuilder.build(middlePath),
+                        new InstantCommand(() -> drivebase.resetPose(new Pose2d(midPose2d, new Rotation2d(angle)))),
+                        // pathBuilder.build(middlePath),
                         // intakePivot.deploy().until(() -> intakePivot.getIntakeState() ==
                         // PivotStates.Deployed),
                         new ParallelCommandGroup(
+                                drivebase.BlineToHub(1.778, 0.1, 0.1),
                                 shooter.shootFuel(),
                                 // hood.shoot(),
                                 feeder
@@ -126,39 +149,79 @@ public class BusterAuto extends SequentialCommandGroup {
                                                                 .andThen(intakePivot.agitate())))));
                 break;
             case "right":
-                new InstantCommand(() -> drivetrain.resetPose(new Pose2d(rightPose2d, new Rotation2d(0)))),
-                new ParallelCommandGroup(
-                        intakePivot.deploy().until(() -> intakePivot.getIntakeState() == PivotStates.Deployed)
-                        .andThen(new InstantCommand(() -> intakeRoller.setRollerSpeed(1))),
-                                        pathBuilder.build(blueTopTrenchToTopOfBalls)),
-                pathBuilder.build(blueTopBallsToBottomBalls),
-                new InstantCommand(() -> intakeRoller.setRollerSpeed(0)),
-                pathBuilder.build(blueBottomBallsToTopNeutralTrench),
-                pathBuilder.build(blueTopNeutralTrenchToTopBlueTrench),
-                drivebase
-                        .BlineToHub(1.778, 0.1, 0.1).deadlineFor(shooter.shootFuel()).andThen(
-                                new ParallelCommandGroup(
-                                        feeder
-                                                .feederOn(0)
-                                                .until(
-                                                        () -> shooter
-                                                                .getShooterState()
-                                                                .equals(ShooterStates.Shooting) &&
-                                                                drivebase.driveBaseState.equals(
-                                                                        States.InShootingPosition))
-                                                .andThen(feeder.feederOn(1).alongWith(intakePivot.agitate()))
-
-                                ));
-                break;
-            case "left":
+                Translation2d rightPose2d = drivebase.isAllianceRed().getAsBoolean()
+                        ? FlippingUtil.flipFieldPosition(new Translation2d(4.414, 8.042656 - 7.486))
+                        : new Translation2d(4.414, 8.042656 - 7.486);
+                mirrorPaths();
                 if (isRed) {
-                    angle = 0;
-                } else {
                     angle = Math.PI;
+                    flipPaths();
+                } else {
+                    angle = 0;
                 }
                 addCommands(
-                        new InstantCommand(() -> drivebase.resetRotation(new Rotation2d(angle))),
-                        new PathPlannerAuto("3 coral auto left"));
+                        new InstantCommand(() -> drivebase.resetPose(new Pose2d(rightPose2d, new Rotation2d(angle)))),
+                        new ParallelCommandGroup(
+                                // intakePivot.deploy().until(() -> intakePivot.getIntakeState() ==
+                                // PivotStates.Deployed)
+                                // .andThen(new InstantCommand(() -> intakeRollers.setRollerSpeed(1))),
+                                pathBuilder.build(blueTopTrenchToTopOfBalls)),
+                        pathBuilder.build(blueTopBallsToBottomBalls),
+                        new InstantCommand(() -> intakeRollers.setRollerSpeed(0)),
+                        pathBuilder.build(blueBottomBallsToTopNeutralTrench),
+                        pathBuilder.build(blueTopNeutralTrenchToTopBlueTrench),
+                        drivebase
+                                .BlineToHub(1.778, 0.1, 0.1).deadlineFor(shooter.shootFuel()).andThen(
+                                        new ParallelCommandGroup(
+                                                feeder
+                                                        .feederOn(0)
+                                                        .until(
+                                                                () -> shooter
+                                                                        .getShooterState()
+                                                                        .equals(ShooterStates.Shooting) &&
+                                                                        drivebase.driveBaseState.equals(
+                                                                                States.InShootingPosition))
+                                                        .andThen(feeder.feederOn(1).alongWith(intakePivot.agitate()))
+
+                                        )));
+                break;
+            case "left":
+
+                if (isRed) {
+                    angle = Math.PI;
+                    flipPaths();
+                } else {
+                    angle = 0;
+                }
+                Translation2d leftPose2d = drivebase.isAllianceRed().getAsBoolean()
+                        ? FlippingUtil.flipFieldPosition(new Translation2d(4.414, 7.486))
+                        : new Translation2d(4.414, 7.486);
+
+                addCommands(
+                        new InstantCommand(() -> drivebase.resetPose(new Pose2d(leftPose2d, new Rotation2d(angle)))),
+                        new ParallelCommandGroup(
+                                // intakePivot.deploy().until(() -> intakePivot.getIntakeState() ==
+                                // PivotStates.Deployed)
+                                // .andThen(new InstantCommand(() -> intakeRollers.setRollerSpeed(1))),
+                                pathBuilder.build(blueTopTrenchToTopOfBalls)),
+                        pathBuilder.build(blueTopBallsToBottomBalls),
+                        new InstantCommand(() -> intakeRollers.setRollerSpeed(0)),
+                        pathBuilder.build(blueBottomBallsToTopNeutralTrench),
+                        pathBuilder.build(blueTopNeutralTrenchToTopBlueTrench),
+                        drivebase
+                                .BlineToHub(1.778, 0.1, 0.1).deadlineFor(shooter.shootFuel()).andThen(
+                                        new ParallelCommandGroup(
+                                                feeder
+                                                        .feederOn(0)
+                                                        .until(
+                                                                () -> shooter
+                                                                        .getShooterState()
+                                                                        .equals(ShooterStates.Shooting) &&
+                                                                        drivebase.driveBaseState.equals(
+                                                                                States.InShootingPosition))
+                                                        .andThen(feeder.feederOn(1).alongWith(intakePivot.agitate()))
+
+                                        )));
                 break;
         }
     }
