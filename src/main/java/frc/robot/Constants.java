@@ -84,7 +84,7 @@ public final class Constants {
 
     // ──Shooter Velocity─────────────────────────────────────────────────────────
 
-    public static final double shootingSpeed = 45.0; //43
+    public static final double shootingSpeed = 43.0; //43
     public static final double feedingSpeed = 90.0;
     public static final double shootingTolerance = 1.0;
     public static final double feedingTolerance = 2.0;
@@ -112,8 +112,8 @@ public final class Constants {
     public static final double ballInitialSpinFromShooterEnemyZone = 100;
 
     // ── Intake positions (encoder units — tune before deploy) ────────────────
-    public static final double IntakeDeployPos = 24;
-    public static final double IntakeDepotPos = 22;
+    public static final double IntakeDeployPos = 23;
+    public static final double IntakeDepotPos = 21;
     public static final double IntakeRetractPos = 10;
     public static final double IntakeStowedPos = 0;
     

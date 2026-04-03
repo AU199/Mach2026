@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import java.util.function.BooleanSupplier;
+import java.util.function.DoubleSupplier;
 
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -23,6 +24,7 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.FuelSim;
@@ -57,7 +59,7 @@ public class Shooter extends SubsystemBase {
     private double tolerance = 0.5;
     private ShooterStates shooterState = ShooterStates.Idle;
     private double poseFromTrench = 0;
-
+    private double speed = 85;
     public Shooter(
             CommandSwerveDrivetrain drivetrain,
             boolean isBlue,
@@ -138,7 +140,8 @@ public class Shooter extends SubsystemBase {
                     double velocity = frontShooter1.getVelocity().getValueAsDouble();
                     double velocityError = Math.abs(velocity - Constants.shootingSpeed);
                     // SmartDashboard.putNumber("Shooting Velocity Error", velocityError);
-                    // SmartDashboard.putBoolean("shooter at velocity", velocityError < Constants.shootingTolerance);
+                    // SmartDashboard.putBoolean("shooter at velocity", velocityError <
+                    // Constants.shootingTolerance);
 
                     if (velocityError < Constants.shootingTolerance) {
                         shooterState = ShooterStates.Shooting;
@@ -155,7 +158,7 @@ public class Shooter extends SubsystemBase {
                     // frontShooter3.setControl(new MotionMagicVelocityVoltage(speed));
                 },
                 () -> {
-                    double targetVelocity = calculateFeedingVelocity();
+                    double targetVelocity = 70; // calculateFeedingVelocity().getAsDouble();
                     frontShooter1.setControl(
                             new MotionMagicVelocityVoltage(targetVelocity));
 
@@ -171,7 +174,7 @@ public class Shooter extends SubsystemBase {
     public Command idle() {
         return Commands.runOnce(
                 () -> {
-                    frontShooter1.setControl(new CoastOut());
+                    frontShooter1.setControl(new MotionMagicVelocityVoltage(0));
                     shooterState = ShooterStates.Idle;
                 });
     }
@@ -204,26 +207,28 @@ public class Shooter extends SubsystemBase {
     // return feedingVelocity;
     // }
 
-    private double calculateFeedingVelocity() {
-        if ((!drivebase.isAllianceRed().getAsBoolean()
-                && (drivebase.getPositionState().get() == POSITIONS.RED_TOP
-                        || drivebase.getPositionState().get() == POSITIONS.RED_BOTTOM)
-                || (drivebase.isAllianceRed().getAsBoolean()
-                        && (drivebase.getPositionState().get() == POSITIONS.BLUE_TOP
-                                || drivebase.getPositionState().get() == POSITIONS.BLUE_BOTTOM)))) {
-            return 90;
-        } else {
-            poseFromTrench = Math.abs(
-                    drivebase.getState().Pose.getX() - (!drivebase.isAllianceRed().getAsBoolean() ? 12.5 : 4.175));
-            double m = 90.0 / 12.0;
-            double speed = -m * poseFromTrench + 90;
-            double clampedSpeed = speed > 90 ? 90 : speed;
-            SmartDashboard.putBoolean("shooter/is speed greater than 90", speed > 90);
-            clampedSpeed = clampedSpeed < 0 ? 0 : speed;
+    private DoubleSupplier calculateFeedingVelocity() {
+        // if ((!drivebase.isAllianceRed().getAsBoolean()
+        // && (drivebase.getPositionState().get() == POSITIONS.RED_TOP
+        // || drivebase.getPositionState().get() == POSITIONS.RED_BOTTOM)
+        // || (drivebase.isAllianceRed().getAsBoolean()
+        // && (drivebase.getPositionState().get() == POSITIONS.BLUE_TOP
+        // || drivebase.getPositionState().get() == POSITIONS.BLUE_BOTTOM)))) {
+        // return 90;
+        // } else {
+        // poseFromTrench = Math.abs(
+        // drivebase.getState().Pose.getX() - (!drivebase.isAllianceRed().getAsBoolean()
+        // ? 12.5 : 4.175));
+        // double m = 90.0 / 12.0;
+        // double speed = -m * poseFromTrench + 90;
+        // double clampedSpeed = speed > 90 ? 90 : speed;
+        // SmartDashboard.putBoolean("shooter/is speed greater than 90", speed > 90);
+        // clampedSpeed = clampedSpeed < 0 ? 0 : speed;
 
-            return clampedSpeed;
+        // return clampedSpeed;
 
-        }
+        // }
+        return () -> 85;
     }
 
     // public Command pivotMotorOn(double speed) {
@@ -263,6 +268,15 @@ public class Shooter extends SubsystemBase {
                     frontShooter1.getVelocity().getValueAsDouble() - targetSpeed) < tolerance);
         };
     }
+
+    // public Command increasingSpeed() {
+    //     return new InstantCommand( speed += 5;);
+       
+    // }
+
+    // public Command decreasingSpeed() {
+    //     speed -= 5;
+    // }
 
     private Pose2d getFuturePose(
             Pose2d robotPose,
@@ -371,7 +385,7 @@ public class Shooter extends SubsystemBase {
         SmartDashboard.getNumber("shooter/kp", Constants.shooterMotorKP);
         SmartDashboard.getNumber("shooter/ki", Constants.shooterMotorKI);
         SmartDashboard.getNumber("shooter/kd", Constants.shooterMotorKD);
-        SmartDashboard.putNumber("shooter/velocity", calculateFeedingVelocity());
+        SmartDashboard.putNumber("shooter/velocity", calculateFeedingVelocity().getAsDouble());
         SmartDashboard.putNumber("shooter/PoseTrench", poseFromTrench);
         SmartDashboard.putString("states/state", shooterState.toString());
 

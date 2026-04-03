@@ -51,7 +51,7 @@ public class GetAuto {
             IntakePivot intakePivot,
             IntakeRollers intakeRoller,
             Shooter shooter,
-            Hood hood,
+        //     Hood hood,
             Feeder feeder) {
         pidControllerR.setTolerance(0.75);
         pidControllerT.setTolerance(0.75);
@@ -67,27 +67,32 @@ public class GetAuto {
                 pidControllerCT);
 
         Path blueTopTrenchToTopOfBalls = new Path("BlueTopTrenchToTopOfBalls");
-        blueTopTrenchToTopOfBalls.mirror();
+        
+        // blueTopTrenchToTopOfBalls.mirror();
         Path blueTopBallsToBottomBalls = new Path("BlueTopBallsToBottomBalls");
-        blueTopBallsToBottomBalls.mirror();
+        blueTopBallsToBottomBalls.flip(); //BLUE TO RED
+        // blueTopBallsToBottomBalls.mirror(); // LEFT TO RIGHT
         Path blueBottomBallsToTopNeutralTrench = new Path(
                 "BlueBottomBallsToTopNeutralTrench");
-        blueBottomBallsToTopNeutralTrench.mirror();
+        blueBottomBallsToTopNeutralTrench.flip();
+        // blueBottomBallsToTopNeutralTrench.mirror();
         Path blueTopNeutralTrenchToTopBlueTrench = new Path(
                 "BlueTopNeutralTrenchToTopBlueTrench");
-        Path middlePath = new Path("middle_auto");       
-        blueTopNeutralTrenchToTopBlueTrench.mirror();
+        blueBottomBallsToTopNeutralTrench.flip();
+        Path middlePath = new Path("middle_auto");    
+        middlePath.flip();   
+        // blueTopNeutralTrenchToTopBlueTrench.mirror();
+        
         Translation2d rightPose2d = drivetrain.isAllianceRed().getAsBoolean() ? FlippingUtil.flipFieldPosition(new Translation2d(4.414, 8.042656 - 7.486)) : new Translation2d(4.414, 8.042656 - 7.486);
-        Translation2d leftPose2d = drivetrain.isAllianceRed().getAsBoolean() ? FlippingUtil.flipFieldPosition(new Translation2d(4.414, 7.486)) : new Translation2d(4.414, 8.042656 - 7.486);
-        Translation2d midPose2d = drivetrain.isAllianceRed().getAsBoolean() ? FlippingUtil.flipFieldPosition(new Translation2d(3.7, 4)) : new Translation2d(4.414, 8.042656 - 7.486);
+        Translation2d leftPose2d = drivetrain.isAllianceRed().getAsBoolean() ? FlippingUtil.flipFieldPosition(new Translation2d(4.414, 7.486)) : new Translation2d(4.414, 7.486);
+        Translation2d midPose2d = drivetrain.isAllianceRed().getAsBoolean() ? FlippingUtil.flipFieldPosition(new Translation2d(3.7, 4)) :new Translation2d(3.7, 4);
         // IF RIGHT THEN MIRROR ALL PATHS
         return Commands.sequence(
-                new InstantCommand(() -> drivetrain.resetPose(new Pose2d(rightPose2d, new Rotation2d(0)))),
+                new InstantCommand(() -> drivetrain.resetPose(new Pose2d(midPose2d, new Rotation2d(0)))),
                 new ParallelCommandGroup(
                         intakePivot.deploy().until(() -> intakePivot.getIntakeState() == PivotStates.Deployed),
-                                        pathBuilder.build(blueTopTrenchToTopOfBalls)),
-                drivetrain
-                        .BlineToHub(1.778, 0.1, 0.1).deadlineFor(shooter.shootFuel()).andThen(
+                                        pathBuilder.build(middlePath)),
+                        shooter.shootFuel()).andThen(
                                 new ParallelCommandGroup(
                                         feeder
                                                 .feederOn(0)
@@ -99,7 +104,7 @@ public class GetAuto {
                                                                         States.InShootingPosition))
                                                 .andThen(feeder.feederOn(1).alongWith(intakePivot.agitate()))
 
-                                )));
+                                ));
 
     }
 }
