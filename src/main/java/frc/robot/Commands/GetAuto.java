@@ -111,8 +111,8 @@ public class GetAuto {
 return Commands.sequence(
                 new InstantCommand(() -> drivetrain.resetPose(new Pose2d(rightPose2d, new Rotation2d(0)))),
                 new ParallelCommandGroup(
-                        intakePivot.deploy().until(() -> intakePivot.getIntakeState() == PivotStates.Deployed),
-                        new InstantCommand(() -> intakeRoller.setRollerSpeed(1)),
+                        intakePivot.deploy().until(() -> intakePivot.getIntakeState() == PivotStates.Deployed)
+                        .andThen(new InstantCommand(() -> intakeRoller.setRollerSpeed(1))),
                                         pathBuilder.build(blueTopTrenchToTopOfBalls)),
                 pathBuilder.build(blueTopBallsToBottomBalls),
                 new InstantCommand(() -> intakeRoller.setRollerSpeed(0)),
