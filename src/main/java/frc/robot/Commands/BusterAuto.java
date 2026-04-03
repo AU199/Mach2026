@@ -128,8 +128,8 @@ public class BusterAuto extends SequentialCommandGroup {
                 addCommands(
                         new InstantCommand(() -> drivebase.resetPose(new Pose2d(midPose2d, new Rotation2d(angle)))),
                         // pathBuilder.build(middlePath),
-                        // intakePivot.deploy().until(() -> intakePivot.getIntakeState() ==
-                        // PivotStates.Deployed),
+                        intakePivot.deploy().until(() -> intakePivot.getIntakeState() ==
+                        PivotStates.Deployed),
                         new ParallelCommandGroup(
                                 drivebase.BlineToHub(1.778, 0.1, 0.1),
                                 shooter.shootFuel(),
@@ -162,9 +162,9 @@ public class BusterAuto extends SequentialCommandGroup {
                 addCommands(
                         new InstantCommand(() -> drivebase.resetPose(new Pose2d(rightPose2d, new Rotation2d(angle)))),
                         new ParallelCommandGroup(
-                                // intakePivot.deploy().until(() -> intakePivot.getIntakeState() ==
-                                // PivotStates.Deployed)
-                                // .andThen(new InstantCommand(() -> intakeRollers.setRollerSpeed(1))),
+                                intakePivot.deploy().until(() -> intakePivot.getIntakeState() ==
+                                PivotStates.Deployed)
+                                .andThen(new InstantCommand(() -> intakeRollers.setRollerSpeed(1))),
                                 pathBuilder.build(blueTopTrenchToTopOfBalls)),
                         pathBuilder.build(blueTopBallsToBottomBalls),
                         new InstantCommand(() -> intakeRollers.setRollerSpeed(0)),
@@ -200,9 +200,9 @@ public class BusterAuto extends SequentialCommandGroup {
                 addCommands(
                         new InstantCommand(() -> drivebase.resetPose(new Pose2d(leftPose2d, new Rotation2d(angle)))),
                         new ParallelCommandGroup(
-                                // intakePivot.deploy().until(() -> intakePivot.getIntakeState() ==
-                                // PivotStates.Deployed)
-                                // .andThen(new InstantCommand(() -> intakeRollers.setRollerSpeed(1))),
+                                intakePivot.deploy().until(() -> intakePivot.getIntakeState() ==
+                                PivotStates.Deployed)
+                                .andThen(new InstantCommand(() -> intakeRollers.setRollerSpeed(1))),
                                 pathBuilder.build(blueTopTrenchToTopOfBalls)),
                         pathBuilder.build(blueTopBallsToBottomBalls),
                         new InstantCommand(() -> intakeRollers.setRollerSpeed(0)),
