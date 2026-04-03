@@ -154,7 +154,8 @@ public class RobotContainer {
                                 ));
 
                 controller1.cross().toggleOnTrue(intakePivot.deploy());
-                controller1.square().toggleOnTrue(intakePivot.depot());
+                controller1.square().whileTrue(feeder.feederOn(1))
+                                .onFalse(feeder.feederOn(0));
                 controller1.triangle().toggleOnTrue(intakePivot.retract());
 
                 controller1
@@ -207,9 +208,11 @@ public class RobotContainer {
 
                 // controller1.povLeft().on(shooter.increasingSpeed());
 
-                controller1.L1().whileTrue(shooter.shootFuel().andThen(shooter.idle()));
+                controller1.L1().whileTrue(shooter.shootFuel())
+                                .onFalse(shooter.idle());
 
-                controller1.L2().whileTrue(shooter.feedFuel().andThen(shooter.idle()));
+                controller1.L2().whileTrue(shooter.feedFuel())
+                                .onFalse(shooter.idle());
 
                 // controller1
                 // .L2()

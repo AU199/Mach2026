@@ -128,25 +128,32 @@ public class BusterAuto extends SequentialCommandGroup {
                 addCommands(
                         new InstantCommand(() -> drivebase.resetPose(new Pose2d(midPose2d, new Rotation2d(angle)))),
                         // pathBuilder.build(middlePath),
-                        intakePivot.deploy().until(() -> intakePivot.getIntakeState() ==
-                        PivotStates.Deployed),
+                        intakePivot.deploy().until(() -> intakePivot.getIntakeState() == PivotStates.Deployed),
                         new ParallelCommandGroup(
                                 drivebase.BlineToHub(1.778, 0.1, 0.1),
                                 shooter.shootFuel(),
                                 // hood.shoot(),
+                                // intakePivot.deploy(),
                                 feeder
                                         .feederOn(0)
                                         .until(
                                                 () -> shooter
                                                         .getShooterState()
-                                                        .equals(ShooterStates.Shooting) &&
-                                                        drivebase.driveBaseState.equals(
-                                                                States.InShootingPosition))
+                                                        .equals(ShooterStates.Shooting)
+                                                        &&
+                                                        drivebase.driveBaseState
+                                                                .equals(
+                                                                        States.InShootingPosition))
                                         .andThen(
                                                 Commands.parallel(
-                                                        Commands.waitSeconds(0.5).andThen(feeder.feederOn(1)),
-                                                        Commands.waitSeconds(2)
-                                                                .andThen(intakePivot.agitate())))));
+                                                        Commands.waitSeconds(
+                                                                0.5)
+                                                                .andThen(feeder.feederOn(
+                                                                        1)),
+                                                        Commands.waitSeconds(
+                                                                2)
+                                                                .andThen(intakePivot
+                                                                        .agitate())))));
                 break;
             case "right":
                 Translation2d rightPose2d = drivebase.isAllianceRed().getAsBoolean()
@@ -162,28 +169,38 @@ public class BusterAuto extends SequentialCommandGroup {
                 addCommands(
                         new InstantCommand(() -> drivebase.resetPose(new Pose2d(rightPose2d, new Rotation2d(angle)))),
                         new ParallelCommandGroup(
-                                intakePivot.deploy().until(() -> intakePivot.getIntakeState() ==
-                                PivotStates.Deployed)
-                                .andThen(new InstantCommand(() -> intakeRollers.setRollerSpeed(1))),
+                                intakePivot.deploy().until(() -> intakePivot.getIntakeState() == PivotStates.Deployed)
+                                        .andThen(new InstantCommand(() -> intakeRollers.setRollerSpeed(1))),
                                 pathBuilder.build(blueTopTrenchToTopOfBalls)),
                         pathBuilder.build(blueTopBallsToBottomBalls),
                         new InstantCommand(() -> intakeRollers.setRollerSpeed(0)),
                         pathBuilder.build(blueBottomBallsToTopNeutralTrench),
                         pathBuilder.build(blueTopNeutralTrenchToTopBlueTrench),
-                        drivebase
-                                .BlineToHub(1.778, 0.1, 0.1).deadlineFor(shooter.shootFuel()).andThen(
-                                        new ParallelCommandGroup(
-                                                feeder
-                                                        .feederOn(0)
-                                                        .until(
-                                                                () -> shooter
-                                                                        .getShooterState()
-                                                                        .equals(ShooterStates.Shooting) &&
-                                                                        drivebase.driveBaseState.equals(
-                                                                                States.InShootingPosition))
-                                                        .andThen(feeder.feederOn(1).alongWith(intakePivot.agitate()))
-
-                                        )));
+                        new ParallelCommandGroup(
+                                drivebase.BlineToHub(1.778, 0.1, 0.1),
+                                shooter.shootFuel(),
+                                // hood.shoot(),
+                                // intakePivot.deploy(),
+                                feeder
+                                        .feederOn(0)
+                                        .until(
+                                                () -> shooter
+                                                        .getShooterState()
+                                                        .equals(ShooterStates.Shooting)
+                                                        &&
+                                                        drivebase.driveBaseState
+                                                                .equals(
+                                                                        States.InShootingPosition))
+                                        .andThen(
+                                                Commands.parallel(
+                                                        Commands.waitSeconds(
+                                                                0.5)
+                                                                .andThen(feeder.feederOn(
+                                                                        1)),
+                                                        Commands.waitSeconds(
+                                                                2)
+                                                                .andThen(intakePivot
+                                                                        .agitate())))));
                 break;
             case "left":
 
@@ -200,28 +217,38 @@ public class BusterAuto extends SequentialCommandGroup {
                 addCommands(
                         new InstantCommand(() -> drivebase.resetPose(new Pose2d(leftPose2d, new Rotation2d(angle)))),
                         new ParallelCommandGroup(
-                                intakePivot.deploy().until(() -> intakePivot.getIntakeState() ==
-                                PivotStates.Deployed)
-                                .andThen(new InstantCommand(() -> intakeRollers.setRollerSpeed(1))),
+                                intakePivot.deploy().until(() -> intakePivot.getIntakeState() == PivotStates.Deployed)
+                                        .andThen(new InstantCommand(() -> intakeRollers.setRollerSpeed(1))),
                                 pathBuilder.build(blueTopTrenchToTopOfBalls)),
                         pathBuilder.build(blueTopBallsToBottomBalls),
                         new InstantCommand(() -> intakeRollers.setRollerSpeed(0)),
                         pathBuilder.build(blueBottomBallsToTopNeutralTrench),
                         pathBuilder.build(blueTopNeutralTrenchToTopBlueTrench),
-                        drivebase
-                                .BlineToHub(1.778, 0.1, 0.1).deadlineFor(shooter.shootFuel()).andThen(
-                                        new ParallelCommandGroup(
-                                                feeder
-                                                        .feederOn(0)
-                                                        .until(
-                                                                () -> shooter
-                                                                        .getShooterState()
-                                                                        .equals(ShooterStates.Shooting) &&
-                                                                        drivebase.driveBaseState.equals(
-                                                                                States.InShootingPosition))
-                                                        .andThen(feeder.feederOn(1).alongWith(intakePivot.agitate()))
-
-                                        )));
+                        new ParallelCommandGroup(
+                                drivebase.BlineToHub(1.778, 0.1, 0.1),
+                                shooter.shootFuel(),
+                                // hood.shoot(),
+                                // intakePivot.deploy(),
+                                feeder
+                                        .feederOn(0)
+                                        .until(
+                                                () -> shooter
+                                                        .getShooterState()
+                                                        .equals(ShooterStates.Shooting)
+                                                        &&
+                                                        drivebase.driveBaseState
+                                                                .equals(
+                                                                        States.InShootingPosition))
+                                        .andThen(
+                                                Commands.parallel(
+                                                        Commands.waitSeconds(
+                                                                0.5)
+                                                                .andThen(feeder.feederOn(
+                                                                        1)),
+                                                        Commands.waitSeconds(
+                                                                2)
+                                                                .andThen(intakePivot
+                                                                        .agitate())))));
                 break;
         }
     }
