@@ -39,7 +39,7 @@ public class Feeder extends SubsystemBase {
     }
 
     public void feederIdle(){
-        feederState = feederState.Idle;
+        feederState = FeederStates.Idle;
         kickerMotor.set(0);
     }
 

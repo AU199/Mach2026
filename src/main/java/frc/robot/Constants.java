@@ -87,6 +87,7 @@ public final class Constants {
     public static final double shootingSpeed = 45.0; //43
     public static final double feedingSpeed = 90.0;
     public static final double shootingTolerance = 1.0;
+    public static final double feedingTolerance = 2.0;
 
     // ── Shooting geometry ─────────────────────────────────────────────────────
     /** Height of the hub opening (top of the ball's entry path), meters */
